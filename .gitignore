@@ -2,3 +2,9 @@ node_modules
 dist
 *.local
 .DS_Store
+
+# capture artifacts
+scripts/card-*.png
+scripts/card-*.jpg
+scripts/*-card.jpg
+tiles-src/

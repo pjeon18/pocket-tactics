@@ -1,13 +1,25 @@
-# Pocket Tactics (working title)
+# Pocket Tactics
 
-A draft-and-deploy Pokémon tactics game: pick a Mythical champion and eight
+**Play: https://pjeon18.github.io/pocket-tactics/**
+
+A draft-and-deploy Pokémon tactics game: draft a Mythical champion and a team of
 Pokémon, deploy them with tiered Poké Balls, and assassinate the enemy champion on
-a 7×10 board with randomized terrain and chest spawns. Movement is live; attacks
-are declared and resolve together when the turn ends. Real Pokémon type matchups
-(+1 super effective / −1 resisted). Two modes: vs. a heuristic AI rival, or two
-players on one screen with live mirrored boards (plus a tabletop rotation mode).
+a 7×10 board of seasonal grass, dirt roads, and tree cover. Movement is live;
+attacks are declared and resolve together when the turn ends. Real type matchups
+(+3 super effective / −2 resisted), TFT-style type synergies, crits/misses, field
+item drops, and per-card redeploy cooldowns.
 
-Full design rationale and rules: [`docs/SPEC.md`](docs/SPEC.md).
+**Three ways to play:**
+- **Vs. the Rival** — a heuristic AI opponent.
+- **Two players, one screen** — live mirrored boards, plus a tabletop rotation mode.
+- **Private online rooms** — share a code, connect peer-to-peer over WebRTC
+  (Trystero); no server, no accounts. The host runs the authoritative engine.
+
+Draft styles: **Classic** (pick your whole team up front) or **Blitz** (buy from a
+5-card shop that restocks every turn — nothing is kept).
+
+Full design rationale and rules: [`docs/SPEC.md`](docs/SPEC.md). Every unit, item,
+and drop rate: [`docs/BALANCE.md`](docs/BALANCE.md) (auto-generated from the data).
 
 ## Run
 
