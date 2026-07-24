@@ -14,6 +14,7 @@ export interface FloatView {
   row: number
   text: string
   color: string
+  sub?: string
 }
 
 /** A just-fainted unit kept around briefly for the drop-and-fade animation. */
@@ -128,23 +129,24 @@ export function BoardView({
   return (
     <div className={`board s-${state.season} ${interactive ? '' : 'board-locked'} ${selecting ? 'board-selecting' : ''}`}>
       {cells}
-      {/* one board-wide grid so every line is identical width and perfectly aligned */}
+      {/* one board-wide grid so every line is identical width and perfectly aligned;
+          the black midline is baked into the same layer so it can never drift */}
       <div className="grid-overlay" />
-      <div className="board-midline" />
 
-      {/* terrain: trees on grass — impassable, blocks lines of fire */}
-      {state.rocks.map(([c, r]) => (
-        <div
-          key={`rock-${c}-${r}`}
-          className="rock"
-          style={{
-            left: `${vc(c) * w}%`, top: `${vr(r) * h}%`, width: `${w}%`, height: `${h}%`,
-            backgroundImage: `url(${asset(`tiles/${state.season}-g${(c * 31 + r * 17) % 4}.png`)})`,
-          }}
-        >
-          <img src={asset('tiles/tree.png')} alt="" draggable={false} className="tree-img" />
-        </div>
-      ))}
+      {/* terrain: trees on grass — impassable, blocks lines of fire. The tile is
+          TRANSPARENT (the grass cell underneath shows through, gridlines intact);
+          trees paint top-to-bottom so a lower tree overlaps the one behind it. */}
+      {[...state.rocks]
+        .sort((a, b) => vr(a[1]) - vr(b[1]))
+        .map(([c, r]) => (
+          <div
+            key={`rock-${c}-${r}`}
+            className="rock"
+            style={{ left: `${vc(c) * w}%`, top: `${vr(r) * h}%`, width: `${w}%`, height: `${h}%` }}
+          >
+            <img src={asset('tiles/tree.png')} alt="" draggable={false} className="tree-img" />
+          </div>
+        ))}
 
       {/* field Poké Balls (item drops) */}
       {state.chests.map((ch) => (
@@ -315,6 +317,11 @@ export function BoardView({
           }}
         >
           {f.text}
+          {f.sub && (
+            <span className={`float-sub ${f.sub.startsWith('Super') ? 'float-sub-super' : 'float-sub-nve'}`}>
+              {f.sub}
+            </span>
+          )}
         </div>
       ))}
     </div>

@@ -209,12 +209,19 @@ function dealDamage(
 ) {
   let amt = base
   let mark = ''
+  let sub: string | undefined
   if (src && kind !== 'raw') {
     const mod = typeMod(ptypeOf(src), ptypeOf(tgt))
     amt += mod
     mark = mod > 0 ? '!' : ''
-    if (mod > 0) color = COLOR.strong
-    if (mod < 0) color = COLOR.resist
+    if (mod > 0) {
+      color = COLOR.strong
+      sub = 'Super effective!'
+    }
+    if (mod < 0) {
+      color = COLOR.resist
+      sub = 'Not very effective…'
+    }
     if (src.heldItem === 'life-orb') amt += 1
     if (kind === 'special' && ptypeOf(src) === 'fighting' && hasSynergy(state.units, src)) amt += 1
     if (tgt.stunned && ptypeOf(src) === 'ice' && hasSynergy(state.units, src)) amt += 1
@@ -224,7 +231,7 @@ function dealDamage(
   }
   tgt.hp -= amt
   if (src) state.stats[src.owner][src.key] = (state.stats[src.owner][src.key] ?? 0) + amt
-  state.events.push({ col: tgt.col, row: tgt.row, text: `-${amt}${mark}${suffix}`, color })
+  state.events.push({ col: tgt.col, row: tgt.row, text: `-${amt}${mark}${suffix}`, color, sub })
 }
 
 function dealHeal(state: GameState, tgt: Unit, amt: number) {
@@ -978,8 +985,10 @@ export function resolveStep(state0: GameState): GameState | null {
             effAtk(state.units, u) + (crit ? CRIT_BONUS : 0),
             COLOR.normal, 'normal', crit ? ' CRIT' : '',
           )
+          const mod = typeMod(ptypeOf(u), ptypeOf(t))
+          const eff = mod > 0 ? ' — super effective!' : mod < 0 ? ' — not very effective' : ''
           state.log.push(
-            `${nameOf(u)} hit ${nameOf(t)} for ${before - t.hp}${crit ? ' — CRITICAL!' : ''}`,
+            `${nameOf(u)} hit ${nameOf(t)} for ${before - t.hp}${crit ? ' — CRITICAL!' : ''}${eff}`,
           )
           // Swarm: bug-synergy normal attacks strike twice
           if (t.hp > 0 && ptypeOf(u) === 'bug' && hasSynergy(state.units, u)) {

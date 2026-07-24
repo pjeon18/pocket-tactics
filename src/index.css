@@ -343,6 +343,15 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 .ab-sprite { width: 40px; height: 40px; object-fit: contain; image-rendering: pixelated; }
 .float-crit { font-size: 20px; }
 
+/* effectiveness caption under the damage number */
+.float-sub {
+  display: block; margin-top: 6px; font-size: 8px; letter-spacing: 0.02em;
+  white-space: nowrap; text-align: center;
+  text-shadow: 1.5px 1.5px 0 #FFFFFF, -1.5px 1.5px 0 #FFFFFF, 1.5px -1.5px 0 #FFFFFF, -1.5px -1.5px 0 #FFFFFF;
+}
+.float-sub-super { color: #C43A00; }
+.float-sub-nve { color: #5A6068; }
+
 .panel-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .panel-label { font-size: 20px; font-weight: 900; }
 .turnpill {
@@ -451,24 +460,24 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 }
 .panels-two .board { width: min(100%, calc((100vh - 400px) * 0.7)); }
 .board-locked { cursor: default; }
-.board-midline {
-  position: absolute; left: 0; right: 0; top: 50%; height: 3px;
-  background: var(--ink); transform: translateY(-50%); pointer-events: none; z-index: 1;
-}
 
 /* ONE board-wide grid: 1px lines at exact cell fractions (7 cols × 10 rows),
    so every line is identical width and perfectly aligned — including over the
-   tree cells. Near-invisible until you're commanding a Pokémon. */
+   tree cells. The black center line lives in the SAME layer (first background),
+   so it can never drift from the grid. Lines stay near-invisible until you're
+   commanding a Pokémon. */
 .grid-overlay {
   position: absolute; inset: 0; pointer-events: none; z-index: 1;
   background-image:
+    linear-gradient(to bottom, transparent calc(50% - 1.5px), var(--ink) calc(50% - 1.5px), var(--ink) calc(50% + 1.5px), transparent calc(50% + 1.5px)),
     linear-gradient(to right, rgba(22, 25, 29, 0.09) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(22, 25, 29, 0.09) 1px, transparent 1px);
-  background-size: calc(100% / 7) calc(100% / 10);
+  background-size: 100% 100%, calc(100% / 7) calc(100% / 10), calc(100% / 7) calc(100% / 10);
   transition: background-image 0.15s;
 }
 .board-selecting .grid-overlay {
   background-image:
+    linear-gradient(to bottom, transparent calc(50% - 1.5px), var(--ink) calc(50% - 1.5px), var(--ink) calc(50% + 1.5px), transparent calc(50% + 1.5px)),
     linear-gradient(to right, rgba(22, 25, 29, 0.5) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(22, 25, 29, 0.5) 1px, transparent 1px);
 }
@@ -501,11 +510,11 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 .cell-threat::after { background: rgba(214, 69, 69, 0.3); box-shadow: inset 0 0 0 2px rgba(214, 69, 69, 0.6); }
 .cell-undo { box-shadow: inset 0 0 0 3.5px #3478DC !important; }
 
-/* terrain: trees on grass — impassable, blocks lines of fire. Sit ABOVE the grid
-   overlay (z:2 > 1) so the canopy is never sliced by a gridline. */
+/* terrain: trees on grass — impassable, blocks lines of fire. The tile itself is
+   TRANSPARENT (the grass cell + gridlines show through around the sprite); only
+   the tree image sits above the grid, so nothing gets sliced or blanked out. */
 .rock {
   position: absolute; pointer-events: none; z-index: 2;
-  background-size: 100% 100%; image-rendering: pixelated;
   display: flex; align-items: flex-end; justify-content: center;
 }
 .tree-img {

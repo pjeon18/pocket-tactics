@@ -148,6 +148,8 @@ export interface FloatEvent {
   row: number
   text: string
   color: string
+  /** Small caption under the number — "Super effective!" / "Not very effective…" */
+  sub?: string
 }
 
 export interface Chest {
