@@ -14,7 +14,7 @@ import type { BallTier, ChampionSpecies, DraftResult, Role, Species } from '../g
 import { CostDots, Sprite } from './Sprite'
 import { PatternGrid, buildMoveAtk, buildSpecial } from './PatternGrid'
 
-type SortKey = 'cost' | 'atk' | 'hp' | 'range'
+type SortKey = 'cost' | 'atk' | 'hp' | 'range' | 'type'
 const tierRank = { poke: 0, great: 1, ultra: 2 } as const
 const HOLD_MS = 420
 
@@ -60,7 +60,10 @@ export function SynergyLegend() {
         <div key={t} className="syn-legend-row">
           <em className="type-chip" style={{ background: TYPE_META[t]!.color }}>{TYPE_META[t]!.label}</em>
           <b>{SYNERGIES[t]!.name}</b>
-          <span>{SYNERGIES[t]!.desc} (3 on the field — your champion counts)</span>
+          <span>
+            <b>3:</b> {SYNERGIES[t]!.desc} · <b>5:</b> {SYNERGIES[t]!.desc2}
+            {' '}(unique Pokémon only — your champion counts, duplicates don't)
+          </span>
         </div>
       ))}
     </div>
@@ -99,7 +102,9 @@ export function Draft({
           ? b.atk - a.atk
           : sort === 'range'
             ? b.range - a.range
-            : b.hp - a.hp,
+            : sort === 'type'
+              ? a.ptype.localeCompare(b.ptype) || costEquiv(a.cost) - costEquiv(b.cost)
+              : b.hp - a.hp,
     )
     return list
   }, [roleFilter, tierFilter, sort])
@@ -179,13 +184,13 @@ export function Draft({
           ))}
         </span>
         <span className="filter-group">
-          {(['cost', 'atk', 'hp', 'range'] as const).map((s) => (
+          {(['cost', 'atk', 'hp', 'range', 'type'] as const).map((s) => (
             <button
               key={s}
               className={`chip ${sort === s ? 'chip-on' : ''}`}
               onClick={() => setSort(s)}
             >
-              {s === 'cost' ? 'By cost' : s === 'atk' ? 'By attack' : s === 'hp' ? 'By HP' : 'By range'}
+              {s === 'cost' ? 'By cost' : s === 'atk' ? 'By attack' : s === 'hp' ? 'By HP' : s === 'range' ? 'By range' : 'By type'}
             </button>
           ))}
         </span>

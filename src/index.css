@@ -737,3 +737,98 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 @media (max-width: 979px) {
   .board { width: min(100%, calc((100vh - 380px) * 0.7)); }
 }
+
+/* ---------- iteration: help corner, compendium, econ pop, wave wipe ---------- */
+
+/* menu: How-to-play and synergies expand side by side */
+.rules-row { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; justify-content: center; max-width: 980px; }
+.rules-row .rules { flex: 1 1 380px; margin-top: 34px; }
+.rules-wide { width: 100%; max-width: 980px; }
+
+/* the readable game doc */
+.compendium { text-align: left; }
+.compendium h4 { margin: 18px 0 8px; font-size: 15px; }
+.comp-scroll { overflow-x: auto; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 12px; }
+.compendium table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+.compendium th, .compendium td { padding: 6px 9px; text-align: left; border-bottom: 1px solid rgba(255, 255, 255, 0.1); white-space: nowrap; }
+.compendium th { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.7; position: sticky; top: 0; }
+.comp-name { display: flex; align-items: center; gap: 7px; font-weight: 800; }
+.comp-name .sprite { width: 30px; height: 30px; image-rendering: pixelated; object-fit: contain; }
+.comp-name .sprite-token { width: 22px; height: 22px; font-size: 10px; }
+.comp-special { white-space: normal !important; min-width: 260px; line-height: 1.4; }
+.comp-drops table { max-width: 380px; }
+.comp-note { font-size: 12px; opacity: 0.75; }
+
+/* in-match help corner */
+.help-corner { position: relative; }
+.help-btn { width: 34px; height: 34px; padding: 0; border-radius: 50%; font-size: 16px; font-weight: 900; }
+.help-pop {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 40;
+  width: min(520px, 86vw); max-height: 70vh; overflow-y: auto;
+  background: var(--card); color: var(--ink); border-radius: 16px; padding: 14px 16px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  display: none; text-align: left; font-size: 13.5px; line-height: 1.55;
+}
+.help-corner:hover .help-pop, .help-corner:focus-within .help-pop { display: block; }
+.help-pop details { margin: 6px 0; }
+.help-pop summary { cursor: pointer; font-weight: 800; padding: 4px 0; }
+.help-pop ul { padding-left: 18px; margin: 8px 0; }
+.help-note { color: var(--mist); font-size: 12.5px; margin: 8px 0 4px; }
+.help-pop .syn-legend-row { color: var(--ink); }
+
+/* End turn lives in the HUD row now */
+.endturn-hud { margin-left: auto; padding: 12px 26px; font-size: 15px; }
+
+/* the ball purse with +N pops */
+.econ-row {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  background: var(--paper); border: 1.5px solid var(--line); border-radius: 14px; padding: 10px 14px;
+}
+.econ-item-big { position: relative; display: inline-flex; align-items: center; gap: 6px; }
+.econ-item-big b { font-size: 22px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.econ-pop { animation: econPop 0.5s cubic-bezier(0.2, 1.8, 0.4, 1); display: inline-block; }
+@keyframes econPop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.55); color: #C9930A; }
+  100% { transform: scale(1); }
+}
+.econ-gain {
+  position: absolute; top: -12px; right: -16px; pointer-events: none;
+  font-family: 'Press Start 2P', monospace; font-size: 11px; color: #2E7D4F;
+  text-shadow: 1.5px 1.5px 0 #FFF, -1.5px 1.5px 0 #FFF, 1.5px -1.5px 0 #FFF, -1.5px -1.5px 0 #FFF;
+  animation: gainRise 1.05s ease-out forwards;
+}
+@keyframes gainRise {
+  0% { opacity: 0; transform: translateY(6px) scale(0.6); }
+  20% { opacity: 1; transform: translateY(0) scale(1.15); }
+  70% { opacity: 1; transform: translateY(-8px) scale(1); }
+  100% { opacity: 0; transform: translateY(-16px) scale(1); }
+}
+
+/* synergy tier-2 chip: maxed */
+.syn-t2 {
+  background: color-mix(in srgb, var(--tc, var(--amber)) 30%, #FFFFFF);
+  box-shadow: 0 0 0 2px var(--tc, var(--amber)), 0 0 10px color-mix(in srgb, var(--tc, var(--amber)) 60%, transparent);
+  font-weight: 900;
+}
+
+/* full-screen wave wipe */
+.wave-wipe {
+  position: fixed; inset: 0; z-index: 90; pointer-events: none;
+  display: flex; animation: waveAcross 0.85s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  transform: translateX(-115%);
+}
+.wave-body { flex: 1; background: linear-gradient(105deg, #C9930A, #E0B23E 55%, #C9930A); margin: 0 -2px; }
+.wave-edge { width: clamp(60px, 9vw, 120px); height: 100%; flex-shrink: 0; }
+.wave-edge path { fill: #C9930A; }
+.wave-edge-tail path { fill: #C9930A; }
+@keyframes waveAcross {
+  0% { transform: translateX(-115%); }
+  45% { transform: translateX(0%); }
+  55% { transform: translateX(0%); }
+  100% { transform: translateX(115%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wave-wipe { animation-duration: 0.01s; opacity: 0; }
+  .econ-pop, .econ-gain { animation: none !important; }
+}

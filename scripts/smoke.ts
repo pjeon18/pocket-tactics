@@ -287,6 +287,23 @@ for (let tries = 0; tries < 12 && !hitBoth; tries++) {
 }
 ok(hitBoth, "Escavalier's normal attack lances the unit behind the target")
 
+/* --- synergy tiers: uniques only, tier 2 at five --- */
+import { effAtk, synergyTier } from '../src/game/rules'
+let syU = newBattle(draftA, draftB)
+syU.rocks = []
+for (let i = 0; i < 3; i++) spawn(syU, 980 + i, 'pikachu', 'A', i, 8) // three DUPLICATE electrics
+ok(synergyTier(syU.units, 'A', 'electric') === 0, 'duplicates do not count toward synergies')
+let syT2 = newBattle(draftA, draftB) // NB: champion Victini is itself a unique FIRE
+syT2.rocks = []
+const fires = ['vulpix', 'ponyta', 'chandelure', 'blaziken'] // 4 uniques + Victini = 5
+fires.forEach((k, i) => spawn(syT2, 985 + i, k, 'A', i, 8))
+ok(synergyTier(syT2.units, 'A', 'fire') === 2, 'five unique fires (champion counts) reach tier 2')
+const vul = syT2.units.find((u) => u.id === 985)!
+vul.atk = 2
+ok(effAtk(syT2.units, vul) === 4, 'Blaze tier 2 grants +2 ATK')
+syT2.units = syT2.units.filter((u) => u.id !== 988) // drop to four fires
+ok(synergyTier(syT2.units, 'A', 'fire') === 1 && effAtk(syT2.units, vul) === 3, 'tier falls back to 1 at four uniques')
+
 /* --- full AI vs AI games run to completion --- */
 for (let g2 = 0; g2 < 5; g2++) {
   let game = newBattle(aiDraft(), aiDraft())

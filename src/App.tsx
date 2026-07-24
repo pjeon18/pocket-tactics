@@ -6,6 +6,7 @@ import { BattleIntro } from './ui/BattleIntro'
 import { Draft } from './ui/Draft'
 import { ModeSelect } from './ui/ModeSelect'
 import { OnlineGame } from './ui/OnlineSetup'
+import { WaveWipe, useWave } from './ui/Wave'
 
 type Mode = 'ai' | 'local'
 
@@ -20,13 +21,15 @@ type Phase =
 
 export default function App() {
   const [phase, setPhase] = useState<Phase>({ t: 'menu' })
+  const { waveActive, go } = useWave()
 
   return (
     <div className="app">
+      <WaveWipe active={waveActive} />
       {phase.t === 'menu' && (
         <ModeSelect
-          onPick={(mode, blitz) => setPhase({ t: 'draftA', mode, blitz })}
-          onOnline={() => setPhase({ t: 'online' })}
+          onPick={(mode, blitz) => go(() => setPhase({ t: 'draftA', mode, blitz }))}
+          onOnline={() => go(() => setPhase({ t: 'online' }))}
         />
       )}
 

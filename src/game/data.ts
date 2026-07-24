@@ -44,25 +44,29 @@ export const CRIT_BONUS = 2
 /** Every Pokémon gains this much HP over its "true" statline (attack/HP ratio fix). */
 export const HP_INFLATE = 3
 
-/** Same-type Pokémon on the field (champion included) unlock a synergy at 3. */
+/** UNIQUE same-type Pokémon on the field (champion counts, duplicates don't):
+    tier 1 at 3, tier 2 at 5 — numeric bonuses double, boolean ones gain a rider. */
 export const SYNERGY_THRESHOLD = 3
+export const SYNERGY_TIER2 = 5
 export interface SynergyDef {
   name: string
   desc: string
+  /** What tier 2 (five uniques) adds. */
+  desc2: string
 }
 export const SYNERGIES: Partial<Record<PType, SynergyDef>> = {
-  fire: { name: 'Blaze', desc: 'Your Fire Pokémon get +1 ATK' },
-  water: { name: 'Torrent', desc: 'Your Water Pokémon get +1 MOV' },
-  electric: { name: 'Static', desc: 'Your Electric Pokémon crit twice as often' },
-  psychic: { name: 'Mindlink', desc: 'Your Psychic Pokémon get +1 range' },
-  grass: { name: 'Photosynthesis', desc: 'Your Grass Pokémon heal 1 at the end of your turn' },
-  normal: { name: 'Guts', desc: 'Your Normal Pokémon get +1 ATK below half HP' },
-  fighting: { name: 'Focus', desc: 'Your Fighting Pokémon deal +1 with specials' },
-  steel: { name: 'Bulwark', desc: 'Your Steel Pokémon take 1 less damage' },
-  ice: { name: 'Frostbite', desc: 'Your Ice Pokémon deal +1 to stunned targets' },
-  rock: { name: 'Sturdy', desc: 'Your Rock Pokémon can never be crit' },
-  dark: { name: 'Ambush', desc: 'Your Dark Pokémon deal +1 to targets at full HP' },
-  bug: { name: 'Swarm', desc: 'Your Bug Pokémon strike twice with normal attacks' },
+  fire: { name: 'Blaze', desc: 'Your Fire Pokémon get +1 ATK', desc2: '+2 ATK' },
+  water: { name: 'Torrent', desc: 'Your Water Pokémon get +1 MOV', desc2: '+2 MOV' },
+  electric: { name: 'Static', desc: 'Your Electric Pokémon crit twice as often', desc2: 'crit three times as often' },
+  psychic: { name: 'Mindlink', desc: 'Your Psychic Pokémon get +1 range', desc2: '+2 range' },
+  grass: { name: 'Photosynthesis', desc: 'Your Grass Pokémon heal 1 at the end of your turn', desc2: 'heal 2' },
+  normal: { name: 'Guts', desc: 'Your Normal Pokémon get +1 ATK below half HP', desc2: '+2 ATK below half' },
+  fighting: { name: 'Focus', desc: 'Your Fighting Pokémon deal +1 with specials', desc2: '+2 with specials' },
+  steel: { name: 'Bulwark', desc: 'Your Steel Pokémon take 1 less damage', desc2: '2 less damage' },
+  ice: { name: 'Frostbite', desc: 'Your Ice Pokémon deal +1 to stunned targets', desc2: '+2 to stunned' },
+  rock: { name: 'Sturdy', desc: 'Your Rock Pokémon can never be crit', desc2: 'also take 1 less damage' },
+  dark: { name: 'Ambush', desc: 'Your Dark Pokémon deal +1 to targets at full HP', desc2: '+2 to full-HP targets' },
+  bug: { name: 'Swarm', desc: 'Your Bug Pokémon strike twice with normal attacks', desc2: 'and gain +1 ATK' },
 }
 
 /** Field Poké Ball drops. Vest and Orb attach to a Pokémon (one held item each). */

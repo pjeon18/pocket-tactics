@@ -1,4 +1,4 @@
-import { COLS, DEPLOY_DEPTH, ROSTER, ROWS, SYNERGIES, SYNERGY_THRESHOLD, ptypeOf } from './data'
+import { COLS, DEPLOY_DEPTH, ROSTER, ROWS, SYNERGIES, SYNERGY_THRESHOLD, SYNERGY_TIER2, ptypeOf } from './data'
 import type { BoardLike, GameState, Owner, PType, PlayerState, Species, Unit } from './types'
 
 export const inBounds = (c: number, r: number) => c >= 0 && c < COLS && r >= 0 && r < ROWS
@@ -26,16 +26,29 @@ export const canAfford = (p: PlayerState, sp: Species) =>
 export const canDeployCard = (p: PlayerState, key: string, shopMode = false) =>
   (p.cooldowns[key] ?? 0) === 0 && (shopMode || canAfford(p, ROSTER[key]))
 
-/* ---------- type synergies (TFT-style: 3 same-type on field, champion counts) ---------- */
+/* ---------- type synergies (TFT-style, champion counts) ----------
+   Tier 1 at 3 UNIQUE same-type Pokémon, tier 2 at 5 — duplicates of the same
+   species never add to the count, so spamming one cheap body can't cheat it. */
 
 export function synergyCounts(units: Unit[], owner: Owner): Partial<Record<PType, number>> {
+  const seen = new Set<string>()
   const counts: Partial<Record<PType, number>> = {}
   for (const u of units) {
-    if (u.owner !== owner) continue
+    if (u.owner !== owner || seen.has(u.key)) continue
+    seen.add(u.key)
     const t = ptypeOf(u)
     counts[t] = (counts[t] ?? 0) + 1
   }
   return counts
+}
+
+/** 0 = inactive, 1 = three uniques fielded, 2 = five uniques fielded. */
+export function synergyTier(units: Unit[], owner: Owner, t: PType): 0 | 1 | 2 {
+  if (!SYNERGIES[t]) return 0
+  const n = synergyCounts(units, owner)[t] ?? 0
+  if (n >= SYNERGY_TIER2) return 2
+  if (n >= SYNERGY_THRESHOLD) return 1
+  return 0
 }
 
 export function activeSynergies(units: Unit[], owner: Owner): Set<PType> {
@@ -49,31 +62,36 @@ export function activeSynergies(units: Unit[], owner: Owner): Set<PType> {
 }
 
 export const hasSynergy = (units: Unit[], u: Unit) =>
-  activeSynergies(units, u.owner).has(ptypeOf(u))
+  synergyTier(units, u.owner, ptypeOf(u)) >= 1
 
-/** ATK with buffs, Blaze (+1 fire), Guts (+1 normal below half HP). Life Orb adds at damage time. */
+/** The unit's own synergy tier — numeric bonuses double at tier 2. */
+export const tierOf = (units: Unit[], u: Unit) => synergyTier(units, u.owner, ptypeOf(u))
+
+/** ATK with buffs, Blaze (fire +1/+2), Guts (normal +1/+2 below half HP), Swarm tier 2 (+1). */
 export function effAtk(units: Unit[], u: Unit): number {
   let a = u.atk + u.atkBuff
   const t = ptypeOf(u)
-  if (hasSynergy(units, u)) {
-    if (t === 'fire') a += 1
-    if (t === 'normal' && u.hp * 2 <= u.maxHp) a += 1
+  const tier = tierOf(units, u)
+  if (tier >= 1) {
+    if (t === 'fire') a += tier
+    if (t === 'normal' && u.hp * 2 <= u.maxHp) a += tier
+    if (t === 'bug' && tier >= 2) a += 1
   }
   return a
 }
 
-/** Range with Mindlink (+1 psychic) and Choice Specs (+3). */
+/** Range with Mindlink (psychic +1/+2) and Choice Specs (+3). */
 export function effRange(units: Unit[], u: Unit): number {
   let r = u.range
-  if (ptypeOf(u) === 'psychic' && hasSynergy(units, u)) r += 1
+  if (ptypeOf(u) === 'psychic') r += tierOf(units, u)
   if (u.heldItem === 'choice-specs') r += 3
   return r
 }
 
-/** Move with buffs, Torrent (+1 water), and Choice Scarf (+2). */
+/** Move with buffs, Torrent (water +1/+2), and Choice Scarf (+2). */
 export function effMove(units: Unit[], u: Unit): number {
   let m = u.move + u.moveBuff
-  if (ptypeOf(u) === 'water' && hasSynergy(units, u)) m += 1
+  if (ptypeOf(u) === 'water') m += tierOf(units, u)
   if (u.heldItem === 'choice-scarf') m += 2
   return m
 }

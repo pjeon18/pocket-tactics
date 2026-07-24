@@ -26,6 +26,7 @@ import {
   ROWS,
   SYNERGIES,
   SYNERGY_THRESHOLD,
+  SYNERGY_TIER2,
   TRADE_GREAT_COST,
   TRADE_ULTRA_COST,
   TYPE_META,
@@ -62,6 +63,9 @@ import { PatternGrid, buildMoveAtk, buildSpecial } from './PatternGrid'
 import { dexOf } from '../game/data'
 import { getVolume, playCry, setVolume, sfxCrit, sfxHeal, sfxHit, sfxKO, sfxMiss, sfxTurn } from './sounds'
 import { MusicCorner, SkyMat } from './SkyMat'
+import { HowToPlay } from './ModeSelect'
+import { SynergyLegend } from './Draft'
+import { WaveWipe, useWave } from './Wave'
 import type { NetSession } from '../net'
 
 type Sel =
@@ -131,6 +135,8 @@ export function Battle({
   const resolvingRef = useRef(resolving)
   resolvingRef.current = resolving
   const [gotHostState, setGotHostState] = useState(!isGuest)
+  const [winnerShown, setWinnerShown] = useState(false)
+  const { waveActive, go: waveGo } = useWave()
 
   useEffect(() => () => floatTimers.current.forEach(clearTimeout), [])
   useEffect(() => {
@@ -259,6 +265,13 @@ export function Battle({
     net.onPeerLeave(() => onExit())
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [net])
+
+  /* the win screen arrives behind a wave sweep */
+  useEffect(() => {
+    if (state.winner && !winnerShown) waveGo(() => setWinnerShown(true))
+    if (!state.winner && winnerShown) setWinnerShown(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.winner])
 
   /* keep selection valid as units faint */
   useEffect(() => {
@@ -558,6 +571,20 @@ export function Battle({
       <div className="toolbar">
         <button className="btn btn-tiny" onClick={onExit}>‹ Menu</button>
         <span className="round-label">Round {state.round}</span>
+        <div className="help-corner">
+          <button className="btn btn-tiny help-btn" aria-label="Help">?</button>
+          <div className="help-pop">
+            <details>
+              <summary>How to play</summary>
+              <HowToPlay />
+            </details>
+            <details>
+              <summary>Type synergies &amp; coverage</summary>
+              <p className="help-note">Super effective +3 · resisted −2 (real Pokémon matchups).</p>
+              <SynergyLegend />
+            </details>
+          </div>
+        </div>
         <label className="volume-ctl" title="Volume — cries and battle sounds">
           <span className="volume-icon">♪</span>
           <input
@@ -604,7 +631,9 @@ export function Battle({
         </div>
       )}
 
-      {state.winner && (
+      <WaveWipe active={waveActive} />
+
+      {state.winner && winnerShown && (
         <div className="overlay">
           <div className="overlay-card">
             <div className="overlay-title">
@@ -792,30 +821,12 @@ function PlayerPanel(props: PanelProps) {
               ))}
             </span>
           </div>
-          <div className="hud-block hud-econ">
-            <span className="econ-item"><BallSprite tier="poke" size={30} /><b>{p.poke}</b></span>
-            <span className="econ-item"><BallSprite tier="great" size={30} /><b>{p.great}</b></span>
-            <span className="econ-item"><BallSprite tier="ultra" size={30} /><b>{p.ultra}</b></span>
-          </div>
+          <button className="btn btn-primary endturn endturn-hud" disabled={!interactive} onClick={onEndTurn}>
+            End turn
+          </button>
         </div>
 
         <div className="trade-row">
-          <button
-            className="trade-btn trade-btn-great"
-            disabled={!interactive || p.poke < TRADE_GREAT_COST || p.great >= GREAT_CAP}
-            onClick={() => onTrade('great')}
-            title={`Trade ${TRADE_GREAT_COST} Poké Balls for a Great Ball`}
-          >
-            {TRADE_GREAT_COST}× <BallSprite tier="poke" size={22} /> → <BallSprite tier="great" size={22} />
-          </button>
-          <button
-            className="trade-btn trade-btn-ultra"
-            disabled={!interactive || p.poke < TRADE_ULTRA_COST || p.ultra >= ULTRA_CAP}
-            onClick={() => onTrade('ultra')}
-            title={`Trade ${TRADE_ULTRA_COST} Poké Balls for an Ultra Ball`}
-          >
-            {TRADE_ULTRA_COST}× <BallSprite tier="poke" size={22} /> → <BallSprite tier="ultra" size={22} />
-          </button>
           <button
             className={`btn btn-tiny danger-toggle ${dangerOn ? 'danger-on' : ''}`}
             onClick={onToggleDanger}
@@ -837,19 +848,15 @@ function PlayerPanel(props: PanelProps) {
           </div>
         )}
         {!solo && !state.shopMode && <BenchStrip {...props} />}
-        {!solo && state.shopMode && (
-          <button className="btn btn-primary endturn" disabled={!interactive} onClick={onEndTurn}>
-            End turn
-          </button>
-        )}
+
+        {/* the ball purse lives where End turn used to be — with a +N pop on gains */}
+        <EconomyRow
+          p={p}
+          interactive={interactive}
+          onTrade={onTrade}
+        />
 
         <BattleStats state={state} owner={owner} />
-
-        {solo && (
-          <button className="btn btn-primary endturn" disabled={!interactive} onClick={onEndTurn}>
-            End turn
-          </button>
-        )}
 
         <div className="log">
           {state.log.slice(-6).map((l, i, arr) => (
@@ -1009,9 +1016,6 @@ function BenchStrip(props: PanelProps) {
       <div className="bench">
         <BenchCards {...props} />
       </div>
-      <button className="btn btn-primary endturn" disabled={!props.interactive} onClick={props.onEndTurn}>
-        End turn
-      </button>
     </div>
   )
 }
@@ -1027,17 +1031,24 @@ function SynergyTracker({ state, owner }: { state: GameState; owner: Owner }) {
   return (
     <div className="synergies">
       {entries.map((t) => {
-        const n = Math.min(counts[t] ?? 0, SYNERGY_THRESHOLD)
-        const active = (counts[t] ?? 0) >= SYNERGY_THRESHOLD
+        const raw = counts[t] ?? 0
+        const tier = raw >= SYNERGY_TIER2 ? 2 : raw >= SYNERGY_THRESHOLD ? 1 : 0
+        // progress reads toward the NEXT tier: n/3, then n/5, then a maxed badge
+        const label =
+          tier === 2
+            ? `${SYNERGIES[t]!.name} MAX`
+            : tier === 1
+              ? `${SYNERGIES[t]!.name} ${raw}/${SYNERGY_TIER2}`
+              : `${TYPE_META[t].label} ${raw}/${SYNERGY_THRESHOLD}`
         return (
           <span
             key={t}
-            className={`syn-chip ${active ? 'syn-on' : ''}`}
+            className={`syn-chip ${tier >= 1 ? 'syn-on' : ''} ${tier === 2 ? 'syn-t2' : ''}`}
             style={{ ['--tc' as string]: TYPE_META[t].color }}
-            title={`${SYNERGIES[t]!.name}: ${SYNERGIES[t]!.desc}`}
+            title={`${SYNERGIES[t]!.name} — 3: ${SYNERGIES[t]!.desc} · 5: ${SYNERGIES[t]!.desc2} (unique Pokémon only)`}
           >
             <span className="syn-dot" />
-            {active ? SYNERGIES[t]!.name : TYPE_META[t].label} {n}/{SYNERGY_THRESHOLD}
+            {label}
           </span>
         )
       })}
@@ -1082,6 +1093,65 @@ function Inventory({ state, owner, sel, interactive, onItem, onPickRevive }: Pan
       {sel?.type === 'itemRevive' && sel.reviveKey && (
         <span className="inventory-hint">Choose an empty tile in your deploy rows.</span>
       )}
+    </div>
+  )
+}
+
+/* ---------- the ball purse: counters that POP and float a +N when they grow ---------- */
+
+function useGain(value: number) {
+  const prev = useRef(value)
+  const [fx, setFx] = useState<{ delta: number; key: number } | null>(null)
+  useEffect(() => {
+    const d = value - prev.current
+    prev.current = value
+    if (d > 0) {
+      setFx({ delta: d, key: Date.now() })
+      const t = window.setTimeout(() => setFx(null), 1100)
+      return () => clearTimeout(t)
+    }
+  }, [value])
+  return fx
+}
+
+function EconomyRow({
+  p, interactive, onTrade,
+}: {
+  p: GameState['players']['A']
+  interactive: boolean
+  onTrade: (target: 'great' | 'ultra') => void
+}) {
+  const pokeFx = useGain(p.poke)
+  const greatFx = useGain(p.great)
+  const ultraFx = useGain(p.ultra)
+  const item = (tier: 'poke' | 'great' | 'ultra', n: number, fx: ReturnType<typeof useGain>) => (
+    <span className="econ-item econ-item-big">
+      <BallSprite tier={tier} size={30} />
+      <b key={fx?.key ?? 0} className={fx ? 'econ-pop' : ''}>{n}</b>
+      {fx && <span key={`g${fx.key}`} className="econ-gain">+{fx.delta}</span>}
+    </span>
+  )
+  return (
+    <div className="econ-row">
+      {item('poke', p.poke, pokeFx)}
+      {item('great', p.great, greatFx)}
+      {item('ultra', p.ultra, ultraFx)}
+      <button
+        className="trade-btn trade-btn-great"
+        disabled={!interactive || p.poke < TRADE_GREAT_COST || p.great >= GREAT_CAP}
+        onClick={() => onTrade('great')}
+        title={`Trade ${TRADE_GREAT_COST} Poké Balls for a Great Ball`}
+      >
+        {TRADE_GREAT_COST}× <BallSprite tier="poke" size={20} /> → <BallSprite tier="great" size={20} />
+      </button>
+      <button
+        className="trade-btn trade-btn-ultra"
+        disabled={!interactive || p.poke < TRADE_ULTRA_COST || p.ultra >= ULTRA_CAP}
+        onClick={() => onTrade('ultra')}
+        title={`Trade ${TRADE_ULTRA_COST} Poké Balls for an Ultra Ball`}
+      >
+        {TRADE_ULTRA_COST}× <BallSprite tier="poke" size={20} /> → <BallSprite tier="ultra" size={20} />
+      </button>
     </div>
   )
 }

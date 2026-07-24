@@ -41,6 +41,7 @@ import {
   canMoveNow,
   effAtk,
   hasSynergy,
+  tierOf,
   inBounds,
   inDeployZone,
   openDeployTiles,
@@ -231,10 +232,14 @@ function dealDamage(
       sub = 'Not very effective…'
     }
     if (src.heldItem === 'life-orb') amt += 1
-    if (kind === 'special' && ptypeOf(src) === 'fighting' && hasSynergy(state.units, src)) amt += 1
-    if (tgt.stunned && ptypeOf(src) === 'ice' && hasSynergy(state.units, src)) amt += 1
-    if (tgt.hp === tgt.maxHp && ptypeOf(src) === 'dark' && hasSynergy(state.units, src)) amt += 1
-    if (ptypeOf(tgt) === 'steel' && hasSynergy(state.units, tgt)) amt -= 1
+    // synergy riders scale with tier (1 at three uniques, 2 at five)
+    const srcTier = tierOf(state.units, src)
+    if (kind === 'special' && ptypeOf(src) === 'fighting') amt += srcTier
+    if (tgt.stunned && ptypeOf(src) === 'ice') amt += srcTier
+    if (tgt.hp === tgt.maxHp && ptypeOf(src) === 'dark') amt += srcTier
+    const tgtTier = tierOf(state.units, tgt)
+    if (ptypeOf(tgt) === 'steel') amt -= tgtTier
+    if (ptypeOf(tgt) === 'rock' && tgtTier >= 2) amt -= 1 // Sturdy tier 2
     amt = Math.max(1, amt)
   }
   tgt.hp -= amt
@@ -997,8 +1002,9 @@ export function resolveStep(state0: GameState): GameState | null {
           state.events.push({ col: t.col, row: t.row, text: 'MISS', color: COLOR.resist })
           state.log.push(`${nameOf(u)} missed ${nameOf(t)}!`)
         } else {
+          // Static: crit chance ×2 at tier 1, ×3 at tier 2
           const critChance =
-            ptypeOf(u) === 'electric' && hasSynergy(state.units, u) ? CRIT_CHANCE * 2 : CRIT_CHANCE
+            ptypeOf(u) === 'electric' ? CRIT_CHANCE * (1 + tierOf(state.units, u)) : CRIT_CHANCE
           const critProof = ptypeOf(t) === 'rock' && hasSynergy(state.units, t) // Sturdy
           const crit = !critProof && Math.random() < critChance
           const before = t.hp
@@ -1092,7 +1098,10 @@ export function finishTurn(state0: GameState): GameState {
   // Photosynthesis: grass-synergy units regenerate 1 at the end of their turn
   for (const u of state.units) {
     if (u.owner !== ending) continue
-    if (ptypeOf(u) === 'grass' && hasSynergy(state.units, u)) dealHeal(state, u, 1)
+    if (ptypeOf(u) === 'grass') {
+      const tier = tierOf(state.units, u)
+      if (tier >= 1) dealHeal(state, u, tier)
+    }
   }
   for (const u of state.units) {
     if (u.owner !== ending) continue
