@@ -56,6 +56,8 @@ export interface Species {
   cost: Cost
   /** Turns before this card can be deployed again (cards are never consumed). */
   cooldown: number
+  /** Normal attacks skewer the unit directly behind the target (Escavalier). */
+  pierceBasic?: boolean
   hp: number
   atk: number
   range: number

@@ -8,7 +8,10 @@ import {
   DROPS,
   FATIGUE_ROUND,
   GREAT_CAP,
+  FIELD_CAP,
+  INCOME_CAP,
   INCOME_STEP_ROUNDS,
+  KILL_BOUNTY,
   ITEMS,
   MISS_CHANCE,
   MOVE_CAP,
@@ -185,13 +188,18 @@ const clone = (state: GameState): GameState => {
 function grantIncome(state: GameState) {
   const p = state.players[state.current]
   p.turns++
-  const income = 1 + Math.floor((state.round - 1) / INCOME_STEP_ROUNDS)
+  // income growth is CAPPED — late game pays a steady trickle, not a flood
+  const income = Math.min(INCOME_CAP, 1 + Math.floor((state.round - 1) / INCOME_STEP_ROUNDS))
   p.poke = Math.min(POKE_CAP, p.poke + income)
   for (const key in p.cooldowns) {
     if (p.cooldowns[key] > 0) p.cooldowns[key]--
   }
   if (state.shopMode) rollShop(state, state.current)
 }
+
+/** Non-champion Pokémon a player has on the field. */
+export const fieldedCount = (state: GameState, owner: Owner) =>
+  state.units.filter((u) => u.owner === owner && !u.isChampion).length
 
 /**
  * The one damage pipeline. Base + type mod (±1), +1 Life Orb (attacker),
@@ -265,7 +273,14 @@ function cleanup(state: GameState) {
   for (const d of dead) {
     state.log.push(`${nameOf(d)} fainted!`)
     if (d.isChampion) state.winner = otherOwner(d.owner)
-    else state.players[d.owner].fainted.push(d.key)
+    else {
+      state.players[d.owner].fainted.push(d.key)
+      // kill bounty: aggression is tempo — the KO pays the other side a ball
+      const hunter = state.players[otherOwner(d.owner)]
+      hunter.poke = Math.min(POKE_CAP, hunter.poke + KILL_BOUNTY)
+      state.events.push({ col: d.col, row: d.row, text: '+1 ball', color: COLOR.chest })
+      state.log.push(`Bounty: +${KILL_BOUNTY} Poké Ball.`)
+    }
   }
   if (dead.length) state.units = state.units.filter((u) => u.hp > 0)
 }
@@ -327,6 +342,7 @@ export function deploy(state0: GameState, owner: Owner, key: string, col: number
     if (!p0.bench.includes(key) || !canDeployCard(p0, key)) return null
   }
   if (!inBounds(col, row) || !inDeployZone(owner, row) || blockedAt(state0, col, row)) return null
+  if (fieldedCount(state0, owner) >= FIELD_CAP) return null // quality over quantity
 
   const state = clone(state0)
   state.events = []
@@ -394,6 +410,7 @@ function reviveUnit(state: GameState, owner: Owner, key: string, col: number, ro
   const p = state.players[owner]
   if (!p.fainted.includes(key)) return false
   if (!inDeployZone(owner, row) || blockedAt(state, col, row)) return false
+  if (fieldedCount(state, owner) >= FIELD_CAP) return false
   p.fainted.splice(p.fainted.indexOf(key), 1)
   const nu = makeUnit(key, owner, col, row)
   nu.summoned = true
@@ -575,10 +592,10 @@ export function useAbility(state0: GameState, unitId: number, payload: AbilityPa
         u.moveBuff += 2
         state.events.push({ col: u.col, row: u.row, text: 'SMASH', color: COLOR.special })
       } else if (u.key === 'lillipup') {
-        // Pickup — scrounges up spare Poké Balls
+        // Pickup — scrounges up a spare Poké Ball (was 2: too strong an engine)
         const p = state.players[u.owner]
-        p.poke = Math.min(POKE_CAP, p.poke + 2)
-        state.events.push({ col: u.col, row: u.row, text: '+2 balls', color: COLOR.chest })
+        p.poke = Math.min(POKE_CAP, p.poke + 1)
+        state.events.push({ col: u.col, row: u.row, text: '+1 ball', color: COLOR.chest })
       } else {
         dealHeal(state, u, u.key === 'grotle' || u.key === 'metapod' ? 4 : 2)
       }
@@ -808,7 +825,12 @@ function resolveEnemySpecial(state: GameState, a: Unit, t: Unit) {
       break
     }
     case 'serperior': {
-      dealDamage(state, a, t, 6, S)
+      // Leaf Storm: 5 to the target, 2 to every enemy beside it
+      dealDamage(state, a, t, 5, S)
+      for (const s of state.units) {
+        if (s.owner === a.owner || s.id === t.id) continue
+        if (Math.max(Math.abs(s.col - t.col), Math.abs(s.row - t.row)) === 1) dealDamage(state, a, s, 2, S)
+      }
       break
     }
     case 'rotommow': {
@@ -1000,6 +1022,16 @@ export function resolveStep(state0: GameState): GameState | null {
               COLOR.normal, 'normal', crit2 ? ' CRIT' : '',
             )
             state.log.push(`${nameOf(u)} struck again for ${b2 - t.hp} (Swarm).`)
+          }
+          // lance-bearers skewer the unit directly behind the target (anti-wall)
+          if (!u.isChampion && ROSTER[u.key]?.pierceBasic) {
+            const [dc, dr] = [Math.sign(t.col - u.col), Math.sign(t.row - u.row)]
+            const behind = at(state.units, t.col + dc, t.row + dr)
+            if (behind && behind.owner !== u.owner) {
+              const b3 = behind.hp
+              dealDamage(state, u, behind, effAtk(state.units, u), COLOR.normal, 'normal')
+              state.log.push(`${nameOf(u)}'s lance skewered ${nameOf(behind)} for ${b3 - behind.hp}.`)
+            }
           }
         }
       } else {

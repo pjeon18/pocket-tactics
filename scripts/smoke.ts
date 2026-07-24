@@ -249,6 +249,44 @@ it.players.A.fainted = ['pikachu']
 const itRev = useItem(it, 'A', 'revive', { reviveKey: 'pikachu', col: 1, row: 9 })!
 ok(itRev !== null && itRev.units.some((u) => u.key === 'pikachu' && u.owner === 'A'), 'Revive returns a fainted Pokémon')
 
+/* --- anti-wall patch: field cap, income cap, kill bounty, lance --- */
+let fc = newBattle(draftA, draftB)
+fc.rocks = []
+fc.players.A.poke = 8
+for (let i = 0; i < 7; i++) spawn(fc, 950 + i, 'pikachu', 'A', i % 7, 8)
+ok(deploy(fc, 'A', 'pikachu', 0, 9) === null, `field cap: an 8th Pokémon cannot deploy (cap ${7})`)
+
+let ic = newBattle(draftA, draftB)
+ic.players.A.poke = 0
+ic.round = 30
+const ic2 = endTurnFully(endTurnFully(ic))
+ok(ic2.players.A.poke <= 4, 'income cap: round 30 still pays only 2/turn')
+
+let kb = newBattle(draftA, draftB)
+kb.rocks = []
+kb.players.A.poke = 3
+spawn(kb, 960, 'haunter', 'A', 2, 5, { atk: 3, range: 2, charge: 4, chargeMax: 4 })
+spawn(kb, 961, 'starly', 'B', 2, 3, { hp: 1 })
+let kbp = planAttack(kb, 960, 961, true)! // Shadow Ball guarantees the KO
+let kbr = resolveStep(kbp)!
+ok(kbr !== null && kbr.players.A.poke === 4, 'kill bounty: a KO pays the hunter +1 Poké Ball')
+
+let ln = newBattle(draftA, draftB)
+ln.rocks = []
+spawn(ln, 970, 'escavalier', 'A', 2, 5, { atk: 3, range: 1 })
+spawn(ln, 971, 'magneton', 'B', 2, 4, { hp: 8 }) // bug vs electric: neutral
+spawn(ln, 972, 'magneton', 'B', 2, 3, { hp: 8 }) // directly behind
+let hitBoth = false
+for (let tries = 0; tries < 12 && !hitBoth; tries++) {
+  // fresh plan each try — the 5% miss roll consumes the plan without the lance
+  const r = resolveStep(planAttack(ln, 970, 971, false)!)
+  if (!r) break
+  const front = r.units.find((u) => u.id === 971)
+  const back = r.units.find((u) => u.id === 972)
+  if (front && front.hp < 8 && back && back.hp < 8) hitBoth = true
+}
+ok(hitBoth, "Escavalier's normal attack lances the unit behind the target")
+
 /* --- full AI vs AI games run to completion --- */
 for (let g2 = 0; g2 < 5; g2++) {
   let game = newBattle(aiDraft(), aiDraft())

@@ -13,6 +13,15 @@ export const MOVE_CAP = 3
  * Great/Ultra Balls come ONLY from trading (and item drops give other things).
  */
 export const POKE_CAP = 8
+
+/** Max non-champion Pokémon fielded at once — quality over quantity, no walls. */
+export const FIELD_CAP = 7
+
+/** Income growth stops here (anti-flood: late game pays 2/turn, not 4-5). */
+export const INCOME_CAP = 2
+
+/** KOing an enemy Pokémon pays out a Poké Ball — aggression is tempo. */
+export const KILL_BOUNTY = 1
 export const GREAT_CAP = 2
 export const ULTRA_CAP = 1
 export const INCOME_STEP_ROUNDS = 5
@@ -79,8 +88,9 @@ export const DROPS: { drop: Drop; weight: number }[] = [
   { drop: { type: 'item', key: 'revive' }, weight: 10 },
   { drop: { type: 'item', key: 'assault-vest' }, weight: 12 },
   { drop: { type: 'item', key: 'life-orb' }, weight: 12 },
-  { drop: { type: 'ball', tier: 'great' }, weight: 22 },
-  { drop: { type: 'ball', tier: 'ultra' }, weight: 9 },
+  /* currency drops trimmed (anti-flood) in favor of consumables */
+  { drop: { type: 'ball', tier: 'great' }, weight: 15 },
+  { drop: { type: 'ball', tier: 'ultra' }, weight: 7 },
   { drop: { type: 'item', key: 'lum-berry' }, weight: 6 },
   /* the game-warping attachments stay VERY rare */
   { drop: { type: 'item', key: 'choice-scarf' }, weight: 2 },
@@ -287,9 +297,9 @@ export const ROSTER: Record<string, Species> = {
     targeting: { kind: 'self' }, pattern: 'self',
   },
   escavalier: {
-    key: 'escavalier', name: 'Escavalier', dex: 589, role: 'tank', ptype: 'bug', tier: 'great', cost: G(2), cooldown: 6,
+    key: 'escavalier', name: 'Escavalier', dex: 589, role: 'tank', ptype: 'bug', tier: 'great', cost: G(2), cooldown: 6, pierceBasic: true,
     hp: 11, atk: 3, range: 1, move: 1, chargeMax: 5,
-    special: 'Megahorn', hint: '5 dmg, lancing on through the two tiles behind the target for 3',
+    special: 'Megahorn', hint: '5 dmg, lancing through the two tiles behind for 3 — its NORMAL attacks skewer the unit behind, too',
     targeting: { kind: 'enemy' }, pattern: 'pierce',
   },
   accelgor: {
@@ -418,8 +428,8 @@ export const ROSTER: Record<string, Species> = {
   serperior: {
     key: 'serperior', name: 'Serperior', dex: 497, role: 'dealer', ptype: 'grass', tier: 'ultra', cost: U(2), cooldown: 8,
     hp: 8, atk: 4, range: 2, move: 2, chargeMax: 4,
-    special: 'Leaf Storm', hint: 'A regal 6 dmg tempest',
-    targeting: { kind: 'enemy' }, pattern: 'target',
+    special: 'Leaf Storm', hint: 'A regal tempest: 5 dmg, plus 2 to every enemy beside the target',
+    targeting: { kind: 'enemy' }, pattern: 'splash',
   },
 
   /* specialists — long range, board-warping specials, slowest charge */
@@ -488,7 +498,7 @@ export const ROSTER: Record<string, Species> = {
   lillipup: {
     key: 'lillipup', name: 'Lillipup', dex: 506, role: 'generalist', ptype: 'normal', tier: 'poke', cost: P(1), cooldown: 3,
     hp: 3, atk: 2, range: 1, move: 2, chargeMax: 2,
-    special: 'Pickup', hint: 'Scrounges up 2 Poké Balls, right away',
+    special: 'Pickup', hint: 'Scrounges up a Poké Ball, right away',
     targeting: { kind: 'self' }, pattern: 'self',
   },
   sunkern: {

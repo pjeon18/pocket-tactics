@@ -11,7 +11,7 @@ _Generated from `src/game/data.ts` by `scripts/balance-sheet.ts` — do not edit
 | Abra | generalist | Psychic | 1P | 1 | 4 | 6 | 1 | 2 | 1 | 2 | Teleport | Right away: hop to any empty tile within 3 |
 | Croagunk | dealer | Fighting | 1P | 1 | 3 | 7 | 2 | 1 | 1 | 3 | Sucker Punch | 4 dmg, +2 against targets still at full HP |
 | Ferroseed | tank | Steel | 1P | 1 | 3 | 9 | 1 | 1 | 1 | 2 | Iron Defense | Restore 2 HP to itself, right away |
-| Lillipup | generalist | Normal | 1P | 1 | 3 | 6 | 2 | 1 | 2 | 2 | Pickup | Scrounges up 2 Poké Balls, right away |
+| Lillipup | generalist | Normal | 1P | 1 | 3 | 6 | 2 | 1 | 2 | 2 | Pickup | Scrounges up a Poké Ball, right away |
 | Poochyena | dealer | Dark | 1P | 1 | 3 | 6 | 2 | 1 | 2 | 3 | Roar | 2 dmg and shoves the target back 2 tiles |
 | Squirtle | tank | Water | 1P | 1 | 3 | 9 | 1 | 1 | 1 | 2 | Withdraw | Restore 2 HP to itself, right away |
 | Starly | dealer | Normal | 1P | 1 | 3 | 6 | 2 | 1 | 3 | 3 | Fly-by | 3 dmg, then Starly darts 2 tiles back |
@@ -51,7 +51,7 @@ _Generated from `src/game/data.ts` by `scripts/balance-sheet.ts` — do not edit
 | Weavile | dealer | Ice | 1G+1P | 4 | 6 | 8 | 4 | 1 | 3 | 4 | Ice Shard | 4 dmg, then Weavile retreats 2 tiles |
 | Arcanine | dealer | Fire | 1G+2P | 5 | 7 | 10 | 4 | 1 | 3 | 4 | Extreme Speed | 4 dmg that lands INSTANTLY when declared |
 | Chandelure | specialist | Fire | 1G+2P | 5 | 6 | 9 | 3 | 3 | 1 | 5 | Heat Wave | 3 dmg to every enemy within 2 tiles of Chandelure |
-| Escavalier | tank | Bug | 1G+2P | 5 | 6 | 14 | 3 | 1 | 1 | 5 | Megahorn | 5 dmg, lancing on through the two tiles behind the target for 3 |
+| Escavalier | tank | Bug | 1G+2P | 5 | 6 | 14 | 3 | 1 | 1 | 5 | Megahorn | 5 dmg, lancing through the two tiles behind for 3 — its NORMAL attacks skewer the unit behind, too |
 | Gallade | dealer | Fighting | 1G+2P | 5 | 6 | 9 | 4 | 1 | 2 | 4 | Psycho Cut | 4 dmg, cutting through to whatever hides behind for 3 |
 | Lapras | tank | Water | 1G+2P | 5 | 7 | 15 | 2 | 2 | 1 | 2 | Surf | 3 dmg, plus 2 to every enemy beside the target |
 | Steelix | tank | Steel | 1G+2P | 5 | 6 | 15 | 3 | 1 | 1 | 2 | Iron Tail | 4 dmg and knocks the target back a tile |
@@ -63,7 +63,7 @@ _Generated from `src/game/data.ts` by `scripts/balance-sheet.ts` — do not edit
 | Gengar | dealer | Ghost | 1U+2P | 8 | 8 | 9 | 5 | 2 | 3 | 4 | Shadow Ball | 5 dmg through blockers, +2 against full-HP targets |
 | Machamp | dealer | Fighting | 1U+2P | 8 | 8 | 12 | 5 | 1 | 2 | 4 | Cross Chop | 6 dmg and knocks the target back a tile |
 | Rhyperior | tank | Rock | 1U+2P | 8 | 8 | 17 | 4 | 1 | 1 | 2 | Rock Wrecker | 6 dmg and knocks the target back a tile |
-| Serperior | dealer | Grass | 1U+2P | 8 | 8 | 11 | 4 | 2 | 2 | 4 | Leaf Storm | A regal 6 dmg tempest |
+| Serperior | dealer | Grass | 1U+2P | 8 | 8 | 11 | 4 | 2 | 2 | 4 | Leaf Storm | A regal tempest: 5 dmg, plus 2 to every enemy beside the target |
 | Snorlax | tank | Normal | 1U+2P | 8 | 8 | 17 | 3 | 1 | 1 | 2 | Body Slam | 5 dmg and the target is stunned — it can’t move next turn |
 | Tangrowth | tank | Grass | 1U+2P | 8 | 8 | 16 | 3 | 2 | 1 | 2 | Giga Drain | 4 dmg, and Tangrowth drinks 2 HP back |
 | Garchomp | dealer | Dragon | 1U+3P | 9 | 8 | 11 | 5 | 1 | 2 | 4 | Earthquake | 4 dmg to every enemy in the 8 tiles around Garchomp |
@@ -163,18 +163,18 @@ _Generated from `src/game/data.ts` by `scripts/balance-sheet.ts` — do not edit
 
 | Drop | Weight | Chance |
 |---|---|---|
-| Potion | 16 | 14.8% |
-| Super Potion | 10 | 9.3% |
-| Max Potion | 5 | 4.6% |
-| Revive | 10 | 9.3% |
-| Assault Vest | 12 | 11.1% |
-| Life Orb | 12 | 11.1% |
-| Great Ball (currency) | 22 | 20.4% |
-| Ultra Ball (currency) | 9 | 8.3% |
-| Lum Berry | 6 | 5.6% |
-| Choice Scarf | 2 | 1.9% |
-| Choice Specs | 2 | 1.9% |
-| Power Herb | 2 | 1.9% |
+| Potion | 16 | 16.2% |
+| Super Potion | 10 | 10.1% |
+| Max Potion | 5 | 5.1% |
+| Revive | 10 | 10.1% |
+| Assault Vest | 12 | 12.1% |
+| Life Orb | 12 | 12.1% |
+| Great Ball (currency) | 15 | 15.2% |
+| Ultra Ball (currency) | 7 | 7.1% |
+| Lum Berry | 6 | 6.1% |
+| Choice Scarf | 2 | 2.0% |
+| Choice Specs | 2 | 2.0% |
+| Power Herb | 2 | 2.0% |
 
 One field Poké Ball spawns every 4 rounds (max 2 on the board). Deploy time: Poké-tier basics act the turn they land; Great/Ultra-tier need a turn to arrive.
 

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   cancelPlan,
   deploy,
+  fieldedCount,
   finishTurn,
   moveUnit,
   newBattle,
@@ -16,6 +17,7 @@ import {
 import {
   CHAMPIONS,
   COLS,
+  FIELD_CAP,
   GREAT_CAP,
   ITEMS,
   MOVE_CAP,
@@ -874,7 +876,7 @@ function BenchCards({ owner, state, sel, interactive, onBench }: PanelProps) {
       {benchSorted(p.bench).map((key) => {
         const s = ROSTER[key]
         const cd = p.cooldowns[key] ?? 0
-        const ready = canDeployCard(p, key, state.shopMode)
+        const ready = canDeployCard(p, key, state.shopMode) && fieldedCount(state, owner) < FIELD_CAP
         const selBench = sel?.type === 'bench' && sel.key === key && interactive
         return (
           <button
@@ -915,7 +917,7 @@ function ChampionCard({ state, owner, label }: { state: GameState; owner: Owner;
           <div className="champ-hud-hpfill" style={{ width: `${Math.max(0, (hp / spec.hp) * 100)}%` }} />
         </div>
         <div className="champ-hud-stats">
-          <b>{hp}/{spec.hp}</b> HP · KOs <b>{kos}</b> · Lost <b>{deaths}</b>
+          <b>{hp}/{spec.hp}</b> HP · KOs <b>{kos}</b> · Lost <b>{deaths}</b> · Fielded <b>{fieldedCount(state, owner)}/{FIELD_CAP}</b>
         </div>
         <div className="champ-hud-balls">
           <BallSprite tier="poke" size={18} /><b>{p.poke}</b>
@@ -980,7 +982,7 @@ function Shop({ state, owner, interactive, onBench, onInspect, sel }: PanelProps
       <div className="shop-row">
         {p.shop.map((key) => {
           const s = ROSTER[key]
-          const affordable = canAfford(p, s)
+          const affordable = canAfford(p, s) && fieldedCount(state, owner) < FIELD_CAP
           const armed = sel?.type === 'bench' && sel.key === key
           return (
             <button
