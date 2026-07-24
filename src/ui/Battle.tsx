@@ -231,10 +231,17 @@ export function Battle({
         setResolving(msg.resolving)
         apply(msg.state)
       })
+      // both sides mount at slightly different times — ask the host for the
+      // current state so the opening broadcast can never be missed
+      net.sendAction({ name: 'sync', args: [] })
     } else {
       // host: broadcast the opening state, then apply any intent the guest sends
       net.sendState({ state: stateRef.current, resolving: false })
       net.onAction((a) => {
+        if (a.name === 'sync') {
+          net.sendState({ state: stateRef.current, resolving: resolvingRef.current })
+          return
+        }
         if (stateRef.current.current !== 'B' || stateRef.current.winner || resolvingRef.current) return
         if (a.name === 'endTurn') {
           setResolving(true)
@@ -281,6 +288,9 @@ export function Battle({
       const next = resolveStep(state)
       if (next) apply(next)
       else {
+        // flip the ref BEFORE applying, so the host's hand-over broadcast
+        // carries resolving:false — otherwise the guest stays locked out
+        resolvingRef.current = false
         apply(finishTurn(state))
         setResolving(false)
       }

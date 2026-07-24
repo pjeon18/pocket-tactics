@@ -47,19 +47,22 @@ export function connectRoom(code: string, role: 'host' | 'guest'): NetSession {
   const st = room.makeAction('st')
   const draft = room.makeAction('draft')
 
+  // NOTE: in this trystero version, onMessage / onPeerJoin / onPeerLeave are
+  // ASSIGNABLE PROPERTIES (initially null), not registration methods — calling
+  // them as functions throws and silently kills the whole handshake.
   return {
     code: code.toUpperCase(),
     role,
     sendAction: (a) => void act.send(a as any),
-    onAction: (cb) => act.onMessage((a: any) => cb(a as NetAction)),
+    onAction: (cb) => { act.onMessage = (a: any) => cb(a as NetAction) },
     sendState: (s) => void st.send(s as any),
-    onState: (cb) => st.onMessage((s: any) => cb(s as NetState)),
+    onState: (cb) => { st.onMessage = (s: any) => cb(s as NetState) },
     sendDraft: (d) => void draft.send(d as any),
-    onDraft: (cb) => draft.onMessage((d: any) => cb(d as DraftResult)),
-    onPeerJoin: (cb) => room.onPeerJoin(() => cb()),
-    onPeerLeave: (cb) => room.onPeerLeave(() => cb()),
+    onDraft: (cb) => { draft.onMessage = (d: any) => cb(d as DraftResult) },
+    onPeerJoin: (cb) => { room.onPeerJoin = () => cb() },
+    onPeerLeave: (cb) => { room.onPeerLeave = () => cb() },
     peerCount: () => Object.keys(room.getPeers()).length,
-    leave: () => room.leave(),
+    leave: () => void room.leave(),
   }
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
