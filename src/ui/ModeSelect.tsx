@@ -18,7 +18,7 @@ export function HowToPlay() {
     <ul>
       <li>Pick a Mythical champion and draft 10 Pokémon (or buy live from the shop in Blitz). Type matchups are real — super effective hits do +3, resisted hits −2.</li>
       <li>Deploy onto your back two rows with Poké Balls (max {FIELD_CAP} fielded at once). Trade 3 for a Great Ball, 6 for an Ultra Ball. Basics fight the turn they land; stronger Pokémon need a turn to arrive.</li>
-      <li>Each turn, up to 3 of your Pokémon may move. Undo is free until you declare an attack.</li>
+      <li>Each turn, up to 3 of your Pokémon may move, and the turn clock gives you 60 seconds — when it runs out, the turn ends itself. Undo is free until you declare an attack.</li>
       <li>Attacks are declared during your turn and all land together when you end it. Every KO pays you a Poké Ball.</li>
       <li>If your champion moves, nothing else may move that turn. Guard it well.</li>
       <li>Field Poké Balls drop every 4 rounds — walk onto one for items. Knock out the enemy champion to win.</li>

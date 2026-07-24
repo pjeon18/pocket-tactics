@@ -229,7 +229,8 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 }
 .panel-active { box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35), 0 0 0 3px var(--amber); }
 /* the waiting player's board stays fully visible — only input is locked */
-.panel-idle .board, .panel-idle .bench-row, .panel-idle .bench-rail { pointer-events: none; }
+/* the waiting player can still CLICK units to inspect them — only the bench is locked */
+.panel-idle .bench-row, .panel-idle .bench-rail { pointer-events: none; }
 .panel-rotated { transform: rotate(180deg); }
 
 /* solo: enemy intel rail | board | your side panel */
@@ -832,3 +833,8 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
   .wave-wipe { animation-duration: 0.01s; opacity: 0; }
   .econ-pop, .econ-gain { animation: none !important; }
 }
+
+/* turn clock: calm until the last 10 seconds */
+.turn-clock { font-variant-numeric: tabular-nums; }
+.turn-clock-low { color: var(--danger); animation: clockPulse 1s steps(2, end) infinite; }
+@keyframes clockPulse { 50% { opacity: 0.45; } }

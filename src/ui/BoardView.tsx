@@ -65,6 +65,7 @@ export function BoardView({
   lunge = null,
   onTile,
   onUnit,
+  onInspectUnit,
 }: {
   state: GameState
   perspective: Owner
@@ -73,6 +74,8 @@ export function BoardView({
   floats: FloatView[]
   spawnIds?: Set<number>
   hitIds?: Set<number>
+  /** Read-only unit inspection for panels that aren't currently interactive. */
+  onInspectUnit?: (u: Unit) => void
   dying?: DyingUnit[]
   lunge?: Lunge | null
   onTile: (c: number, r: number) => void
@@ -247,7 +250,7 @@ export function BoardView({
                 : undefined,
               zIndex: lunging ? 5 : undefined,
             }}
-            onClick={interactive ? (e) => { e.stopPropagation(); onUnit(u) } : undefined}
+            onClick={(e) => { e.stopPropagation(); if (interactive) onUnit(u); else onInspectUnit?.(u) }}
           >
             <div className="unit-body">
               <Sprite

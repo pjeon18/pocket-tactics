@@ -82,6 +82,12 @@ type Sel =
 let FLOAT_ID = 1
 const AI_STEP_MS = 620
 const RESOLVE_MS = 540
+/** Per-turn clock: generous but restraining; hit zero and the turn ends itself.
+    Tune live with ?tt=<seconds>. */
+const TURN_SECONDS = (() => {
+  const q = Number(new URLSearchParams(window.location.search).get('tt'))
+  return Number.isFinite(q) && q >= 10 ? q : 60
+})()
 const tierRank = { poke: 0, great: 1, ultra: 2 } as const
 
 const ACTIONS = {
@@ -121,7 +127,6 @@ export function Battle({
   const [dying, setDying] = useState<DyingUnit[]>([])
   const [lunge, setLunge] = useState<Lunge | null>(null)
   const [banner, setBanner] = useState<{ text: string; key: number } | null>(null)
-  const [dangerOn, setDangerOn] = useState(false)
   const [volume, setVolumeState] = useState(getVolume())
   const startRef = useRef(Date.now())
   const prevUnits = useRef<Unit[]>([])
@@ -137,6 +142,13 @@ export function Battle({
   const [gotHostState, setGotHostState] = useState(!isGuest)
   const [winnerShown, setWinnerShown] = useState(false)
   const { waveActive, go: waveGo } = useWave()
+
+  /* per-turn clock — each client times only the seat it controls */
+  const doEndTurnRef = useRef<() => void>(() => {})
+  const [turnLeft, setTurnLeft] = useState(TURN_SECONDS)
+  const controlsCurrent =
+    !state.winner && !resolving &&
+    (net ? state.current === myOwner : mode === 'ai' ? state.current === 'A' : true)
 
   useEffect(() => () => floatTimers.current.forEach(clearTimeout), [])
   useEffect(() => {
@@ -277,6 +289,21 @@ export function Battle({
   useEffect(() => {
     if (sel && 'id' in sel && !state.units.some((u) => u.id === sel.id)) setSel(null)
   }, [state, sel])
+
+  /* turn clock: reset on handover, tick while this client is on the move */
+  useEffect(() => setTurnLeft(TURN_SECONDS), [state.current])
+  useEffect(() => {
+    if (!controlsCurrent) return
+    const iv = window.setInterval(() => setTurnLeft((v) => v - 1), 1000)
+    return () => clearInterval(iv)
+  }, [controlsCurrent, state.current])
+  useEffect(() => {
+    if (turnLeft <= 0 && controlsCurrent) {
+      setTurnLeft(TURN_SECONDS)
+      doEndTurnRef.current()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [turnLeft, controlsCurrent])
 
   /* turn banner sweep on handover */
   const bannerKey = useRef(0)
@@ -520,6 +547,8 @@ export function Battle({
     setResolving(true)
   }
 
+  doEndTurnRef.current = doEndTurn
+
   const restart = () => {
     // online rematches would need a fresh handshake; offline only
     const fresh = newBattle(draftA, draftB, blitz)
@@ -548,10 +577,13 @@ export function Battle({
       : mode === 'ai' ? (o === 'A' ? 'You' : 'Rival') : o === 'A' ? 'Player 1' : 'Player 2'
 
   const shared = {
-    state, mode, resolving, sel, selUnit, floats, elapsed, spawnIds, hitIds,
-    dying, lunge, banner, dangerOn,
-    onToggleDanger: () => setDangerOn((v) => !v),
+    state, mode, resolving, sel, selUnit, floats, elapsed, turnLeft, spawnIds, hitIds,
+    dying, lunge, banner,
     onUnit, onTile,
+    onInspectUnit: (u: Unit) => {
+      if (state.winner) return
+      setSel({ type: 'enemy', id: u.id }) // read-only inspect: info card + threat tiles
+    },
     onInspect: (key: string) => setSel(sel?.type === 'card' && sel.key === key ? null : { type: 'card', key }),
     onTrade: (target: 'great' | 'ultra') => run('tradeBalls', state.current, target),
     onBench: (key: string) => setSel(sel?.type === 'bench' && sel.key === key ? null : { type: 'bench', key }),
@@ -711,14 +743,14 @@ interface PanelProps {
   sel: Sel
   selUnit?: Unit
   elapsed: number
+  turnLeft: number
   spawnIds: Set<number>
   hitIds: Set<number>
   dying: DyingUnit[]
   lunge: Lunge | null
   banner: { text: string; key: number } | null
-  dangerOn: boolean
-  onToggleDanger: () => void
   onUnit: (u: Unit) => void
+  onInspectUnit: (u: Unit) => void
   onTile: (c: number, r: number) => void
   onTrade: (target: 'great' | 'ultra') => void
   onBench: (key: string) => void
@@ -734,27 +766,13 @@ interface PanelProps {
 function PlayerPanel(props: PanelProps) {
   const {
     owner, solo, label, state, mode, resolving, interactive, rotated, visuals, floats,
-    onUnit, onTile, onTrade, onEndTurn, elapsed, spawnIds, hitIds,
-    dying, lunge, banner, dangerOn, onToggleDanger,
+    onUnit, onTile, onTrade, onEndTurn, elapsed, turnLeft, spawnIds, hitIds,
+    dying, lunge, banner,
   } = props
   const p = state.players[owner]
   const myTurn = state.current === owner && !state.winner
   const aiThinking = mode === 'ai' && state.current === 'B' && !state.winner
 
-  /* danger zone: every tile any enemy of this panel's owner could strike next turn */
-  const effVisuals = useMemo(() => {
-    const base: BoardVisuals = visuals ?? {
-      selId: null, moveTiles: [], attackIds: [], specialIds: [], specialTiles: [],
-      threat: new Set<string>(), undoTile: null,
-    }
-    if (!dangerOn) return base
-    const threat = new Set(base.threat)
-    for (const u of state.units) {
-      if (u.owner === owner) continue
-      for (const t of threatTiles(state, u)) threat.add(t)
-    }
-    return { ...base, threat }
-  }, [visuals, dangerOn, state, owner])
 
   const status = resolving
     ? 'Attacks landing…'
@@ -778,7 +796,7 @@ function PlayerPanel(props: PanelProps) {
             state={state}
             perspective={owner}
             interactive={interactive}
-            visuals={effVisuals}
+            visuals={visuals}
             floats={floats}
             spawnIds={spawnIds}
             hitIds={hitIds}
@@ -786,6 +804,7 @@ function PlayerPanel(props: PanelProps) {
             lunge={lunge}
             onTile={onTile}
             onUnit={onUnit}
+            onInspectUnit={props.onInspectUnit}
           />
           {banner && (
             <div key={banner.key} className="turn-banner">{banner.text}</div>
@@ -813,6 +832,12 @@ function PlayerPanel(props: PanelProps) {
             <span className="hud-label">Time</span>
             <span className="hud-value">{mm}:{ss}</span>
           </div>
+          <div className="hud-block">
+            <span className="hud-label">Turn clock</span>
+            <span className={`hud-value turn-clock ${myTurn && turnLeft <= 10 ? 'turn-clock-low' : ''}`}>
+              {myTurn && !resolving ? `${Math.max(0, turnLeft)}s` : '—'}
+            </span>
+          </div>
           <div className="hud-block hud-moves">
             <span className="hud-label">Moves</span>
             <span className="moves-left">
@@ -823,16 +848,6 @@ function PlayerPanel(props: PanelProps) {
           </div>
           <button className="btn btn-primary endturn endturn-hud" disabled={!interactive} onClick={onEndTurn}>
             End turn
-          </button>
-        </div>
-
-        <div className="trade-row">
-          <button
-            className={`btn btn-tiny danger-toggle ${dangerOn ? 'danger-on' : ''}`}
-            onClick={onToggleDanger}
-            title="Show every tile the enemy could strike next turn"
-          >
-            Danger zone
           </button>
         </div>
 
