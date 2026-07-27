@@ -79,10 +79,10 @@ ok(deploy(s, 'A', 'snorlax', 0, 9) === null, 'cannot deploy Snorlax without an U
 let s2 = deploy(s, 'A', 'pikachu', 0, 9)!
 ok(!!s2 && s2.players.A.poke === 0, 'deploy pays pokeballs (Pikachu costs 2 now)')
 ok(s2.players.A.bench.includes('pikachu'), 'the card stays in the deck after deploying')
-ok(s2.players.A.cooldowns.pikachu === 3, 'deploying starts the redeploy cooldown')
+ok(s2.players.A.cooldowns.pikachu === 6, 'deploying starts the redeploy cooldown (cheap Pokémon +3)')
 ok(deploy(s2, 'A', 'pikachu', 1, 9) === null, 'cannot redeploy while on cooldown')
 let s3 = s2
-for (let i = 0; i < 3; i++) s3 = endTurnFully(endTurnFully(s3)) // 3 full rounds tick the cooldown to 0
+for (let i = 0; i < 6; i++) s3 = endTurnFully(endTurnFully(s3)) // 6 full rounds tick the cooldown to 0
 ok((s3.players.A.cooldowns.pikachu ?? 0) === 0 && deploy(s3, 'A', 'pikachu', 1, 9) !== null, 'card is redeployable after its cooldown')
 
 /* --- deploy time: nobody attacks the turn they land, but they may move --- */
@@ -245,9 +245,9 @@ spawn(ice, 960, 'mamoswine', 'A', 2, 5, { charge: 3, chargeMax: 3 })
 spawn(ice, 961, 'snorlax', 'B', 2, 4, { hp: 22, maxHp: 22 }) // ice vs normal = neutral, big body to survive
 const spearPlan = planAttack(ice, 960, 961, true)!
 const allSpears = withRandom(0, () => resolveStep(spearPlan)!) // 0 < every chance → all four land
-ok(allSpears.units.find((u) => u.id === 961)!.hp === 22 - 12, 'Icicle Spear can strike four times (4×3 dmg)')
+ok(allSpears.units.find((u) => u.id === 961)!.hp === 22 - 16, 'Icicle Spear can strike four times (4×4 dmg, premium +1)')
 const oneSpear = withRandom(0.99, () => resolveStep(planAttack(ice, 960, 961, true)!)!) // first lands, second (0.99≥0.75) stops
-ok(oneSpear.units.find((u) => u.id === 961)!.hp === 22 - 3, 'Icicle Spear stops after the first hit misses (min 1 hit)')
+ok(oneSpear.units.find((u) => u.id === 961)!.hp === 22 - 4, 'Icicle Spear stops after the first hit misses (min 1 hit)')
 
 /* --- Drifblim Ominous Wind: ranged phasing hit + self-heal --- */
 let dbl = newBattle(draftA, draftB)
@@ -256,7 +256,7 @@ spawn(dbl, 970, 'drifblim', 'A', 2, 6, { charge: 3, chargeMax: 3, hp: 5, maxHp: 
 spawn(dbl, 971, 'blaziken', 'B', 2, 4, { hp: 15, maxHp: 15 }) // ghost vs fire = neutral, two rows away
 const windPlan = planAttack(dbl, 970, 971, true)!
 const windRes = resolveStep(windPlan)!
-ok(windRes.units.find((u) => u.id === 971)!.hp === 15 - 4, 'Ominous Wind hits for 4 at range')
+ok(windRes.units.find((u) => u.id === 971)!.hp === 15 - 5, 'Ominous Wind hits for 5 at range (premium +1)')
 ok(windRes.units.find((u) => u.id === 970)!.hp === 7, 'Ominous Wind heals Drifblim by 2')
 
 /* --- crits & misses (normal attacks only, deterministic RNG) --- */
@@ -310,7 +310,14 @@ let ic = newBattle(draftA, draftB)
 ic.players.A.poke = 0
 ic.round = 30
 const ic2 = endTurnFully(endTurnFully(ic))
-ok(ic2.players.A.poke <= 4, 'income cap: round 30 still pays only 2/turn')
+ok(ic2.players.A.poke === 3, 'income cap: round 30 pays the capped 3/turn')
+
+// income steps: 1/turn early, 2 at round 6, 3 at round 16
+let inc16 = newBattle(draftA, draftB)
+inc16.players.A.poke = 0
+inc16.round = 16
+const inc16b = endTurnFully(endTurnFully(inc16))
+ok(inc16b.players.A.poke === 3, 'income reaches 3/turn at round 16')
 
 let kb = newBattle(draftA, draftB)
 kb.rocks = []
@@ -359,13 +366,13 @@ const draftS = { champion: 'victini', picks: draftA.picks, summons: ['hooh', 'lu
 let sm = newBattle(draftS, draftB)
 sm.rocks = []
 spawn(sm, 970, 'pikachu', 'A', 0, 8, { hp: 7, maxHp: 7 })
-sm.players.A.poke = 8
+sm.players.A.poke = 20
 ok(useSummon(sm, 'A', 'dialga') === null, 'cannot use a summon you did not draft')
 const smh = useSummon(sm, 'A', 'hooh')!
 const buffed = smh.units.find((u) => u.id === 970)!
 ok(smh !== null && buffed.maxHp === 10 && buffed.hp === 10, 'Ho-Oh grants +3 max HP to fielded allies')
-ok(smh.players.A.poke === 4, 'summons cost Poké Balls')
-ok(useSummon(smh, 'A', 'hooh') === null, 'each summon fires once per game')
+ok(smh.players.A.poke === 14, 'summons cost Poké Balls (Ho-Oh is 6)')
+ok(useSummon(smh, 'A', 'hooh') !== null, 'summons are re-castable — not once per game')
 const sml = useSummon(smh, 'A', 'lugia')!
 ok(sml !== null && sml.lugiaLock === 'B', 'Lugia grounds the opponent')
 const smlB = endTurnFully(sml) // now B's turn, locked
@@ -384,6 +391,38 @@ spawn(pd, 976, 'porygon2', 'A', 1, 8)
 pd.players.A.poke = 0
 const pd2 = endTurnFully(endTurnFully(pd)) // B, then back to A's income
 ok(pd2.players.A.poke >= 2, 'Payday: two unique Normals pay +1 extra ball')
+
+/* --- Kyogre: a 3×3 whirlpool that crashes down after one round --- */
+const draftKG = { champion: 'victini', picks: draftA.picks, summons: ['kyogre', 'groudon'] }
+let ky = newBattle(draftKG, draftB)
+ky.rocks = []
+ky.players.A.poke = 8
+spawn(ky, 980, 'magneton', 'B', 3, 4, { hp: 10, maxHp: 10 }) // electric: neutral to water
+ok(useSummon(ky, 'A', 'kyogre', { row: 0 }) === null, 'Kyogre cannot be aimed at the foe’s back rows')
+const kyCast = useSummon(ky, 'A', 'kyogre', { col: 3, row: 4 })!
+ok(kyCast !== null && kyCast.units.find((u) => u.id === 980)!.hp === 10, 'whirlpool does not hit the moment it is placed')
+const kyMid = endTurnFully(kyCast) // A ends: fuse 2→1, still no hit
+ok(kyMid.units.find((u) => u.id === 980)!.hp === 10, 'whirlpool waits a full round')
+const kyDone = endTurnFully(kyMid) // B ends: fuse 1→0, crashes down for 4
+ok(kyDone.units.find((u) => u.id === 980)!.hp === 6, 'whirlpool hits everything still inside for 4')
+
+/* --- Groudon: a row erupts for 6 at the end of your own turn --- */
+let gr = newBattle(draftKG, draftB)
+gr.rocks = []
+gr.players.A.poke = 8
+spawn(gr, 985, 'magneton', 'B', 2, 4, { hp: 12, maxHp: 12 })
+const grCast = useSummon(gr, 'A', 'groudon', { row: 4 })!
+ok(grCast.units.find((u) => u.id === 985)!.hp === 12, 'eruption is telegraphed, not instant')
+const grDone = endTurnFully(grCast) // A ends: fuse 1→0, erupts for 6
+ok(grDone.units.find((u) => u.id === 985)!.hp === 6, 'eruption hits its row for 6 at end of turn')
+
+/* --- premium (Great/Ultra) Pokémon get +1 on their special --- */
+let pr = newBattle(draftA, draftB)
+pr.rocks = []
+spawn(pr, 990, 'lucario', 'A', 2, 5, { charge: 5, chargeMax: 5 }) // great-tier, Aura Sphere 4 → 5
+spawn(pr, 991, 'blaziken', 'B', 2, 4, { hp: 15, maxHp: 15 }) // fighting vs fire = neutral
+const prRes = resolveStep(planAttack(pr, 990, 991, true)!)!
+ok(prRes.units.find((u) => u.id === 991)!.hp === 15 - 5, 'premium special hits +1 harder (Lucario 4→5)')
 
 /* --- full AI vs AI games run to completion --- */
 for (let g2 = 0; g2 < 5; g2++) {

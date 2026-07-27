@@ -683,10 +683,13 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 /* ---------- action bar / bench / log ---------- */
 /* FIXED height so selecting things never shifts the layout around it */
 .actionbar {
-  height: 208px; overflow-y: auto; background: var(--paper); border: 2px solid var(--line);
+  /* min-height keeps a stable footprint, but the box GROWS for the cancel/undo
+     buttons instead of forcing an inner scrollbar */
+  min-height: 208px; overflow: visible; background: var(--paper); border: 2px solid var(--line);
   border-radius: 16px; padding: 12px 14px;
   display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 700;
 }
+.ab-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
 .actionbar-empty { justify-content: center; color: var(--mist); }
 .ab-main { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .ab-name { font-weight: 900; font-size: 19px; display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
@@ -779,14 +782,21 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 .comp-name .sprite-token { width: 22px; height: 22px; font-size: 10px; }
 .comp-special { white-space: normal !important; min-width: 260px; line-height: 1.4; }
 .comp-drops table { max-width: 380px; }
-.howto-cols { display: flex; gap: 28px; align-items: flex-start; }
+.howto-cols { display: flex; gap: 28px; align-items: flex-start; margin-top: 18px; }
 .howto-col { flex: 1; min-width: 0; }
 .howto-col-head { margin: 0 0 8px; font-size: 15px; color: var(--on-dark); }
 .howto-col .syn-legend-note { margin-top: 0; }
 @media (max-width: 760px) { .howto-cols { flex-direction: column; gap: 8px; } }
-.comp-two { display: flex; gap: 12px; align-items: flex-start; }
-.comp-two > .comp-scroll { flex: 1; min-width: 0; }
-@media (max-width: 720px) { .comp-two { flex-direction: column; } }
+.comp-two { display: flex; gap: 14px; align-items: flex-start; }
+.comp-two > .comp-scroll { flex: 1; min-width: 0; overflow-x: visible; }
+@media (max-width: 720px) { .comp-two { flex-direction: column; } .comp-two > .comp-scroll { overflow-x: auto; } }
+/* the roster table now fits its half-width with no side-scroll and uniform rows */
+.comp-roster { table-layout: auto; }
+.comp-roster th, .comp-roster td { padding: 6px 5px; }
+.comp-roster th:first-child, .comp-roster td:first-child { padding-left: 9px; }
+.comp-roster td:not(.comp-name) { text-align: center; font-variant-numeric: tabular-nums; }
+.comp-roster th:not(:first-child):not(:nth-child(2)) { text-align: center; }
+.comp-roster .comp-name { min-width: 96px; }
 .comp-note { font-size: 12px; opacity: 0.75; }
 
 /* in-match help corner */
@@ -920,6 +930,23 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 .summon-name { flex: 1; text-align: left; }
 .summon-cost { display: inline-flex; align-items: center; gap: 3px; font-variant-numeric: tabular-nums; }
 .summon-used { filter: grayscale(1); }
+.summon-block { display: flex; flex-direction: column; gap: 8px; }
+.summon-armed { background: color-mix(in srgb, var(--amber) 24%, #FFFFFF); border-style: solid; }
+.summon-preview {
+  border: 2px solid color-mix(in srgb, var(--amber) 55%, var(--line)); border-radius: 14px;
+  background: var(--paper); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px;
+  animation: coachIn 0.2s ease-out;
+}
+.summon-preview-desc { font-size: 13px; font-weight: 700; line-height: 1.45; color: var(--ink); }
+.summon-preview-actions { display: flex; gap: 8px; align-items: center; }
+.summon-preview-actions .btn-gold { display: inline-flex; align-items: center; gap: 5px; }
+.summon-aim-hint { border-style: dashed; }
+
+/* summon hazard footprints on the board */
+.cell-hazard { position: absolute; pointer-events: none; z-index: 2; border-radius: 4px; animation: hazardPulse 1.2s ease-in-out infinite; }
+.hazard-kyogre { background: rgba(47, 111, 208, 0.34); box-shadow: inset 0 0 0 2px rgba(47, 111, 208, 0.6); }
+.hazard-groudon { background: rgba(214, 69, 69, 0.32); box-shadow: inset 0 0 0 2px rgba(214, 69, 69, 0.6); }
+@keyframes hazardPulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 0.9; } }
 
 /* the opponent's two summons, shown face-down until they're spent */
 .enemy-summons { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }

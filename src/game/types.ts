@@ -162,6 +162,20 @@ export interface Chest {
   row: number
 }
 
+/** A delayed area effect from a targeted summon (Kyogre's whirlpool, Groudon's
+ * eruption). Ticks down each turn end; when `fuse` hits 0 it damages every unit
+ * standing on one of its tiles, then clears. */
+export interface Hazard {
+  key: string
+  owner: Owner
+  /** Damage type for effectiveness, or null for flat/typeless damage. */
+  ptype: PType | null
+  dmg: number
+  tiles: [number, number][]
+  fuse: number
+  label: string
+}
+
 export interface GameState {
   units: Unit[]
   players: Record<Owner, PlayerState>
@@ -174,6 +188,8 @@ export interface GameState {
   rocks: [number, number][]
   /** Field Poké Balls — move onto one to open it (drops an item). */
   chests: Chest[]
+  /** Pending delayed area effects from targeted summons. */
+  hazards: Hazard[]
   /** Damage dealt per species, per side — feeds the battle-stats panel. */
   stats: Record<Owner, Record<string, number>>
   /** Blitz draft: no pre-drafted deck — deploy straight from a rotating shop. */

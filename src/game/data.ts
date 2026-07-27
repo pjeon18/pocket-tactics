@@ -12,13 +12,17 @@ export const MOVE_CAP = 3
  * Economy: 1 Poké Ball per turn, +1 more per turn every 5 rounds.
  * Great/Ultra Balls come ONLY from trading (and item drops give other things).
  */
-export const POKE_CAP = 8
+export const POKE_CAP = 10
 
 /** Max non-champion Pokémon fielded at once — quality over quantity, no walls. */
 export const FIELD_CAP = 7
 
-/** Income growth stops here (anti-flood: late game pays 2/turn, not 4-5). */
-export const INCOME_CAP = 2
+/** Income tops out here (anti-flood: even late game pays a steady trickle). */
+export const INCOME_CAP = 3
+
+/** Rounds at which per-turn income steps up by 1 (from a base of 1): 2/turn at
+    round 6, 3/turn at round 16 — then it holds at the cap. */
+export const INCOME_BREAKS = [6, 16]
 
 /** KOing an enemy Pokémon pays out a Poké Ball — aggression is tempo. */
 export const KILL_BOUNTY = 1
@@ -33,23 +37,27 @@ export const START_GREAT_B = 0
 
 export const DRAFT_SIZE = 8
 
-/** Legendary summons: one-shot battlefield effects, never fielded. Pick 2. */
+/** Legendary summons: battlefield effects, never fielded. Pick 2, re-castable. */
 export const SUMMON_PICKS = 2
 export interface SummonDef {
   key: string
   name: string
   dex: number
-  /** Poké Ball cost to unleash it (once per game). */
+  /** Poké Ball cost to unleash it. Re-castable as long as you can pay. */
   cost: number
   desc: string
+  /** Targeted summons need the player to aim first: a board tile or a row. */
+  target?: 'tile' | 'row'
 }
 export const SUMMONS: Record<string, SummonDef> = {
-  hooh: { key: 'hooh', name: 'Ho-Oh', dex: 250, cost: 4, desc: 'Sacred Fire — every Pokémon you have fielded gains +3 max HP, right away' },
-  lugia: { key: 'lugia', name: 'Lugia', dex: 249, cost: 4, desc: 'Aeroblast — next turn your opponent can neither move nor deploy' },
+  hooh: { key: 'hooh', name: 'Ho-Oh', dex: 250, cost: 6, desc: 'Sacred Fire — every Pokémon you have fielded gains +3 max HP, right away' },
+  lugia: { key: 'lugia', name: 'Lugia', dex: 249, cost: 6, desc: 'Aeroblast — next turn your opponent can neither move nor deploy' },
   dialga: { key: 'dialga', name: 'Dialga', dex: 483, cost: 6, desc: 'Roar of Time — every one of your Pokémon gets its special fully charged' },
   palkia: { key: 'palkia', name: 'Palkia', dex: 484, cost: 6, desc: 'Spacial Rend — all of your Pokémon have 5 movement this turn' },
+  kyogre: { key: 'kyogre', name: 'Kyogre', dex: 382, cost: 4, target: 'tile', desc: 'Origin Pulse — mark a 3×3 whirlpool; at the end of the round it hits everything still inside for 4 (water). Opponents can flee it on their turn.' },
+  groudon: { key: 'groudon', name: 'Groudon', dex: 383, cost: 4, target: 'row', desc: 'Precipice Blades — choose a row; at the end of your turn it erupts for 6 to everyone standing on it.' },
 }
-export const SUMMON_ORDER = ['hooh', 'lugia', 'dialga', 'palkia']
+export const SUMMON_ORDER = ['hooh', 'lugia', 'dialga', 'palkia', 'kyogre', 'groudon']
 
 /** From this round on, both champions take 1 fatigue damage per round — games must end. */
 export const FATIGUE_ROUND = 20
@@ -219,7 +227,7 @@ export const ROSTER: Record<string, Species> = {
   /* tanks — big HP, melee, specials charge fast */
   onix: {
     key: 'onix', name: 'Onix', dex: 95, role: 'tank', ptype: 'rock', tier: 'poke', cost: P(2), cooldown: 4,
-    hp: 9, atk: 2, range: 1, move: 1, chargeMax: 2,
+    hp: 9, atk: 2, range: 1, move: 1, chargeMax: 4,
     special: 'Bind', hint: '2 dmg and the target is stunned — it can’t move next turn',
     targeting: { kind: 'enemy' }, pattern: 'target',
   },
@@ -638,6 +646,17 @@ export const CHAMPIONS: Record<string, ChampionSpecies> = {
 /* HP inflation: applied once, so draft cards and battle agree. */
 for (const s of Object.values(ROSTER)) s.hp += HP_INFLATE
 for (const c of Object.values(CHAMPIONS)) c.hp += HP_INFLATE
+
+/** A Pokémon that costs a Great or Ultra Ball is "premium". */
+export const isPremium = (cost: Cost): boolean => cost.great > 0 || cost.ultra > 0
+
+/* Cheap Poké-only Pokémon (under 4 Poké Balls) redeploy slower — throttles
+   body-spam. Premium Pokémon hit harder: +1 to their basic attack (their
+   special gets +1 too, applied in the damage pipeline). */
+for (const s of Object.values(ROSTER)) {
+  if (!isPremium(s.cost) && s.cost.poke < 4) s.cooldown += 3
+  if (isPremium(s.cost)) s.atk += 1
+}
 
 export const CHAMPION_ORDER = ['mew', 'celebi', 'jirachi', 'victini', 'manaphy']
 

@@ -148,6 +148,28 @@ all three modes. (Added after a 16-min/10-round 2P game.)
 **Off-turn inspection:** click any Pokémon while it's NOT your turn → read-only
 info card + threat range. (The old "Danger zone" button was removed for this.)
 
+**Economy + summons overhaul (2026-07-27 #5):** POKE_CAP 8→10; INCOME_CAP 2→3
+with explicit `INCOME_BREAKS = [6, 16]` (income is 1/turn, 2 at round 6, 3 at
+round 16, `grantIncome` counts breaks reached). Legendary summons are now
+RE-CASTABLE (dropped the once-per-game gate in `useSummon`; still pay the cost,
+`usedSummons` only drives the foe-reveal). Ho-Oh/Lugia cost 4→6. Two new
+TARGETED summons (cost 4): **Kyogre** (tile → 3×3 whirlpool, water, hits for 4 at
+the end of the round; foes can flee) and **Groudon** (row → erupts for 6,
+typeless, at the end of your turn). Targeted summons use a new delayed-`Hazard`
+system (`GameState.hazards`, resolved in `finishTurn` via `resolveHazards`, fuse
+2 for Kyogre / 1 for Groudon; rendered as `.cell-hazard` on the board). Neither
+can be aimed at the opponent's back two rows. The AI only drafts the untargeted
+four. Onix chargeMax 2→4. Cheap Poké-only Pokémon (<4 Poké Balls, no G/U) get
++3 redeploy cooldown; premium (Great/Ultra) Pokémon get +1 ATK on normal AND
+special (special +1 lives in the `dealDamage` pipeline). Summon UI is now
+TWO-PRESS: tap a summon → `summonPreview` (description + Summon/Aim button) →
+cast, or Aim (`summonAim` sel highlights legal tiles/rows, `onTile` casts with a
+target). ActionBar switched from fixed 208px + inner scroll to `min-height` +
+`overflow: visible` so the cancel/undo buttons grow the box instead of
+scrolling. Pokédex dropped its wide wrapping Special column → uniform rows (no
+more jagged separators) and each half fits with no side-scroll. How-to-play
+expander body gets `margin-top` so it clears the summary.
+
 **Guided tutorial (2026-07-27):** menu → "New here? Play the tutorial" mounts
 `Battle` with `tutorial`, `initialState`, and `rebuild` props (App phase
 `{t:'tutorial'}`). Scenario in `src/game/tutorial.ts`: player = Victini +

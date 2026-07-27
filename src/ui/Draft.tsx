@@ -196,7 +196,7 @@ export function Draft({
         Legendary summons — pick {SUMMON_PICKS}
         <span className="pick-count">{summons.length}/{SUMMON_PICKS}</span>
       </div>
-      <p className="draft-sub summon-sub">One-shot battlefield effects, cast anywhere for Poké Balls. Once per game each.</p>
+      <p className="draft-sub summon-sub">Battlefield effects cast for Poké Balls — re-castable as long as you can pay.</p>
       <div className="champ-grid summon-grid">
         {SUMMON_ORDER.map((key) => {
           const sm = SUMMONS[key]
@@ -211,7 +211,7 @@ export function Draft({
               {sel && <span className="picked-mark">✓</span>}
               <Sprite dex={sm.dex} name={sm.name} tokenColor="#C9930A" className="card-sprite" />
               <div className="card-name">{sm.name}</div>
-              <div className="card-stats">{sm.cost} Poké Balls · once per game</div>
+              <div className="card-stats">{sm.cost} Poké Balls · re-castable</div>
               <div className="card-hint">{sm.desc}</div>
             </button>
           )

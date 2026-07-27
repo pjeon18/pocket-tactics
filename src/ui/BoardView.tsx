@@ -132,6 +132,19 @@ export function BoardView({
   return (
     <div className={`board s-${state.season} ${interactive ? '' : 'board-locked'} ${selecting ? 'board-selecting' : ''}`}>
       {cells}
+
+      {/* pending summon hazards (Kyogre whirlpool / Groudon eruption) */}
+      {state.hazards.flatMap((hz) =>
+        hz.tiles.map(([c, r]) => (
+          <div
+            key={`hz-${hz.key}-${c}-${r}`}
+            className={`cell-hazard hazard-${hz.key}`}
+            style={{ left: `${vc(c) * w}%`, top: `${vr(r) * h}%`, width: `${w}%`, height: `${h}%` }}
+            title={`${hz.label} — ${hz.dmg} damage soon`}
+          />
+        )),
+      )}
+
       {/* one board-wide grid so every line is identical width and perfectly aligned;
           the black midline is baked into the same layer so it can never drift */}
       <div className="grid-overlay" />

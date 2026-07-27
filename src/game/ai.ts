@@ -36,7 +36,8 @@ export function aiDraft(): DraftResult {
   take(byTier('ultra'), 2)
   take(byTier('great'), 4)
   take(byTier('poke'), DRAFT_SIZE - picks.length)
-  const summons = [...SUMMON_ORDER].sort(() => Math.random() - 0.5).slice(0, 2)
+  // the AI only drafts summons it knows how to cast (the untargeted ones)
+  const summons = SUMMON_ORDER.filter((k) => !SUMMONS[k].target).sort(() => Math.random() - 0.5).slice(0, 2)
   return { champion, picks, summons }
 }
 

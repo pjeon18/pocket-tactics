@@ -6,7 +6,6 @@ import {
   DROPS,
   FIELD_CAP,
   ITEMS,
-  ROLE_META,
   ROSTER,
   SUMMONS,
   SUMMON_ORDER,
@@ -43,11 +42,11 @@ export function Compendium() {
       <div className="comp-two">
         {columns.map((col, ci) => (
           <div className="comp-scroll" key={ci}>
-            <table>
+            <table className="comp-roster">
               <thead>
                 <tr>
-                  <th>Pokémon</th><th>Type</th><th>Role</th><th>Cost</th><th>HP</th><th>ATK</th>
-                  <th>RNG</th><th>MOV</th><th>Charge</th><th>Redeploy</th><th>Special</th>
+                  <th>Pokémon</th><th>Type</th><th>Cost</th><th>HP</th><th>ATK</th>
+                  <th>RNG</th><th>MOV</th><th>Chg</th><th>CD</th>
                 </tr>
               </thead>
               <tbody>
@@ -58,11 +57,9 @@ export function Compendium() {
                       {s.name}
                     </td>
                     <td><em className="type-chip" style={{ background: TYPE_META[s.ptype].color }}>{TYPE_META[s.ptype].label}</em></td>
-                    <td>{ROLE_META[s.role].label}</td>
-                    <td><CostDots cost={s.cost} size={14} /></td>
+                    <td><CostDots cost={s.cost} size={13} /></td>
                     <td>{s.hp}</td><td>{s.atk}</td><td>{s.range}</td><td>{s.move}</td>
                     <td>{s.chargeMax}</td><td>{s.cooldown}t</td>
-                    <td className="comp-special"><b>{s.special}</b> — {s.hint}</td>
                   </tr>
                 ))}
               </tbody>

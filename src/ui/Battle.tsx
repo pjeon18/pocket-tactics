@@ -82,6 +82,8 @@ type Sel =
   | { type: 'revive'; id: number; reviveKey: string | null }
   | { type: 'item'; item: ItemKey }
   | { type: 'itemRevive'; reviveKey: string | null }
+  | { type: 'summonPreview'; key: string } // showing a summon's details before casting
+  | { type: 'summonAim'; key: string } // aiming a targeted summon (Kyogre / Groudon)
 
 let FLOAT_ID = 1
 const AI_STEP_MS = 620
@@ -403,6 +405,14 @@ export function Battle({
       v.specialTiles = openDeployTiles(state, state.current, deployDepthFor(ROSTER[sel.key].tier))
       return v
     }
+    if (sel?.type === 'summonAim') {
+      const banned = summonBannedRows(state.current)
+      const tiles: [number, number][] = []
+      for (let c = 0; c < COLS; c++)
+        for (let r = 0; r < ROWS; r++) if (!banned.includes(r)) tiles.push([c, r])
+      v.specialTiles = tiles
+      return v
+    }
     if (sel?.type === 'item') {
       const valid = (u: Unit): boolean => {
         if (u.owner !== state.current) return false
@@ -496,6 +506,12 @@ export function Battle({
     if (sel?.type === 'bench') {
       if (run('deploy', state.current, sel.key, c, r)) setSel(null)
       else if (!inDeployZone(state.current, r, 4)) setSel(null)
+      return
+    }
+    if (sel?.type === 'summonAim') {
+      if (visuals.specialTiles.some(([tc, tr]) => tc === c && tr === r)) {
+        if (run('useSummon', state.current, sel.key, { col: c, row: r })) setSel(null)
+      } else setSel(null)
       return
     }
     if (sel?.type === 'itemRevive' && sel.reviveKey) {
@@ -628,7 +644,11 @@ export function Battle({
       else if (selUnit) setSel({ type: 'revive', id: selUnit.id, reviveKey: key })
     },
     onItem: onItemPress,
-    onSummon: (key: string) => run('useSummon', state.current, key),
+    // tapping a summon opens its details first; a second press casts (or aims)
+    onSummon: (key: string) => setSel(sel?.type === 'summonPreview' && sel.key === key ? null : { type: 'summonPreview', key }),
+    onSummonCast: (key: string) => { if (run('useSummon', state.current, key)) setSel(null) },
+    onSummonAim: (key: string) => setSel({ type: 'summonAim', key }),
+    onSummonCancel: () => setSel(null),
     onEndTurn: doEndTurn,
     chat: online ? { msgs: chatMsgs, send: sendChat } : undefined,
   }
@@ -960,8 +980,16 @@ interface PanelProps {
   onItem: (item: ItemKey) => void
   onInspect: (key: string) => void
   onSummon: (key: string) => void
+  onSummonCast: (key: string) => void
+  onSummonAim: (key: string) => void
+  onSummonCancel: () => void
   onEndTurn: () => void
   chat?: { msgs: { me: boolean; text: string }[]; send: (text: string) => void }
+}
+
+/** Rows nearest the OPPONENT's home edge — off-limits for summon targeting. */
+function summonBannedRows(current: Owner): number[] {
+  return current === 'A' ? [0, 1] : [ROWS - 2, ROWS - 1]
 }
 
 function PlayerPanel(props: PanelProps) {
@@ -1337,32 +1365,66 @@ function SynergyTracker({ state, owner }: { state: GameState; owner: Owner }) {
 
 /* ---------- inventory ---------- */
 
-function SummonRow({ state, owner, interactive, onSummon }: PanelProps) {
+function SummonRow({ state, owner, interactive, sel, onSummon, onSummonCast, onSummonAim, onSummonCancel }: PanelProps) {
   const p = state.players[owner]
   if (!p.summons.length) return null
+  const previewKey = sel?.type === 'summonPreview' ? sel.key : null
+  const aimKey = sel?.type === 'summonAim' ? sel.key : null
+  const preview = previewKey ? SUMMONS[previewKey] : null
+  const aim = aimKey ? SUMMONS[aimKey] : null
   return (
-    <div className="summon-row">
-      {p.summons.map((key) => {
-        const sm = SUMMONS[key]
-        if (!sm) return null
-        const used = p.usedSummons.includes(key)
-        const affordable = p.poke >= sm.cost
-        return (
-          <button
-            key={key}
-            className={`summon-btn ${used ? 'summon-used' : ''}`}
-            disabled={!interactive || used || !affordable}
-            onClick={() => onSummon(key)}
-            title={`${sm.name} — ${sm.desc} (${sm.cost} Poké Balls, once per game)`}
-          >
-            <Sprite dex={sm.dex} name={sm.name} tokenColor="#C9930A" />
-            <span className="summon-name">{used ? 'Answered' : sm.name}</span>
-            {!used && (
+    <div className="summon-block">
+      <div className="summon-row">
+        {p.summons.map((key) => {
+          const sm = SUMMONS[key]
+          if (!sm) return null
+          const affordable = p.poke >= sm.cost
+          const armed = key === previewKey || key === aimKey
+          return (
+            <button
+              key={key}
+              className={`summon-btn ${armed ? 'summon-armed' : ''}`}
+              disabled={!interactive || !affordable}
+              onClick={() => onSummon(key)}
+              title={`${sm.name} — ${sm.desc}`}
+            >
+              <Sprite dex={sm.dex} name={sm.name} tokenColor="#C9930A" />
+              <span className="summon-name">{sm.name}</span>
               <span className="summon-cost"><BallSprite tier="poke" size={15} />{sm.cost}</span>
-            )}
-          </button>
-        )
-      })}
+            </button>
+          )
+        })}
+      </div>
+
+      {preview && interactive && (
+        <div className="summon-preview">
+          <div className="summon-preview-desc">{preview.desc}</div>
+          <div className="summon-preview-actions">
+            <button
+              className="btn btn-gold btn-tiny"
+              disabled={p.poke < preview.cost}
+              onClick={() => (preview.target ? onSummonAim(preview.key) : onSummonCast(preview.key))}
+            >
+              {preview.target ? 'Aim on the board' : 'Summon'} · {preview.cost}
+              <BallSprite tier="poke" size={13} />
+            </button>
+            <button className="btn btn-tiny" onClick={onSummonCancel}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {aim && interactive && (
+        <div className="summon-preview summon-aim-hint">
+          <div className="summon-preview-desc">
+            {aim.target === 'row'
+              ? 'Tap a highlighted row — it erupts at the end of your turn.'
+              : 'Tap a highlighted tile for the whirlpool’s centre.'}
+          </div>
+          <div className="summon-preview-actions">
+            <button className="btn btn-tiny" onClick={onSummonCancel}>Cancel</button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

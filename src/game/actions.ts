@@ -10,7 +10,8 @@ import {
   GREAT_CAP,
   FIELD_CAP,
   INCOME_CAP,
-  INCOME_STEP_ROUNDS,
+  INCOME_BREAKS,
+  isPremium,
   KILL_BOUNTY,
   ITEMS,
   MISS_CHANCE,
@@ -53,7 +54,7 @@ import {
 } from './rules'
 import { SUMMONS, synergyThresholds } from './data'
 import { synergyTier } from './rules'
-import type { DraftResult, GameState, ItemKey, Owner, Season, Unit } from './types'
+import type { DraftResult, GameState, Hazard, ItemKey, Owner, Season, Unit } from './types'
 
 let UID = 1
 
@@ -146,6 +147,7 @@ export function newBattle(
     movesLeft: MOVE_CAP,
     rocks: generateRocks(),
     chests: [],
+    hazards: [],
     stats: { A: {}, B: {} },
     shopMode,
     season: season ?? SEASONS[Math.floor(Math.random() * SEASONS.length)],
@@ -189,12 +191,12 @@ const clone = (state: GameState): GameState => {
   return next
 }
 
-/** 1 Poké Ball per turn, +1 more every INCOME_STEP_ROUNDS rounds. Cooldowns tick here. */
+/** 1 Poké Ball per turn, stepping up at the INCOME_BREAKS rounds. Cooldowns tick here. */
 function grantIncome(state: GameState) {
   const p = state.players[state.current]
   p.turns++
   // income growth is CAPPED — late game pays a steady trickle, not a flood
-  const income = Math.min(INCOME_CAP, 1 + Math.floor((state.round - 1) / INCOME_STEP_ROUNDS))
+  const income = Math.min(INCOME_CAP, 1 + INCOME_BREAKS.filter((r) => state.round >= r).length)
   // Payday: Normal-type synergy pays out extra Poké Balls (2 uniques → +1, 4 → +2)
   const payday = synergyTier(state.units, state.current, 'normal')
   p.poke = Math.min(POKE_CAP, p.poke + income + payday)
@@ -238,6 +240,8 @@ function dealDamage(
       sub = 'Not very effective…'
     }
     if (src.heldItem === 'life-orb') amt += 1
+    // premium (Great/Ultra) Pokémon hit +1 harder with their special too
+    if (kind === 'special' && !src.isChampion && ROSTER[src.key] && isPremium(ROSTER[src.key].cost)) amt += 1
     // synergy riders scale with tier (1 at three uniques, 2 at five)
     const srcTier = tierOf(state.units, src)
     if (kind === 'special' && ptypeOf(src) === 'fighting') amt += srcTier
@@ -377,17 +381,40 @@ export function deploy(state0: GameState, owner: Owner, key: string, col: number
  * Unleash a drafted legendary summon: a one-shot, field-wide effect. Free action
  * besides its Poké Ball cost; each summon fires once per game.
  */
-export function useSummon(state0: GameState, owner: Owner, key: string): GameState | null {
+/** Rows nearest the OPPONENT's home edge — off-limits for summon targeting. */
+function oppBackRows(owner: Owner): number[] {
+  return otherOwner(owner) === 'B' ? [0, 1] : [ROWS - 2, ROWS - 1]
+}
+
+export function useSummon(
+  state0: GameState,
+  owner: Owner,
+  key: string,
+  target?: { col?: number; row?: number },
+): GameState | null {
   if (state0.winner || owner !== state0.current) return null
   const def = SUMMONS[key]
   const p0 = state0.players[owner]
-  if (!def || !p0.summons.includes(key) || p0.usedSummons.includes(key)) return null
+  // re-castable: only requires that it was drafted and you can afford it
+  if (!def || !p0.summons.includes(key)) return null
   if (p0.poke < def.cost) return null
+
+  // targeted summons must be aimed at a legal spot
+  const banned = oppBackRows(owner)
+  if (def.target === 'tile') {
+    if (target?.col == null || target?.row == null) return null
+    if (target.col < 0 || target.col >= COLS || target.row < 0 || target.row >= ROWS) return null
+    if (banned.includes(target.row)) return null
+  }
+  if (def.target === 'row') {
+    if (target?.row == null || target.row < 0 || target.row >= ROWS) return null
+    if (banned.includes(target.row)) return null
+  }
 
   const state = clone(state0)
   const p = state.players[owner]
   p.poke -= def.cost
-  p.usedSummons.push(key)
+  if (!p.usedSummons.includes(key)) p.usedSummons.push(key) // revealed to the foe once cast
   const mine = state.units.filter((u) => u.owner === owner)
 
   switch (key) {
@@ -415,11 +442,52 @@ export function useSummon(state0: GameState, owner: Owner, key: string): GameSta
         state.events.push({ col: u.col, row: u.row, text: 'WARP', color: '#C9930A' })
       }
       break
+    case 'kyogre': {
+      const tiles: [number, number][] = []
+      for (let dc = -1; dc <= 1; dc++) {
+        for (let dr = -1; dr <= 1; dr++) {
+          const c = target!.col! + dc
+          const r = target!.row! + dr
+          if (c >= 0 && c < COLS && r >= 0 && r < ROWS) tiles.push([c, r])
+        }
+      }
+      // fuse 2: ticks at the end of this turn and again at the end of the foe's
+      state.hazards.push({ key, owner, ptype: 'water', dmg: 4, tiles, fuse: 2, label: 'Whirlpool' })
+      break
+    }
+    case 'groudon': {
+      const tiles: [number, number][] = []
+      for (let c = 0; c < COLS; c++) tiles.push([c, target!.row!])
+      // fuse 1: erupts at the end of this turn — no time to flee. Typeless.
+      state.hazards.push({ key, owner, ptype: null, dmg: 6, tiles, fuse: 1, label: 'Eruption' })
+      break
+    }
     default:
       return null
   }
-  state.log.push(`${def.name} answered the call! ${def.desc}.`)
+  state.log.push(`${def.name} answered the call! ${def.desc}`)
   return state
+}
+
+/** Tick every pending hazard; resolve (damage everyone on its tiles) at fuse 0. */
+function resolveHazards(state: GameState) {
+  const survivors: Hazard[] = []
+  for (const hz of state.hazards) {
+    hz.fuse -= 1
+    if (hz.fuse > 0) {
+      survivors.push(hz)
+      continue
+    }
+    for (const [c, r] of hz.tiles) {
+      const u = at(state.units, c, r)
+      if (!u) continue
+      const amt = Math.max(1, hz.dmg + (hz.ptype ? typeMod(hz.ptype, ptypeOf(u)) : 0))
+      dealDamage(state, null, u, amt, COLOR.special, 'raw', '')
+    }
+    state.log.push(`${SUMMONS[hz.key]?.name ?? hz.label} crashes down!`)
+  }
+  state.hazards = survivors
+  cleanup(state)
 }
 
 /** Trade Poké Balls up: 3 → 1 Great Ball, 6 → 1 Ultra Ball. Free action. */
@@ -1190,6 +1258,7 @@ export function finishTurn(state0: GameState): GameState {
   }
   state.movesLeft = MOVE_CAP
   if (state.lugiaLock === ending) state.lugiaLock = null // the grounded turn is over
+  resolveHazards(state) // whirlpools / eruptions tick and may crash down now
   state.current = otherOwner(ending)
   if (state.current === 'A') {
     state.round++
