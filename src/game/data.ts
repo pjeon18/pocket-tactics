@@ -317,7 +317,7 @@ export const ROSTER: Record<string, Species> = {
   },
   snorlax: {
     key: 'snorlax', name: 'Snorlax', dex: 143, role: 'tank', ptype: 'normal', tier: 'ultra', cost: U(2), cooldown: 8,
-    hp: 16, atk: 3, range: 1, move: 1, chargeMax: 2,
+    hp: 17, atk: 3, range: 1, move: 1, chargeMax: 2,
     special: 'Body Slam', hint: '5 dmg and the target is stunned — it can’t move next turn',
     targeting: { kind: 'enemy' }, pattern: 'target',
   },
@@ -430,7 +430,7 @@ export const ROSTER: Record<string, Species> = {
   gengar: {
     key: 'gengar', name: 'Gengar', dex: 94, role: 'dealer', ptype: 'ghost', tier: 'ultra', cost: U(2), cooldown: 8,
     hp: 7, atk: 5, range: 2, move: 3, chargeMax: 3,
-    special: 'Shadow Ball', hint: '5 dmg through blockers, +2 against full-HP targets',
+    special: 'Shadow Ball', hint: '6 dmg that phases straight through blockers',
     targeting: { kind: 'enemy', rangeOverride: 2, ignoreBlock: true }, pattern: 'target',
   },
   machamp: {
@@ -442,13 +442,13 @@ export const ROSTER: Record<string, Species> = {
   gyarados: {
     key: 'gyarados', name: 'Gyarados', dex: 130, role: 'dealer', ptype: 'water', tier: 'ultra', cost: U(3), cooldown: 8,
     hp: 10, atk: 5, range: 1, move: 2, chargeMax: 3,
-    special: 'Dragon Rage', hint: '5 dmg and hurls the target back 2 tiles',
+    special: 'Dragon Rage', hint: '6 dmg and hurls the target back 2 tiles',
     targeting: { kind: 'enemy' }, pattern: 'target',
   },
   garchomp: {
     key: 'garchomp', name: 'Garchomp', dex: 445, role: 'dealer', ptype: 'dragon', tier: 'ultra', cost: U(3), cooldown: 8,
     hp: 10, atk: 6, range: 1, move: 2, chargeMax: 3,
-    special: 'Earthquake', hint: '4 dmg to every enemy in the 8 tiles around Garchomp',
+    special: 'Earthquake', hint: '6 dmg to every enemy in the 8 tiles around Garchomp',
     targeting: { kind: 'aoe' }, pattern: 'ring1',
   },
 
@@ -461,13 +461,13 @@ export const ROSTER: Record<string, Species> = {
   tangrowth: {
     key: 'tangrowth', name: 'Tangrowth', dex: 465, role: 'tank', ptype: 'grass', tier: 'ultra', cost: U(2), cooldown: 8,
     hp: 15, atk: 3, range: 2, move: 1, chargeMax: 2,
-    special: 'Giga Drain', hint: '4 dmg, and Tangrowth drinks 2 HP back',
+    special: 'Giga Drain', hint: '6 dmg, and Tangrowth drinks 2 HP back',
     targeting: { kind: 'enemy' }, pattern: 'target',
   },
   serperior: {
     key: 'serperior', name: 'Serperior', dex: 497, role: 'dealer', ptype: 'grass', tier: 'ultra', cost: U(2), cooldown: 8,
     hp: 9, atk: 4, range: 2, move: 2, chargeMax: 3,
-    special: 'Leaf Storm', hint: 'A regal tempest: 5 dmg, plus 2 to every enemy beside the target',
+    special: 'Leaf Storm', hint: 'A regal tempest: 6 dmg, plus 2 to every enemy beside the target',
     targeting: { kind: 'enemy' }, pattern: 'splash',
   },
 
@@ -492,14 +492,14 @@ export const ROSTER: Record<string, Species> = {
   },
   jynx: {
     key: 'jynx', name: 'Jynx', dex: 124, role: 'specialist', ptype: 'ice', tier: 'poke', cost: P(3), cooldown: 4,
-    hp: 5, atk: 2, range: 2, move: 1, chargeMax: 4,
+    hp: 4, atk: 3, range: 3, move: 1, chargeMax: 4,
     special: 'Lovely Kiss', hint: '2 dmg and the target is stunned — it can’t move next turn',
     targeting: { kind: 'enemy' }, pattern: 'target',
   },
   mamoswine: {
     key: 'mamoswine', name: 'Mamoswine', dex: 473, role: 'dealer', ptype: 'ice', tier: 'ultra', cost: U(2), cooldown: 8,
     hp: 11, atk: 6, range: 1, move: 1, chargeMax: 3,
-    special: 'Icicle Spear', hint: 'Strikes 1–4 times for 3 each — 100% / 75% / 50% / 25% per hit',
+    special: 'Icicle Spear', hint: 'Strikes 1–4 times for 6 each — 100% / 75% / 50% / 25% per hit',
     targeting: { kind: 'enemy' }, pattern: 'target',
   },
   rotomwash: {
@@ -516,7 +516,7 @@ export const ROSTER: Record<string, Species> = {
   },
   espeon: {
     key: 'espeon', name: 'Espeon', dex: 196, role: 'specialist', ptype: 'psychic', tier: 'great', cost: G(1), cooldown: 6,
-    hp: 6, atk: 3, range: 2, move: 1, chargeMax: 4,
+    hp: 6, atk: 3, range: 3, move: 1, chargeMax: 4,
     special: 'Psyshock', hint: '4 dmg and hurls the target back 2 tiles',
     targeting: { kind: 'enemy' }, pattern: 'target',
   },
@@ -529,7 +529,7 @@ export const ROSTER: Record<string, Species> = {
   alakazam: {
     key: 'alakazam', name: 'Alakazam', dex: 65, role: 'specialist', ptype: 'psychic', tier: 'ultra', cost: U(2), cooldown: 8,
     hp: 6, atk: 4, range: 3, move: 1, chargeMax: 3,
-    special: 'Psychic', hint: '5 dmg and hurls the target back 2 tiles',
+    special: 'Psychic', hint: '6 dmg and hurls the target back 2 tiles',
     targeting: { kind: 'enemy' }, pattern: 'target',
   },
 
@@ -554,7 +554,7 @@ export const ROSTER: Record<string, Species> = {
   },
   abra: {
     key: 'abra', name: 'Abra', dex: 63, role: 'generalist', ptype: 'psychic', tier: 'poke', cost: P(1), cooldown: 4,
-    hp: 3, atk: 1, range: 2, move: 1, chargeMax: 2,
+    hp: 2, atk: 1, range: 3, move: 1, chargeMax: 2,
     special: 'Teleport', hint: 'Right away: hop to any empty tile within 3',
     targeting: { kind: 'blink', rangeOverride: 3 }, pattern: 'anywhere',
   },
@@ -566,7 +566,7 @@ export const ROSTER: Record<string, Species> = {
   },
   kirlia: {
     key: 'kirlia', name: 'Kirlia', dex: 281, role: 'generalist', ptype: 'psychic', tier: 'poke', cost: P(2), cooldown: 4,
-    hp: 5, atk: 2, range: 2, move: 1, chargeMax: 3,
+    hp: 5, atk: 2, range: 3, move: 1, chargeMax: 3,
     special: 'Heal Pulse', hint: 'Restore 4 HP to an ally within 2 tiles, right away',
     targeting: { kind: 'ally', rangeOverride: 2 }, pattern: 'ally',
   },
@@ -578,32 +578,32 @@ export const ROSTER: Record<string, Species> = {
   },
   chansey: {
     key: 'chansey', name: 'Chansey', dex: 113, role: 'generalist', ptype: 'normal', tier: 'great', cost: G(1), cooldown: 6,
-    hp: 12, atk: 1, range: 1, move: 1, chargeMax: 3,
+    hp: 14, atk: 1, range: 1, move: 1, chargeMax: 3,
     special: 'Soft-Boiled', hint: 'Restore 5 HP to an ally within 2 tiles, right away',
     targeting: { kind: 'ally', rangeOverride: 2 }, pattern: 'ally',
   },
   lucario: {
     key: 'lucario', name: 'Lucario', dex: 448, role: 'generalist', ptype: 'fighting', tier: 'great', cost: G(1), cooldown: 6,
-    hp: 7, atk: 3, range: 2, move: 2, chargeMax: 3,
+    hp: 7, atk: 3, range: 2, move: 3, chargeMax: 3,
     special: 'Aura Sphere', hint: '4 dmg to any enemy within 3 tiles — never blocked',
     targeting: { kind: 'enemy', rangeOverride: 3, ignoreBlock: true }, pattern: 'anywhere',
   },
   blaziken: {
     key: 'blaziken', name: 'Blaziken', dex: 257, role: 'generalist', ptype: 'fire', tier: 'great', cost: G(3), cooldown: 6,
-    hp: 9, atk: 3, range: 1, move: 2, chargeMax: 3,
+    hp: 9, atk: 3, range: 1, move: 3, chargeMax: 3,
     special: 'Blaze Kick', hint: '4 dmg, a guaranteed CRIT against full-HP targets',
     targeting: { kind: 'enemy' }, pattern: 'target',
   },
   krookodile: {
     key: 'krookodile', name: 'Krookodile', dex: 553, role: 'generalist', ptype: 'dark', tier: 'great', cost: G(3), cooldown: 6,
     hp: 9, atk: 3, range: 1, move: 1, chargeMax: 3,
-    special: 'Crunch', hint: '4 dmg, +3 if the target is below half HP',
+    special: 'Crunch', hint: '6 dmg (Crunch)',
     targeting: { kind: 'enemy' }, pattern: 'target',
   },
   dragonite: {
     key: 'dragonite', name: 'Dragonite', dex: 149, role: 'generalist', ptype: 'dragon', tier: 'ultra', cost: U(2), cooldown: 8,
     hp: 12, atk: 4, range: 2, move: 2, chargeMax: 3,
-    special: 'Hyper Beam', hint: '5 dmg to the first enemy in a straight line, any distance',
+    special: 'Hyper Beam', hint: '6 dmg to the first enemy in a straight line, any distance',
     targeting: { kind: 'enemy', rangeOverride: 9 }, pattern: 'line',
   },
 }

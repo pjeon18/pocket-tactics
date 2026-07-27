@@ -215,6 +215,12 @@ export const fieldedCount = (state: GameState, owner: Owner) =>
  * +1 Focus on specials (fighting synergy), −1 Bulwark (steel-synergy defender);
  * floor 1. Attributed damage feeds the battle-stats panel.
  */
+/** These premium specials are hand-tuned to a flat 6, so they skip the +1. */
+const SPECIAL_SIX = new Set([
+  'krookodile', 'gengar', 'machamp', 'tangrowth', 'serperior',
+  'mamoswine', 'alakazam', 'dragonite', 'gyarados', 'garchomp',
+])
+
 function dealDamage(
   state: GameState,
   src: Unit | null,
@@ -240,8 +246,9 @@ function dealDamage(
       sub = 'Not very effective…'
     }
     if (src.heldItem === 'life-orb') amt += 1
-    // premium (Great/Ultra) Pokémon hit +1 harder with their special too
-    if (kind === 'special' && !src.isChampion && ROSTER[src.key] && isPremium(ROSTER[src.key].cost)) amt += 1
+    // premium (Great/Ultra) Pokémon hit +1 harder with their special too —
+    // except the hand-tuned "flat 6" specials, which are already set to 6
+    if (kind === 'special' && !src.isChampion && ROSTER[src.key] && isPremium(ROSTER[src.key].cost) && !SPECIAL_SIX.has(src.key)) amt += 1
     // synergy riders scale with tier (1 at three uniques, 2 at five)
     const srcTier = tierOf(state.units, src)
     if (kind === 'special' && ptypeOf(src) === 'fighting') amt += srcTier
@@ -877,7 +884,7 @@ function resolveEnemySpecial(state: GameState, a: Unit, t: Unit) {
       break
     }
     case 'gyarados': {
-      dealDamage(state, a, t, 5, S)
+      dealDamage(state, a, t, 6, S)
       if (t.hp > 0) knockback(state, a, t, 2)
       break
     }
@@ -911,7 +918,7 @@ function resolveEnemySpecial(state: GameState, a: Unit, t: Unit) {
       const chances = [1, 0.75, 0.5, 0.25]
       for (const c of chances) {
         if (t.hp <= 0 || Math.random() >= c) break
-        dealDamage(state, a, t, 3, S)
+        dealDamage(state, a, t, 6, S)
       }
       break
     }
@@ -931,7 +938,7 @@ function resolveEnemySpecial(state: GameState, a: Unit, t: Unit) {
       break
     }
     case 'gengar': {
-      dealDamage(state, a, t, t.hp === t.maxHp ? 7 : 5, S)
+      dealDamage(state, a, t, 6, S)
       break
     }
     case 'escavalier': {
@@ -959,13 +966,13 @@ function resolveEnemySpecial(state: GameState, a: Unit, t: Unit) {
       break
     }
     case 'tangrowth': {
-      dealDamage(state, a, t, 4, S)
+      dealDamage(state, a, t, 6, S)
       dealHeal(state, a, 2)
       break
     }
     case 'serperior': {
-      // Leaf Storm: 5 to the target, 2 to every enemy beside it
-      dealDamage(state, a, t, 5, S)
+      // Leaf Storm: 6 to the target, 2 to every enemy beside it
+      dealDamage(state, a, t, 6, S)
       for (const s of state.units) {
         if (s.owner === a.owner || s.id === t.id) continue
         if (Math.max(Math.abs(s.col - t.col), Math.abs(s.row - t.row)) === 1) dealDamage(state, a, s, 2, S)
@@ -1083,7 +1090,7 @@ function resolveEnemySpecial(state: GameState, a: Unit, t: Unit) {
       break
     }
     case 'alakazam': {
-      dealDamage(state, a, t, 5, S)
+      dealDamage(state, a, t, 6, S)
       if (t.hp > 0) knockback(state, a, t, 2)
       break
     }
@@ -1102,11 +1109,11 @@ function resolveEnemySpecial(state: GameState, a: Unit, t: Unit) {
       break
     }
     case 'krookodile': {
-      dealDamage(state, a, t, t.hp * 2 < t.maxHp ? 7 : 4, S)
+      dealDamage(state, a, t, 6, S)
       break
     }
     case 'dragonite': {
-      dealDamage(state, a, t, 5, S)
+      dealDamage(state, a, t, 6, S)
       break
     }
     default: {
@@ -1205,7 +1212,7 @@ export function resolveStep(state0: GameState): GameState | null {
       for (const s of state.units) {
         if (s.owner === u.owner) continue
         if (Math.max(Math.abs(s.col - u.col), Math.abs(s.row - u.row)) <= radius)
-          dealDamage(state, u, s, u.key === 'chandelure' ? 3 : 4, COLOR.special)
+          dealDamage(state, u, s, u.key === 'chandelure' ? 3 : u.key === 'garchomp' ? 6 : 4, COLOR.special)
       }
     }
     u.charge = 0

@@ -16,7 +16,7 @@ import {
 } from '../src/game/actions'
 import { aiDraft, aiStep } from '../src/game/ai'
 import { MOVE_CAP, ROSTER, costEquiv, typeMod } from '../src/game/data'
-import { canMoveNow, openDeployTiles, reachable, targetsFrom } from '../src/game/rules'
+import { canActNow, canMoveNow, openDeployTiles, reachable, targetsFrom } from '../src/game/rules'
 import type { GameState, Unit } from '../src/game/types'
 
 let failures = 0
@@ -242,12 +242,12 @@ ok(surfMid.hp < 12 && surfShore.hp === 7 && surfAlly.hp < 7, 'Surf soaks midfiel
 let ice = newBattle(draftA, draftB)
 ice.rocks = []
 spawn(ice, 960, 'mamoswine', 'A', 2, 5, { charge: 3, chargeMax: 3 })
-spawn(ice, 961, 'snorlax', 'B', 2, 4, { hp: 22, maxHp: 22 }) // ice vs normal = neutral, big body to survive
+spawn(ice, 961, 'snorlax', 'B', 2, 4, { hp: 30, maxHp: 30 }) // ice vs normal = neutral, big body to survive
 const spearPlan = planAttack(ice, 960, 961, true)!
 const allSpears = withRandom(0, () => resolveStep(spearPlan)!) // 0 < every chance → all four land
-ok(allSpears.units.find((u) => u.id === 961)!.hp === 22 - 16, 'Icicle Spear can strike four times (4×4 dmg, premium +1)')
+ok(allSpears.units.find((u) => u.id === 961)!.hp === 30 - 24, 'Icicle Spear can strike four times (4×6 dmg)')
 const oneSpear = withRandom(0.99, () => resolveStep(planAttack(ice, 960, 961, true)!)!) // first lands, second (0.99≥0.75) stops
-ok(oneSpear.units.find((u) => u.id === 961)!.hp === 22 - 4, 'Icicle Spear stops after the first hit misses (min 1 hit)')
+ok(oneSpear.units.find((u) => u.id === 961)!.hp === 30 - 6, 'Icicle Spear stops after the first hit misses (min 1 hit, 6 each)')
 
 /* --- Drifblim Ominous Wind: ranged phasing hit + self-heal --- */
 let dbl = newBattle(draftA, draftB)
@@ -423,6 +423,23 @@ spawn(pr, 990, 'lucario', 'A', 2, 5, { charge: 5, chargeMax: 5 }) // great-tier,
 spawn(pr, 991, 'blaziken', 'B', 2, 4, { hp: 15, maxHp: 15 }) // fighting vs fire = neutral
 const prRes = resolveStep(planAttack(pr, 990, 991, true)!)!
 ok(prRes.units.find((u) => u.id === 991)!.hp === 15 - 5, 'premium special hits +1 harder (Lucario 4→5)')
+
+/* --- the hand-tuned "flat 6" specials do exactly 6, no premium bonus --- */
+let f6 = newBattle(draftA, draftB)
+f6.rocks = []
+spawn(f6, 992, 'gengar', 'A', 2, 5, { charge: 8, chargeMax: 8 }) // ultra, but SPECIAL_SIX → flat 6
+spawn(f6, 993, 'blaziken', 'B', 2, 4, { hp: 15, maxHp: 15 }) // ghost vs fire = neutral
+const f6Res = resolveStep(planAttack(f6, 992, 993, true)!)!
+ok(f6Res.units.find((u) => u.id === 993)!.hp === 15 - 6, 'flat-6 special deals exactly 6 (Gengar, no premium +1)')
+
+/* --- stun now blocks acting too, not just movement --- */
+let st = newBattle(draftA, draftB)
+st.rocks = []
+const stU = spawn(st, 994, 'lucario', 'A', 2, 5, { charge: 5, chargeMax: 5, stunned: true })
+spawn(st, 995, 'magneton', 'B', 2, 4)
+ok(!canMoveNow(st, stU), 'a stunned Pokémon cannot move')
+ok(!canActNow(st, stU), 'a stunned Pokémon cannot attack either')
+ok(planAttack(st, 994, 995, false) === null, 'a stunned Pokémon cannot declare an attack')
 
 /* --- full AI vs AI games run to completion --- */
 for (let g2 = 0; g2 < 5; g2++) {

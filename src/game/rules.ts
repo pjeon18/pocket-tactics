@@ -122,10 +122,10 @@ export function canMoveNow(state: GameState, u: Unit): boolean {
   return state.movesLeft > 0 && !championMovedThisTurn(state)
 }
 
-/** Stun blocks movement only — a stunned Pokémon can still attack from where it stands. */
+/** A stunned Pokémon is frozen for its next turn — it can neither move nor attack. */
 export function canActNow(state: GameState, u: Unit): boolean {
   if (state.winner || u.owner !== state.current) return false
-  return !u.acted && !u.summoned
+  return !u.acted && !u.summoned && !u.stunned
 }
 
 const ORTHO = [
