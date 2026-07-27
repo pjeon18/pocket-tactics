@@ -768,7 +768,8 @@ export function Battle({
 
 /* ---------- guided tutorial coach ---------- */
 
-type TutorialStep = 'deploy' | 'restTurn' | 'wait' | 'move' | 'restMove' | 'attack' | 'resolveTurn'
+type TutorialStep =
+  | 'deploy' | 'restTurn' | 'wait' | 'move' | 'restMove' | 'charge' | 'special' | 'resolveTurn'
 
 function tutorialStep(state: GameState, resolving: boolean): TutorialStep {
   if (resolving || state.current !== 'A') return 'wait'
@@ -779,41 +780,90 @@ function tutorialStep(state: GameState, resolving: boolean): TutorialStep {
   const champB = state.units.find((u) => u.owner === 'B' && u.isChampion)
   const inRange =
     !!champB && Math.max(Math.abs(unit.col - champB.col), Math.abs(unit.row - champB.row)) <= unit.range
-  if (inRange) return 'attack'
-  // out of range: move if it still can, otherwise end the turn and continue next one
-  if (unit.moved || state.movesLeft <= 0) return 'restMove'
-  return 'move'
+  if (!inRange) {
+    // out of range: move if it still can this turn, otherwise end the turn and continue
+    return unit.moved || state.movesLeft <= 0 ? 'restMove' : 'move'
+  }
+  // in range: charge the special up, then unleash it as the finisher
+  return unit.charge >= unit.chargeMax ? 'special' : 'charge'
 }
 
-const TUTORIAL_COPY: Record<TutorialStep, { title: string; body: string }> = {
+const TUTORIAL_COPY: Record<TutorialStep, { title: string; body: string; highlight: string[] }> = {
   deploy: {
     title: 'Step 1 — Deploy',
-    body: 'Tap Pikachu on your bench (right side), then tap a glowing tile near your side to send it onto the field.',
+    body: 'Poké Balls (highlighted below) are your currency. Tap Pikachu on your bench — its card shows it costs 2 — then tap a glowing tile to send it out.',
+    highlight: ['.bench-card', '.econ-row'],
   },
   restTurn: {
-    title: 'Step 2 — End your turn',
-    body: "A Pokémon can't attack the turn it deploys — it needs a turn to settle in. Press End turn.",
+    title: 'Step 2 — Settle in',
+    body: "A Pokémon can't attack the turn it deploys. Press End turn to let it settle — its special starts charging too.",
+    highlight: ['.endturn-hud'],
   },
   wait: {
     title: 'Rival’s turn',
-    body: 'Your rival is passive in the tutorial, so it just passes. Hang tight…',
+    body: 'The tutorial rival is passive, so it just passes its turn. Hang tight…',
+    highlight: [],
   },
   move: {
     title: 'Step 3 — Move in',
-    body: 'Tap your Pikachu, then a blue tile to move it toward the gold enemy champion until it’s in range.',
+    body: 'Tap your Pikachu, then a blue tile to move it toward the gold enemy champion until it’s within range.',
+    highlight: [],
   },
   restMove: {
     title: 'Step 3 — Keep closing in',
-    body: 'That’s this turn’s move. Press End turn, then move again next turn until Pikachu is beside the champion.',
+    body: 'That’s this turn’s move. Press End turn, then move again next turn until Pikachu can reach the champion.',
+    highlight: ['.endturn-hud'],
   },
-  attack: {
-    title: 'Step 4 — Declare an attack',
-    body: 'Tap the enemy champion to plan an attack. Attacks are declared now and all land when the turn ends.',
+  charge: {
+    title: 'Step 4 — Charge the special',
+    body: 'Specials fire only once their charge meter is full. Tap Pikachu to watch its pips fill, then press End turn to charge one more notch.',
+    highlight: ['.endturn-hud'],
+  },
+  special: {
+    title: 'Step 5 — Unleash the special',
+    body: 'Charged! Tap Pikachu, press Use Thunder Wave, then tap the champion. Specials are your big, charged attacks — and they never miss.',
+    highlight: ['.btn-gold'],
   },
   resolveTurn: {
-    title: 'Step 5 — Resolve',
-    body: 'Press End turn — your planned attack lands and knocks out the champion. That wins the match.',
+    title: 'Step 6 — Resolve',
+    body: 'Attacks and specials are declared now and land when the turn ends. Press End turn to fire it and knock out the champion.',
+    highlight: ['.endturn-hud'],
   },
+}
+
+/** Draws a pulsing amber ring around each live UI element the current step points at. */
+function TutorialSpotlight({ selectors }: { selectors: string[] }) {
+  const [rects, setRects] = useState<{ x: number; y: number; w: number; h: number }[]>([])
+  const key = selectors.join('|')
+  useEffect(() => {
+    if (!selectors.length) { setRects([]); return }
+    const measure = () => {
+      const rs: { x: number; y: number; w: number; h: number }[] = []
+      for (const s of selectors) {
+        document.querySelectorAll(s).forEach((el) => {
+          const r = el.getBoundingClientRect()
+          if (r.width && r.height) rs.push({ x: r.left, y: r.top, w: r.width, h: r.height })
+        })
+      }
+      setRects(rs)
+    }
+    measure()
+    const id = window.setInterval(measure, 140)
+    window.addEventListener('resize', measure)
+    return () => { window.clearInterval(id); window.removeEventListener('resize', measure) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key])
+  return (
+    <>
+      {rects.map((r, i) => (
+        <div
+          key={i}
+          className="tut-ring"
+          style={{ left: r.x - 6, top: r.y - 6, width: r.w + 12, height: r.h + 12 }}
+        />
+      ))}
+    </>
+  )
 }
 
 function TutorialCoach({
@@ -823,14 +873,17 @@ function TutorialCoach({
   const step = tutorialStep(state, resolving)
   const copy = TUTORIAL_COPY[step]
   return (
-    <div className="tutorial-coach">
-      <div className="tutorial-coach-head">
-        <span className="tutorial-tag">Tutorial</span>
-        <button className="btn btn-tiny tutorial-skip" onClick={onExit}>Skip</button>
+    <>
+      <TutorialSpotlight selectors={copy.highlight} />
+      <div className="tutorial-coach">
+        <div className="tutorial-coach-head">
+          <span className="tutorial-tag">Tutorial</span>
+          <button className="btn btn-tiny tutorial-skip" onClick={onExit}>Skip</button>
+        </div>
+        <div className="tutorial-coach-title">{copy.title}</div>
+        <div className="tutorial-coach-body">{copy.body}</div>
       </div>
-      <div className="tutorial-coach-title">{copy.title}</div>
-      <div className="tutorial-coach-body">{copy.body}</div>
-    </div>
+    </>
   )
 }
 

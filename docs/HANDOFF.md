@@ -153,10 +153,13 @@ info card + threat range. (The old "Danger zone" button was removed for this.)
 `{t:'tutorial'}`). Scenario in `src/game/tutorial.ts`: player = Victini +
 one Pikachu bench, rival = a wounded Manaphy champion parked at (3,3), rocks
 cleared. The rival is passive (the AI loop passes when `tutorial`). A
-state-driven `TutorialCoach` overlay walks the real store actions through
-deploy → rest (deployed units can't attack) → move → declare → resolve → win,
-with a `restMove` fallback if the unit is stranded out of range. Electric beats
-water so one clean Pikachu hit ends it. Drive/verify with
+state-driven `TutorialCoach` overlay walks the real store actions through deploy → rest (deployed units can't
+attack) → move → **charge** → **charged special (Thunder Wave)** → resolve →
+win, with a `restMove` fallback if stranded. The charged special is the
+finisher (specials never miss/crit, so it's deterministic — champ HP 3, electric
+special vs water = 4). A `TutorialSpotlight` rings the real UI per step
+(`highlight` selectors: bench card + Poké-ball purse on deploy, End turn, the
+gold special button). Drive/verify with
 `scripts/tut-test.mjs`. The How-to-play menu expander now shows the rules in a
 left column and Type Synergies in a right column (`.howto-cols`); the standalone
 Type-synergies toggle is gone.

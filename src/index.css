@@ -968,6 +968,12 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 .tutorial-skip { padding: 4px 12px; }
 .tutorial-coach-title { font-size: 18px; font-weight: 900; color: var(--ink); margin-bottom: 3px; }
 .tutorial-coach-body { font-size: 14px; font-weight: 600; line-height: 1.5; color: var(--mist); }
+.tut-ring {
+  position: fixed; z-index: 21; pointer-events: none; border: 3px solid var(--amber); border-radius: 12px;
+  box-shadow: 0 0 0 3px rgba(201, 147, 10, 0.28), 0 0 20px rgba(201, 147, 10, 0.55);
+  animation: tutPulse 1.15s ease-in-out infinite;
+}
+@keyframes tutPulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
 .btn-tutorial {
   background: transparent; color: var(--amber); border: 2.5px dashed var(--amber);
   box-shadow: none; font-size: 14.5px;
