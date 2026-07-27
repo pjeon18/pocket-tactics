@@ -106,16 +106,20 @@ finishers). The live truth is the Effect column in BALANCE.md.
 
 ## 4. Type synergies (TFT-style)
 
-Unlocks at **3 UNIQUE same-type Pokémon** (tier 1) and **5** (tier 2). **Champion
-counts; duplicates do NOT** (spamming one cheap body can't cheat it — Paul's
-explicit ask). Numeric bonuses double at tier 2. Twelve defined:
+Unlocks at **3 UNIQUE same-type Pokémon** (tier 1) and **5** (tier 2) — except
+**Normal, which tiers at 2 / 4** (per-type thresholds via `synergyThresholds(t)`
+in `data.ts`; the legend, tracker chips, and tooltips all read from it).
+**Champion counts; duplicates do NOT** (spamming one cheap body can't cheat it —
+Paul's explicit ask). Numeric bonuses double at tier 2. Twelve defined:
 
 Blaze(fire +ATK), Torrent(water +MOV), Static(electric +crit%),
-Mindlink(psychic +range), Photosynthesis(grass end-turn regen), Guts(normal +ATK
-under half HP), Focus(fighting +special dmg), Bulwark(steel −dmg taken),
-Frostbite(ice +dmg to stunned), Sturdy(rock crit-immunity), Ambush(dark +dmg to
-full-HP), Swarm(bug double normal attack). Logic in `rules.ts`
-(`synergyTier`, `tierOf`, `hasSynergy`); descriptions + `desc2` in `data.ts`.
+Mindlink(psychic +range), Photosynthesis(grass end-turn regen),
+**Payday(normal: +1 Poké Ball at your turn start, +2 at tier 2 — replaced Guts,
+paid in `grantIncome` on top of INCOME_CAP)**, Focus(fighting +special dmg),
+Bulwark(steel −dmg taken), Frostbite(ice +dmg to stunned), Sturdy(rock
+crit-immunity), Ambush(dark +dmg to full-HP), Swarm(bug double normal attack).
+Logic in `rules.ts` (`synergyTier`, `tierOf`, `hasSynergy`); descriptions +
+`desc2` in `data.ts`.
 
 ---
 
@@ -144,11 +148,25 @@ all three modes. (Added after a 16-min/10-round 2P game.)
 **Off-turn inspection:** click any Pokémon while it's NOT your turn → read-only
 info card + threat range. (The old "Danger zone" button was removed for this.)
 
+**Legendary summons (2026-07-27):** every draft (classic AND blitz) also picks
+**2 of 4 legendaries** — one-shot effects cast for Poké Balls, never fielded,
+once per game each. `SUMMONS`/`SUMMON_ORDER`/`SUMMON_PICKS` in `data.ts`;
+`useSummon` in `actions.ts` (network-ready via the `ACTIONS` registry);
+`PlayerState.summons/usedSummons`; UI = `SummonRow` above the inventory.
+— **Ho-Oh 4P**: every fielded ally gains +3 max HP immediately.
+— **Lugia 4P**: `state.lugiaLock` — opponent can neither move nor deploy next
+  turn (cleared in `finishTurn` when the grounded side's turn ends).
+— **Dialga 6P**: all your units' specials fully charged.
+— **Palkia 6P**: all your units have 5 movement this turn (via `moveBuff`).
+AI drafts 2 at random and casts them heuristically in `aiStep`.
+
 ---
 
 ## 6. Items & field drops
 
-A field Poké Ball spawns **every 4 rounds** (max 2), static (no bob). Walk a
+A field Poké Ball spawns **every 3 rounds** (max 2), static (no bob). Drop
+weights lean toward premium loot (Ultra Ball 10, Max Potion 7, Choice items /
+Power Herb 4 each; plain Potion trimmed to 10). Walk a
 Pokémon onto it for a weighted `DROPS` roll. Consumables: Potion(3)/Super(5)/Max
 (full), Revive. Held (1 per Pokémon): Assault Vest(+2 HP), Life Orb(+1 all dmg),
 Choice Scarf(+2 MOV), Choice Specs(+3 range) — Choice items + Power Herb are very

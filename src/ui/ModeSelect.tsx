@@ -8,6 +8,8 @@ import {
   ITEMS,
   ROLE_META,
   ROSTER,
+  SUMMONS,
+  SUMMON_ORDER,
   TYPE_META,
   costEquiv,
 } from '../game/data'
@@ -17,11 +19,12 @@ export function HowToPlay() {
   return (
     <ul>
       <li>Pick a Mythical champion and draft 8 Pokémon (or buy live from the shop in Blitz). Type matchups are real — super effective hits do +3, resisted hits −2.</li>
-      <li>Deploy zones scale with cost: Poké-tier lands up to 4 rows deep, Great-tier 3, Ultra-tier 2 (max {FIELD_CAP} fielded at once). Trade 3 Poké Balls for a Great Ball, 6 for an Ultra. Basics fight the turn they land; stronger Pokémon need a turn to arrive.</li>
+      <li>Deploy zones scale with cost: Poké-tier lands up to 4 rows deep, Great-tier 3, Ultra-tier 2 (max {FIELD_CAP} fielded at once). Trade 3 Poké Balls for a Great Ball, 6 for an Ultra. No Pokémon attacks the turn it lands, but it may move.</li>
       <li>Each turn, up to 3 of your Pokémon may move, and the turn clock gives you 60 seconds — when it runs out, the turn ends itself. Undo is free until you declare an attack.</li>
       <li>Attacks are declared during your turn and all land together when you end it. Every KO pays you a Poké Ball.</li>
       <li>If your champion moves, nothing else may move that turn. Guard it well.</li>
-      <li>Field Poké Balls drop every 4 rounds — walk onto one for items. Knock out the enemy champion to win.</li>
+      <li>Field Poké Balls drop every 3 rounds — walk onto one for items.</li>
+      <li>You also draft 2 legendary summons — one-shot effects cast for Poké Balls, once per game each. Knock out the enemy champion to win.</li>
     </ul>
   )
 }
@@ -85,6 +88,30 @@ export function Compendium() {
         </table>
       </div>
 
+      <h4>Legendary summons — draft 2, cast for Poké Balls, once per game each</h4>
+      <div className="comp-scroll">
+        <table>
+          <thead>
+            <tr><th>Summon</th><th>Cost</th><th>Effect</th></tr>
+          </thead>
+          <tbody>
+            {SUMMON_ORDER.map((k) => {
+              const s = SUMMONS[k]
+              return (
+                <tr key={k}>
+                  <td className="comp-name">
+                    <Sprite dex={s.dex} name={s.name} tokenColor="#f5a524" />
+                    {s.name}
+                  </td>
+                  <td>{s.cost}P</td>
+                  <td className="comp-special">{s.desc}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+
       <h4>Field Poké Ball drop rates</h4>
       <div className="comp-scroll comp-drops">
         <table>
@@ -104,7 +131,7 @@ export function Compendium() {
           </tbody>
         </table>
       </div>
-      <p className="comp-note">One field Poké Ball drops every 4 rounds (max 2 on the board).</p>
+      <p className="comp-note">One field Poké Ball drops every 3 rounds (max 2 on the board).</p>
     </div>
   )
 }

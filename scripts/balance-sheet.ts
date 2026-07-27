@@ -3,7 +3,7 @@
  * balance passes. Re-run after any data change: npx tsx scripts/balance-sheet.ts
  */
 import { writeFileSync } from 'node:fs'
-import { CHAMPIONS, DROPS, ITEMS, ROSTER, SYNERGIES, TYPE_META, costEquiv } from '../src/game/data'
+import { CHAMPIONS, DROPS, ITEMS, ROSTER, SUMMONS, SUMMON_ORDER, SYNERGIES, TYPE_META, costEquiv, synergyThresholds } from '../src/game/data'
 import type { ItemKey, PType, Role, Species } from '../src/game/types'
 
 const all = Object.values(ROSTER)
@@ -44,6 +44,17 @@ for (const c of Object.values(CHAMPIONS)) {
   push(`| ${c.name} | ${TYPE_META[c.ptype].label} | ${c.hp} | ${c.atk} | ${c.range} | ${c.move} | ${c.chargeMax}${c.once ? ' (once)' : ''} | ${c.ability} | ${c.hint} |`)
 }
 push()
+push('## Legendary summons')
+push()
+push('Drafted 2 per player (classic and blitz). One-shot battlefield effects cast for Poké Balls — never fielded, once per game each.')
+push()
+push('| Summon | Cost | Effect |')
+push('|---|---|---|')
+for (const k of SUMMON_ORDER) {
+  const s = SUMMONS[k]
+  push(`| ${s.name} | ${s.cost}P | ${s.desc} |`)
+}
+push()
 
 /* ---------- distributions ---------- */
 const count = <K extends string>(keys: K[]) => {
@@ -54,12 +65,13 @@ const count = <K extends string>(keys: K[]) => {
 
 push('## Distributions')
 push()
-push('### By type (synergy threshold is 3 — champion types add to the count in play)')
+push('### By type (unique species only — champion types add to the count in play)')
 push()
-push('| Type | Roster count | Synergy defined |')
-push('|---|---|---|')
+push('| Type | Roster count | Synergy defined | Tiers at |')
+push('|---|---|---|---|')
 for (const [t, n] of count(all.map((s) => s.ptype))) {
-  push(`| ${TYPE_META[t as PType].label} | ${n} | ${SYNERGIES[t as PType] ? `✓ ${SYNERGIES[t as PType]!.name}` : '—'} |`)
+  const [th1, th2] = synergyThresholds(t as PType)
+  push(`| ${TYPE_META[t as PType].label} | ${n} | ${SYNERGIES[t as PType] ? `✓ ${SYNERGIES[t as PType]!.name}` : '—'} | ${SYNERGIES[t as PType] ? `${th1} / ${th2}` : '—'} |`)
 }
 push()
 push('### By role')
@@ -121,7 +133,7 @@ for (const d of DROPS) {
   push(`| ${name} | ${d.weight} | ${((d.weight / totalW) * 100).toFixed(1)}% |`)
 }
 push()
-push(`One field Poké Ball spawns every 4 rounds (max 2 on the board). Deploy time: Poké-tier basics act the turn they land; Great/Ultra-tier need a turn to arrive.`)
+push(`One field Poké Ball spawns every 3 rounds (max 2 on the board). No Pokémon attacks the turn it lands, but it may move.`)
 push()
 push('## Signature specials — status')
 push()

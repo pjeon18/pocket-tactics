@@ -79,26 +79,37 @@ _Generated from `src/game/data.ts` by `scripts/balance-sheet.ts` — do not edit
 | Victini | Fire | 12 | 2 | 1 | 1 | 5 | V-Create | This turn, every one of your Pokémon gets +2 attack and +2 movement, right away |
 | Manaphy | Water | 12 | 1 | 2 | 1 | 6 | Surf | A tidal wave hits every Pokémon outside her own back two rows for 4 — friend and foe alike |
 
+## Legendary summons
+
+Drafted 2 per player (classic and blitz). One-shot battlefield effects cast for Poké Balls — never fielded, once per game each.
+
+| Summon | Cost | Effect |
+|---|---|---|
+| Ho-Oh | 4P | Sacred Fire — every Pokémon you have fielded gains +3 max HP, right away |
+| Lugia | 4P | Aeroblast — next turn your opponent can neither move nor deploy |
+| Dialga | 6P | Roar of Time — every one of your Pokémon gets its special fully charged |
+| Palkia | 6P | Spacial Rend — all of your Pokémon have 5 movement this turn |
+
 ## Distributions
 
-### By type (synergy threshold is 3 — champion types add to the count in play)
+### By type (unique species only — champion types add to the count in play)
 
-| Type | Roster count | Synergy defined |
-|---|---|---|
-| Water | 6 | ✓ Torrent |
-| Normal | 6 | ✓ Guts |
-| Fighting | 6 | ✓ Focus |
-| Fire | 6 | ✓ Blaze |
-| Grass | 5 | ✓ Photosynthesis |
-| Dark | 5 | ✓ Ambush |
-| Rock | 4 | ✓ Sturdy |
-| Steel | 4 | ✓ Bulwark |
-| Bug | 4 | ✓ Swarm |
-| Psychic | 4 | ✓ Mindlink |
-| Ice | 3 | ✓ Frostbite |
-| Electric | 3 | ✓ Static |
-| Ghost | 2 | — |
-| Dragon | 2 | — |
+| Type | Roster count | Synergy defined | Tiers at |
+|---|---|---|---|
+| Water | 6 | ✓ Torrent | 3 / 5 |
+| Normal | 6 | ✓ Payday | 2 / 4 |
+| Fighting | 6 | ✓ Focus | 3 / 5 |
+| Fire | 6 | ✓ Blaze | 3 / 5 |
+| Grass | 5 | ✓ Photosynthesis | 3 / 5 |
+| Dark | 5 | ✓ Ambush | 3 / 5 |
+| Rock | 4 | ✓ Sturdy | 3 / 5 |
+| Steel | 4 | ✓ Bulwark | 3 / 5 |
+| Bug | 4 | ✓ Swarm | 3 / 5 |
+| Psychic | 4 | ✓ Mindlink | 3 / 5 |
+| Ice | 3 | ✓ Frostbite | 3 / 5 |
+| Electric | 3 | ✓ Static | 3 / 5 |
+| Ghost | 2 | — | — |
+| Dragon | 2 | — | — |
 
 ### By role
 
@@ -163,20 +174,20 @@ _Generated from `src/game/data.ts` by `scripts/balance-sheet.ts` — do not edit
 
 | Drop | Weight | Chance |
 |---|---|---|
-| Potion | 16 | 16.2% |
-| Super Potion | 10 | 10.1% |
-| Max Potion | 5 | 5.1% |
-| Revive | 10 | 10.1% |
-| Assault Vest | 12 | 12.1% |
-| Life Orb | 12 | 12.1% |
-| Great Ball (currency) | 15 | 15.2% |
-| Ultra Ball (currency) | 7 | 7.1% |
-| Lum Berry | 6 | 6.1% |
-| Choice Scarf | 2 | 2.0% |
-| Choice Specs | 2 | 2.0% |
-| Power Herb | 2 | 2.0% |
+| Potion | 10 | 9.6% |
+| Super Potion | 10 | 9.6% |
+| Max Potion | 7 | 6.7% |
+| Revive | 10 | 9.6% |
+| Assault Vest | 12 | 11.5% |
+| Life Orb | 12 | 11.5% |
+| Great Ball (currency) | 15 | 14.4% |
+| Ultra Ball (currency) | 10 | 9.6% |
+| Lum Berry | 6 | 5.8% |
+| Choice Scarf | 4 | 3.8% |
+| Choice Specs | 4 | 3.8% |
+| Power Herb | 4 | 3.8% |
 
-One field Poké Ball spawns every 4 rounds (max 2 on the board). Deploy time: Poké-tier basics act the turn they land; Great/Ultra-tier need a turn to arrive.
+One field Poké Ball spawns every 3 rounds (max 2 on the board). No Pokémon attacks the turn it lands, but it may move.
 
 ## Signature specials — status
 
