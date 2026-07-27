@@ -656,6 +656,8 @@ export const isPremium = (cost: Cost): boolean => cost.great > 0 || cost.ultra >
 for (const s of Object.values(ROSTER)) {
   if (!isPremium(s.cost) && s.cost.poke < 4) s.cooldown += 3
   if (isPremium(s.cost)) s.atk += 1
+  // tanks are meant to be committed, not spammed — floor their redeploy at 6
+  if (s.role === 'tank') s.cooldown = Math.max(s.cooldown, 6)
 }
 
 export const CHAMPION_ORDER = ['mew', 'celebi', 'jirachi', 'victini', 'manaphy']

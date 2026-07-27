@@ -941,6 +941,8 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 .summon-preview-actions { display: flex; gap: 8px; align-items: center; }
 .summon-preview-actions .btn-gold { display: inline-flex; align-items: center; gap: 5px; }
 .summon-aim-hint { border-style: dashed; }
+.summon-cost-line { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
+.summon-cost-line img { image-rendering: pixelated; vertical-align: middle; }
 
 /* summon hazard footprints on the board */
 .cell-hazard { position: absolute; pointer-events: none; z-index: 2; border-radius: 4px; animation: hazardPulse 1.2s ease-in-out infinite; }

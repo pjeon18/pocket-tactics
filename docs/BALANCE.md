@@ -37,7 +37,7 @@ _Generated from `src/game/data.ts` by `scripts/balance-sheet.ts` — do not edit
 | Chansey | generalist | Normal | 1G+1P | 4 | 6 | 15 | 2 | 1 | 1 | 3 | Soft-Boiled | Restore 5 HP to an ally within 2 tiles, right away |
 | Espeon | specialist | Psychic | 1G+1P | 4 | 6 | 9 | 4 | 2 | 1 | 4 | Psyshock | 4 dmg and hurls the target back 2 tiles |
 | Ferrothorn | tank | Steel | 1G+1P | 4 | 6 | 15 | 3 | 1 | 1 | 2 | Power Whip | 4 dmg and drags the target adjacent to Ferrothorn |
-| Gigalith | tank | Rock | 4P | 4 | 4 | 14 | 2 | 1 | 1 | 2 | Rock Slide | 3 dmg, plus 2 to every enemy beside the target |
+| Gigalith | tank | Rock | 4P | 4 | 6 | 14 | 2 | 1 | 1 | 2 | Rock Slide | 3 dmg, plus 2 to every enemy beside the target |
 | Golem | tank | Rock | 1G+1P | 4 | 6 | 15 | 4 | 1 | 1 | 2 | Rock Blast | 2 dmg, hitting 2–4 times |
 | Houndoom | dealer | Dark | 1G+1P | 4 | 6 | 9 | 5 | 2 | 2 | 4 | Dark Pulse | 4 dmg, piercing on for 3 into the tile behind |
 | Lucario | generalist | Fighting | 1G+1P | 4 | 6 | 10 | 4 | 2 | 2 | 3 | Aura Sphere | 4 dmg to any enemy within 3 tiles — never blocked |

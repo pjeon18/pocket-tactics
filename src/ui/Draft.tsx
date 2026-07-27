@@ -15,7 +15,7 @@ import {
 } from '../game/data'
 import { synergyThresholds } from '../game/data'
 import type { BallTier, ChampionSpecies, DraftResult, Role, Species } from '../game/types'
-import { CostDots, Sprite } from './Sprite'
+import { BallSprite, CostDots, Sprite } from './Sprite'
 import { PatternGrid, buildMoveAtk, buildSpecial } from './PatternGrid'
 
 type SortKey = 'cost' | 'atk' | 'hp' | 'range' | 'type'
@@ -211,7 +211,9 @@ export function Draft({
               {sel && <span className="picked-mark">✓</span>}
               <Sprite dex={sm.dex} name={sm.name} tokenColor="#C9930A" className="card-sprite" />
               <div className="card-name">{sm.name}</div>
-              <div className="card-stats">{sm.cost} Poké Balls · re-castable</div>
+              <div className="card-stats summon-cost-line">
+                <BallSprite tier="poke" size={15} />{sm.cost} · re-castable
+              </div>
               <div className="card-hint">{sm.desc}</div>
             </button>
           )

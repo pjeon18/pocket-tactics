@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CostDots, Sprite } from './Sprite'
+import { BallSprite, CostDots, Sprite } from './Sprite'
 import { SynergyLegend } from './Draft'
 import {
   CHAMPIONS,
@@ -23,7 +23,7 @@ export function HowToPlay() {
       <li>Attacks are declared during your turn and all land together when you end it. Every KO pays you a Poké Ball.</li>
       <li>If your champion moves, nothing else may move that turn. Guard it well.</li>
       <li>Field Poké Balls drop every 3 rounds — walk onto one for items.</li>
-      <li>You also draft 2 legendary summons — one-shot effects cast for Poké Balls, once per game each. Knock out the enemy champion to win.</li>
+      <li>You also draft 2 legendary summons — battlefield effects cast for Poké Balls, re-castable as long as you can pay. Knock out the enemy champion to win.</li>
     </ul>
   )
 }
@@ -91,7 +91,7 @@ export function Compendium() {
         </table>
       </div>
 
-      <h4>Legendary summons — draft 2, cast for Poké Balls, once per game each</h4>
+      <h4>Legendary summons — draft 2, cast for Poké Balls, re-castable</h4>
       <div className="comp-scroll">
         <table>
           <thead>
@@ -106,7 +106,7 @@ export function Compendium() {
                     <Sprite dex={s.dex} name={s.name} tokenColor="#f5a524" />
                     {s.name}
                   </td>
-                  <td>{s.cost}P</td>
+                  <td><span className="summon-cost-line"><BallSprite tier="poke" size={14} />{s.cost}</span></td>
                   <td className="comp-special">{s.desc}</td>
                 </tr>
               )
