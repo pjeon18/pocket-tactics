@@ -116,7 +116,7 @@ export const othersMovedThisTurn = (state: GameState) =>
  */
 export function canMoveNow(state: GameState, u: Unit): boolean {
   if (state.winner || u.owner !== state.current) return false
-  if (u.moved || u.summoned || u.stunned) return false
+  if (u.moved || u.stunned) return false // freshly deployed units may move — just not attack
   if (u.isChampion) return !othersMovedThisTurn(state) && !championMovedThisTurn(state)
   return state.movesLeft > 0 && !championMovedThisTurn(state)
 }

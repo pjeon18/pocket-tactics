@@ -364,9 +364,11 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 
 /* HUD: round, time, moves, balls */
 .hud {
-  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-  background: var(--paper); border: 2px solid var(--line); border-radius: 16px; padding: 10px 14px;
+  display: flex; align-items: center; gap: 14px; flex-wrap: nowrap;
+  background: var(--paper); border: 2px solid var(--line); border-radius: 16px; padding: 8px 14px;
 }
+.hud .endturn-hud { margin-left: auto; padding: 11px 22px; font-size: 15px; white-space: nowrap; flex-shrink: 0; }
+.hud .hud-block { flex-shrink: 0; }
 .hud-block { display: flex; flex-direction: column; gap: 2px; }
 .hud-label { font-size: 10.5px; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mist); }
 .hud-value { font-size: 22px; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
@@ -702,12 +704,15 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 .bench-row { display: flex; gap: 10px; align-items: stretch; }
 .bench { flex: 1; display: flex; gap: 7px; overflow-x: auto; padding: 2px; flex-wrap: wrap; }
 .bench-card {
-  position: relative; flex-shrink: 0; width: 72px;
+  position: relative; flex-shrink: 0; width: 72px; height: 72px; overflow: hidden;
   background: color-mix(in srgb, var(--tc, var(--mist)) 12%, #FFFFFF);
   border: 3px solid color-mix(in srgb, var(--tc, var(--mist)) 70%, #FFFFFF);
-  border-radius: 14px; padding: 6px 2px 7px; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  border-radius: 12px; padding: 2px; display: flex; flex-direction: column; align-items: center;
+  justify-content: space-between; gap: 0;
   cursor: pointer; transition: border-color 0.15s, opacity 0.2s, transform 0.1s;
 }
+.bench-card .sprite { width: 42px; height: 42px; object-fit: contain; image-rendering: pixelated; }
+.bench-card .cost-dots img, .bench-card .cost-dots .ball-dot { width: 12px; height: 12px; }
 .bench-card:hover:not(:disabled) { transform: translateY(-2px); }
 .bench-card .sprite { width: 42px; height: 42px; object-fit: contain; image-rendering: pixelated; }
 .bench-card .sprite-token { width: 32px; height: 32px; font-size: 14px; }
@@ -727,7 +732,15 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
   position: fixed; inset: 0; z-index: 20; background: rgba(21, 24, 29, 0.85);
   backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center;
 }
-.overlay-card { text-align: center; padding: 24px; }
+.overlay-card {
+  text-align: center; padding: 36px 44px; max-width: 560px; width: calc(100% - 40px);
+  background: var(--card); color: var(--ink); border-radius: 24px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45); display: flex; flex-direction: column; gap: 14px;
+}
+.overlay-review { align-self: center; }
+.review-return {
+  position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%); z-index: 25;
+}
 .overlay-title {
   font-size: 64px; font-weight: 900; letter-spacing: 0.02em; color: var(--on-dark);
   animation: goPop 0.5s cubic-bezier(0.2, 1.7, 0.4, 1);
@@ -838,3 +851,26 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 .turn-clock { font-variant-numeric: tabular-nums; }
 .turn-clock-low { color: var(--danger); animation: clockPulse 1s steps(2, end) infinite; }
 @keyframes clockPulse { 50% { opacity: 0.45; } }
+
+
+/* ---------- Poké Ball wallpaper: a quiet diagonal drift behind menus ---------- */
+.ball-wallpaper {
+  position: fixed; inset: -120px; z-index: 0; pointer-events: none; opacity: 0.05;
+  background-image: url('https://raw.githubusercontent.com/msikma/pokesprite/master/items/ball/poke.png');
+  background-size: 64px 64px; image-rendering: pixelated;
+  animation: wallpaperDrift 46s linear infinite;
+}
+@keyframes wallpaperDrift { to { background-position: 640px 640px; } }
+.menu > *:not(.ball-wallpaper), .draft > *:not(.ball-wallpaper) { position: relative; z-index: 1; }
+
+/* draft chrome */
+.draft-back { position: absolute; left: 0; top: 4px; }
+.draft-head { position: relative; }
+.draft-search {
+  border: 2.5px solid rgba(242, 242, 237, 0.25); border-radius: 99px; background: transparent;
+  color: var(--on-dark); padding: 8px 18px; font-size: 14px; font-weight: 700; min-width: 200px;
+}
+.draft-search::placeholder { color: var(--on-dark-sub); }
+.draft-search:focus { outline: none; border-color: var(--amber); }
+.syn-legend-note { color: var(--on-dark); font-weight: 700; margin: 2px 0 10px; line-height: 1.5; }
+.rules .syn-legend-note, .help-pop .syn-legend-note { color: inherit; }

@@ -360,8 +360,8 @@ export function deploy(state0: GameState, owner: Owner, key: string, col: number
   else p.cooldowns[key] = sp.cooldown // the card stays in the deck; it just cools down
   if (!p.revealed.includes(key)) p.revealed.push(key) // once seen, seen forever
   const u = makeUnit(key, owner, col, row)
-  // deploy time: basics hit the ground running; Great/Ultra-tier need a turn to land
-  u.summoned = sp.tier !== 'poke'
+  // deploy time: nobody swings the turn they land (they may still move)
+  u.summoned = true
   state.units.push(u)
   state.log.push(`${sp.name} joined the battle.`)
   return state

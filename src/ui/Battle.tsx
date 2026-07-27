@@ -99,6 +99,7 @@ type ActionName = keyof typeof ACTIONS
 export function Battle({
   mode,
   blitz,
+  timerOn = true,
   draftA,
   draftB,
   net,
@@ -107,6 +108,7 @@ export function Battle({
 }: {
   mode: 'ai' | 'local'
   blitz: boolean
+  timerOn?: boolean
   draftA: DraftResult
   draftB: DraftResult
   net?: NetSession
@@ -142,13 +144,15 @@ export function Battle({
   resolvingRef.current = resolving
   const [gotHostState, setGotHostState] = useState(!isGuest)
   const [winnerShown, setWinnerShown] = useState(false)
+  const [reviewing, setReviewing] = useState(false) // hide the result to study the final board
+  const [quitConfirm, setQuitConfirm] = useState(false)
   const { waveActive, go: waveGo } = useWave()
 
   /* per-turn clock — each client times only the seat it controls */
   const doEndTurnRef = useRef<() => void>(() => {})
   const [turnLeft, setTurnLeft] = useState(TURN_SECONDS)
   const controlsCurrent =
-    !state.winner && !resolving &&
+    timerOn && !state.winner && !resolving &&
     (net ? state.current === myOwner : mode === 'ai' ? state.current === 'A' : true)
 
   useEffect(() => () => floatTimers.current.forEach(clearTimeout), [])
@@ -281,8 +285,15 @@ export function Battle({
 
   /* the win screen arrives behind a wave sweep */
   useEffect(() => {
-    if (state.winner && !winnerShown) waveGo(() => setWinnerShown(true))
-    if (!state.winner && winnerShown) setWinnerShown(false)
+    if (state.winner && !winnerShown) {
+      // let the killing blow sit on screen for a beat before the curtain
+      const t = window.setTimeout(() => waveGo(() => setWinnerShown(true)), 3000)
+      return () => clearTimeout(t)
+    }
+    if (!state.winner && winnerShown) {
+      setWinnerShown(false)
+      setReviewing(false)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.winner])
 
@@ -578,12 +589,12 @@ export function Battle({
       : mode === 'ai' ? (o === 'A' ? 'You' : 'Rival') : o === 'A' ? 'Player 1' : 'Player 2'
 
   const shared = {
-    state, mode, resolving, sel, selUnit, floats, elapsed, turnLeft, spawnIds, hitIds,
+    state, mode, resolving, sel, selUnit, floats, elapsed, turnLeft, timerOn, spawnIds, hitIds,
     dying, lunge, banner,
     onUnit, onTile,
     onInspectUnit: (u: Unit) => {
-      if (state.winner) return
-      setSel({ type: 'enemy', id: u.id }) // read-only inspect: info card + threat tiles
+      // read-only inspect: info card + threat tiles; click again to unselect
+      setSel((prev) => (prev?.type === 'enemy' && prev.id === u.id ? null : { type: 'enemy', id: u.id }))
     },
     onInspect: (key: string) => setSel(sel?.type === 'card' && sel.key === key ? null : { type: 'card', key }),
     onTrade: (target: 'great' | 'ultra') => run('tradeBalls', state.current, target),
@@ -602,7 +613,7 @@ export function Battle({
   return (
     <div className="battle">
       <div className="toolbar">
-        <button className="btn btn-tiny" onClick={onExit}>‹ Menu</button>
+        <button className="btn btn-tiny" onClick={() => (state.winner ? onExit() : setQuitConfirm(true))}>‹ Menu</button>
         <span className="round-label">Round {state.round}</span>
         <div className="help-corner">
           <button className="btn btn-tiny help-btn" aria-label="Help">?</button>
@@ -633,7 +644,7 @@ export function Battle({
             aria-label="Sound volume"
           />
         </label>
-        {mode === 'local' && (
+        {mode === 'local' && !net && (
           <button className="btn btn-tiny" onClick={() => setTabletop((v) => !v)}>
             {tabletop ? 'Side-by-side' : 'Tabletop mode'}
           </button>
@@ -666,13 +677,32 @@ export function Battle({
 
       <WaveWipe active={waveActive} />
 
-      {state.winner && winnerShown && (
+      {state.winner && winnerShown && reviewing && (
+        <button className="btn btn-primary review-return" onClick={() => setReviewing(false)}>
+          Back to results
+        </button>
+      )}
+
+      {quitConfirm && !state.winner && (
+        <div className="overlay">
+          <div className="overlay-card">
+            <div className="overlay-title">Quit this game?</div>
+            <div className="overlay-sub">This game will be lost.</div>
+            <div className="overlay-btns">
+              <button className="btn btn-primary" onClick={onExit}>Quit game</button>
+              <button className="btn btn-ghost" onClick={() => setQuitConfirm(false)}>Keep playing</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {state.winner && winnerShown && !reviewing && (
         <div className="overlay">
           <div className="overlay-card">
             <div className="overlay-title">
               {mode === 'ai'
                 ? state.winner === 'A' ? 'Victory' : 'Defeat'
-                : `${playerLabel(state.winner)} wins`}
+                : playerLabel(state.winner) === 'You' ? 'You win!' : `${playerLabel(state.winner)} wins!`}
             </div>
             <div className="overlay-sub">
               {CHAMPIONS[state.players[otherOwner(state.winner)].championKey].name} fainted ·
@@ -683,6 +713,9 @@ export function Battle({
               <button className="btn btn-primary" onClick={restart}>Rematch</button>
               <button className="btn btn-ghost" onClick={onRedraft}>New draft</button>
             </div>
+            <button className="btn btn-tiny overlay-review" onClick={() => setReviewing(true)}>
+              View the final board
+            </button>
           </div>
         </div>
       )}
@@ -745,6 +778,7 @@ interface PanelProps {
   selUnit?: Unit
   elapsed: number
   turnLeft: number
+  timerOn: boolean
   spawnIds: Set<number>
   hitIds: Set<number>
   dying: DyingUnit[]
@@ -767,7 +801,7 @@ interface PanelProps {
 function PlayerPanel(props: PanelProps) {
   const {
     owner, solo, label, state, mode, resolving, interactive, rotated, visuals, floats,
-    onUnit, onTile, onTrade, onEndTurn, elapsed, turnLeft, spawnIds, hitIds,
+    onUnit, onTile, onTrade, onEndTurn, elapsed, turnLeft, timerOn, spawnIds, hitIds,
     dying, lunge, banner,
   } = props
   const p = state.players[owner]
@@ -836,7 +870,7 @@ function PlayerPanel(props: PanelProps) {
           <div className="hud-block">
             <span className="hud-label">Turn clock</span>
             <span className={`hud-value turn-clock ${myTurn && turnLeft <= 10 ? 'turn-clock-low' : ''}`}>
-              {myTurn && !resolving ? `${Math.max(0, turnLeft)}s` : '—'}
+              {!timerOn ? 'off' : myTurn && !resolving ? `${Math.max(0, turnLeft)}s` : '—'}
             </span>
           </div>
           <div className="hud-block hud-moves">

@@ -84,14 +84,15 @@ let s3 = s2
 for (let i = 0; i < 3; i++) s3 = endTurnFully(endTurnFully(s3)) // 3 full rounds tick the cooldown to 0
 ok((s3.players.A.cooldowns.pikachu ?? 0) === 0 && deploy(s3, 'A', 'pikachu', 1, 9) !== null, 'card is redeployable after its cooldown')
 
-/* --- deploy time: basics land ready, strong Pokémon need a turn --- */
+/* --- deploy time: nobody attacks the turn they land, but they may move --- */
 let dt = newBattle(draftA, draftB)
+dt.rocks = []
 dt.players.A.poke = 5
-dt.players.A.great = 1
 const dpk = deploy(dt, 'A', 'pikachu', 0, 9)!
-ok(dpk !== null && dpk.units.find((u) => u.key === 'pikachu')!.summoned === false, 'basics fight the turn they land')
-const dgr = deploy(dpk, 'A', 'lucario', 1, 9)
-ok(dgr !== null && dgr!.units.find((u) => u.key === 'lucario')!.summoned === true, 'great-tier needs a turn to land')
+const fresh = dpk.units.find((u) => u.key === 'pikachu')!
+ok(fresh.summoned === true, 'every deploy waits a turn to attack')
+ok(canMoveNow(dpk, fresh), 'a freshly deployed Pokémon may still move')
+ok(planAttack(dpk, fresh.id, dpk.units.find((u) => u.owner === 'B')!.id, false) === null, 'and cannot declare an attack')
 
 /* --- blitz shop mode: deploy straight from the shop, nothing is kept --- */
 let bz = newBattle(draftA, draftB, true)

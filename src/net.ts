@@ -18,6 +18,12 @@ export interface NetState {
   resolving: boolean
 }
 
+/** Match settings — the room creator's choices govern both sides. */
+export interface NetMode {
+  blitz: boolean
+  timer: boolean
+}
+
 export interface NetSession {
   code: string
   role: 'host' | 'guest'
@@ -27,6 +33,8 @@ export interface NetSession {
   onState: (cb: (s: NetState) => void) => void
   sendDraft: (d: DraftResult) => void
   onDraft: (cb: (d: DraftResult) => void) => void
+  sendMode: (m: NetMode) => void
+  onMode: (cb: (m: NetMode) => void) => void
   onPeerJoin: (cb: () => void) => void
   onPeerLeave: (cb: () => void) => void
   peerCount: () => number
@@ -46,6 +54,7 @@ export function connectRoom(code: string, role: 'host' | 'guest'): NetSession {
   const act = room.makeAction('act')
   const st = room.makeAction('st')
   const draft = room.makeAction('draft')
+  const modeCh = room.makeAction('mode')
 
   // NOTE: in this trystero version, onMessage / onPeerJoin / onPeerLeave are
   // ASSIGNABLE PROPERTIES (initially null), not registration methods — calling
@@ -59,6 +68,8 @@ export function connectRoom(code: string, role: 'host' | 'guest'): NetSession {
     onState: (cb) => { st.onMessage = (s: any) => cb(s as NetState) },
     sendDraft: (d) => void draft.send(d as any),
     onDraft: (cb) => { draft.onMessage = (d: any) => cb(d as DraftResult) },
+    sendMode: (m) => void modeCh.send(m as any),
+    onMode: (cb) => { modeCh.onMessage = (m: any) => cb(m as NetMode) },
     onPeerJoin: (cb) => { room.onPeerJoin = () => cb() },
     onPeerLeave: (cb) => { room.onPeerLeave = () => cb() },
     peerCount: () => Object.keys(room.getPeers()).length,

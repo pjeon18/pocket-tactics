@@ -56,14 +56,15 @@ function HoldButton({
 export function SynergyLegend() {
   return (
     <div className="syn-legend">
+      <p className="syn-legend-note">
+        The numbers are how many UNIQUE same-type Pokémon you need fielded at once
+        (3 unlocks the effect, 5 upgrades it). Your champion counts — duplicates don't.
+      </p>
       {(Object.keys(SYNERGIES) as (keyof typeof SYNERGIES)[]).map((t) => (
         <div key={t} className="syn-legend-row">
           <em className="type-chip" style={{ background: TYPE_META[t]!.color }}>{TYPE_META[t]!.label}</em>
           <b>{SYNERGIES[t]!.name}</b>
-          <span>
-            <b>3:</b> {SYNERGIES[t]!.desc} · <b>5:</b> {SYNERGIES[t]!.desc2}
-            {' '}(unique Pokémon only — your champion counts, duplicates don't)
-          </span>
+          <span><b>3:</b> {SYNERGIES[t]!.desc} · <b>5:</b> {SYNERGIES[t]!.desc2}</span>
         </div>
       ))}
     </div>
@@ -73,10 +74,12 @@ export function SynergyLegend() {
 export function Draft({
   label,
   championOnly = false,
+  onBack,
   onDone,
 }: {
   label: string
   championOnly?: boolean
+  onBack?: () => void
   onDone: (r: DraftResult) => void
 }) {
   const [champion, setChampion] = useState<string | null>(null)
@@ -85,6 +88,7 @@ export function Draft({
   const [roleFilter, setRoleFilter] = useState<Role | 'all'>('all')
   const [tierFilter, setTierFilter] = useState<BallTier | 'all'>('all')
   const [sort, setSort] = useState<SortKey>('cost')
+  const [search, setSearch] = useState('')
 
   const toggle = (key: string) =>
     setPicks((p) =>
@@ -93,6 +97,7 @@ export function Draft({
 
   const roster = useMemo(() => {
     let list = Object.values(ROSTER)
+    if (search.trim()) list = list.filter((s) => s.name.toLowerCase().includes(search.trim().toLowerCase()))
     if (roleFilter !== 'all') list = list.filter((s) => s.role === roleFilter)
     if (tierFilter !== 'all') list = list.filter((s) => s.tier === tierFilter)
     list = [...list].sort((a, b) =>
@@ -107,7 +112,7 @@ export function Draft({
               : b.hp - a.hp,
     )
     return list
-  }, [roleFilter, tierFilter, sort])
+  }, [roleFilter, tierFilter, sort, search])
 
   const ready = champion && (championOnly || picks.length === DRAFT_SIZE)
   const detailSpecies: Species | ChampionSpecies | null = detail
@@ -116,7 +121,11 @@ export function Draft({
 
   return (
     <div className="draft">
+      <div className="ball-wallpaper" aria-hidden="true" />
       <header className="draft-head">
+        {onBack && (
+          <button className="btn btn-tiny draft-back" onClick={onBack}>‹ Back</button>
+        )}
         <div className="draft-player">{label}</div>
         <h2>Draft your team</h2>
         <p className="draft-sub">One Mythical champion, {DRAFT_SIZE} Pokémon. Tap to pick — hold a card for the full breakdown.</p>
@@ -161,6 +170,12 @@ export function Draft({
         <SynergyLegend />
       </details>
       <div className="filterbar">
+        <input
+          className="draft-search"
+          placeholder="Search Pokémon"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
         <span className="filter-group">
           {(['all', 'tank', 'dealer', 'specialist', 'generalist'] as const).map((r) => (
             <button

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { connectRoom, makeRoomCode, type NetSession } from '../net'
+import { connectRoom, makeRoomCode, type NetMode, type NetSession } from '../net'
 import type { DraftResult } from '../game/types'
 import { Draft } from './Draft'
 import { BattleIntro } from './BattleIntro'
@@ -119,12 +119,21 @@ export function OnlineWaiting({ note }: { note: string }) {
 }
 
 /**
- * The whole online lifecycle: room setup → each side drafts → drafts are
- * exchanged over the wire → battle. Online is classic-draft only (host is A,
- * guest is B); the host runs the authoritative engine inside Battle.
+ * The whole online lifecycle: room setup → the HOST's match settings (blitz /
+ * timer) are sent to the guest → each side drafts → drafts are exchanged →
+ * battle. Host is A and runs the authoritative engine inside Battle.
  */
-export function OnlineGame({ onExit }: { onExit: () => void }) {
+export function OnlineGame({
+  blitz,
+  timer,
+  onExit,
+}: {
+  blitz: boolean
+  timer: boolean
+  onExit: () => void
+}) {
   const [net, setNet] = useState<NetSession | null>(null)
+  const [mode, setMode] = useState<NetMode | null>(null)
   const [myDraft, setMyDraft] = useState<DraftResult | null>(null)
   const [peerDraft, setPeerDraft] = useState<DraftResult | null>(null)
   const [intro, setIntro] = useState(true)
@@ -133,14 +142,32 @@ export function OnlineGame({ onExit }: { onExit: () => void }) {
   useEffect(() => {
     if (!net) return
     net.onDraft((d) => setPeerDraft(d))
-  }, [net])
+    if (net.role === 'host') {
+      // the room creator's menu choices govern the match
+      const m = { blitz, timer }
+      setMode(m)
+      // fire twice: once now, once shortly after, in case the guest's handler
+      // attaches a beat later than the connection
+      net.sendMode(m)
+      const t = window.setTimeout(() => net.sendMode(m), 1200)
+      return () => clearTimeout(t)
+    }
+    net.onMode((m) => setMode(m))
+  }, [net, blitz, timer])
 
   if (!net) return <OnlineSetup onReady={setNet} onBack={onExit} />
+
+  if (!mode) return <OnlineWaiting note="Syncing match settings" />
 
   if (!myDraft) {
     return (
       <Draft
         label={net.role === 'host' ? 'You (host)' : 'You (guest)'}
+        championOnly={mode.blitz}
+        onBack={() => {
+          net.leave()
+          onExit()
+        }}
         onDone={(d) => {
           net.sendDraft(d)
           setMyDraft(d)
@@ -159,7 +186,8 @@ export function OnlineGame({ onExit }: { onExit: () => void }) {
   return (
     <Battle
       mode="local"
-      blitz={false}
+      blitz={mode.blitz}
+      timerOn={mode.timer}
       net={net}
       draftA={draftA}
       draftB={draftB}

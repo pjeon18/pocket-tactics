@@ -113,12 +113,14 @@ export function ModeSelect({
   onPick,
   onOnline,
 }: {
-  onPick: (mode: 'ai' | 'local', blitz: boolean) => void
-  onOnline: () => void
+  onPick: (mode: 'ai' | 'local', blitz: boolean, timer: boolean) => void
+  onOnline: (blitz: boolean, timer: boolean) => void
 }) {
   const [blitz, setBlitz] = useState(false)
+  const [timer, setTimer] = useState(true)
   return (
     <div className="menu">
+      <div className="ball-wallpaper" aria-hidden="true" />
       <div className="menu-marks">
         <Sprite dex={151} name="Mew" tokenColor="#F85888" />
         <Sprite dex={251} name="Celebi" tokenColor="#78C850" />
@@ -138,16 +140,19 @@ export function ModeSelect({
         <button className={`chip ${blitz ? 'chip-on' : ''}`} onClick={() => setBlitz(true)}>
           Blitz draft — buy from a shop that restocks every turn
         </button>
+        <button className={`chip ${timer ? 'chip-on' : ''}`} onClick={() => setTimer(!timer)}>
+          {timer ? 'Turn clock: 60 seconds' : 'Turn clock: off'}
+        </button>
       </div>
 
       <div className="menu-btns">
-        <button className="btn btn-primary" onClick={() => onPick('ai', blitz)}>
+        <button className="btn btn-primary" onClick={() => onPick('ai', blitz, timer)}>
           Battle the Rival
         </button>
-        <button className="btn btn-ghost" onClick={() => onPick('local', blitz)}>
+        <button className="btn btn-ghost" onClick={() => onPick('local', blitz, timer)}>
           Two Players · One Screen
         </button>
-        <button className="btn btn-ghost" onClick={onOnline}>
+        <button className="btn btn-ghost" onClick={() => onOnline(blitz, timer)}>
           Play Online · Private Room
         </button>
       </div>
