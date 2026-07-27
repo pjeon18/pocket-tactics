@@ -35,34 +35,40 @@ export function Compendium() {
   const roster = Object.values(ROSTER).sort(
     (a, b) => costEquiv(a.cost) - costEquiv(b.cost) || a.name.localeCompare(b.name),
   )
+  const half = Math.ceil(roster.length / 2)
+  const columns = [roster.slice(0, half), roster.slice(half)]
   return (
     <div className="compendium">
       <h4>Every Pokémon</h4>
-      <div className="comp-scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>Pokémon</th><th>Type</th><th>Role</th><th>Cost</th><th>HP</th><th>ATK</th>
-              <th>RNG</th><th>MOV</th><th>Charge</th><th>Redeploy</th><th>Special</th>
-            </tr>
-          </thead>
-          <tbody>
-            {roster.map((s) => (
-              <tr key={s.key}>
-                <td className="comp-name">
-                  <Sprite dex={s.dex} name={s.name} tokenColor={TYPE_META[s.ptype].color} />
-                  {s.name}
-                </td>
-                <td><em className="type-chip" style={{ background: TYPE_META[s.ptype].color }}>{TYPE_META[s.ptype].label}</em></td>
-                <td>{ROLE_META[s.role].label}</td>
-                <td><CostDots cost={s.cost} size={14} /></td>
-                <td>{s.hp}</td><td>{s.atk}</td><td>{s.range}</td><td>{s.move}</td>
-                <td>{s.chargeMax}</td><td>{s.cooldown}t</td>
-                <td className="comp-special"><b>{s.special}</b> — {s.hint}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="comp-two">
+        {columns.map((col, ci) => (
+          <div className="comp-scroll" key={ci}>
+            <table>
+              <thead>
+                <tr>
+                  <th>Pokémon</th><th>Type</th><th>Role</th><th>Cost</th><th>HP</th><th>ATK</th>
+                  <th>RNG</th><th>MOV</th><th>Charge</th><th>Redeploy</th><th>Special</th>
+                </tr>
+              </thead>
+              <tbody>
+                {col.map((s) => (
+                  <tr key={s.key}>
+                    <td className="comp-name">
+                      <Sprite dex={s.dex} name={s.name} tokenColor={TYPE_META[s.ptype].color} />
+                      {s.name}
+                    </td>
+                    <td><em className="type-chip" style={{ background: TYPE_META[s.ptype].color }}>{TYPE_META[s.ptype].label}</em></td>
+                    <td>{ROLE_META[s.role].label}</td>
+                    <td><CostDots cost={s.cost} size={14} /></td>
+                    <td>{s.hp}</td><td>{s.atk}</td><td>{s.range}</td><td>{s.move}</td>
+                    <td>{s.chargeMax}</td><td>{s.cooldown}t</td>
+                    <td className="comp-special"><b>{s.special}</b> — {s.hint}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))}
       </div>
 
       <h4>Champions</h4>

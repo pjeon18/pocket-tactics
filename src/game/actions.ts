@@ -837,6 +837,16 @@ function resolveEnemySpecial(state: GameState, a: Unit, t: Unit) {
       for (let i = 0; i < hits && t.hp > 0; i++) dealDamage(state, a, t, 2, S)
       break
     }
+    case 'mamoswine': {
+      // Icicle Spear: up to 4 spears at 3 dmg each; the first always lands,
+      // each further spear only fires if the previous did (100/75/50/25%).
+      const chances = [1, 0.75, 0.5, 0.25]
+      for (const c of chances) {
+        if (t.hp <= 0 || Math.random() >= c) break
+        dealDamage(state, a, t, 3, S)
+      }
+      break
+    }
     case 'houndoom': {
       dealDamage(state, a, t, 4, S)
       const [dcH, drH] = rayDir(a, t)
@@ -940,6 +950,11 @@ function resolveEnemySpecial(state: GameState, a: Unit, t: Unit) {
     }
     case 'haunter': {
       dealDamage(state, a, t, 4, S)
+      break
+    }
+    case 'drifblim': {
+      dealDamage(state, a, t, 4, S)
+      dealHeal(state, a, 2)
       break
     }
     case 'scyther': {

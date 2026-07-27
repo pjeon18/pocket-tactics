@@ -148,6 +148,15 @@ all three modes. (Added after a 16-min/10-round 2P game.)
 **Off-turn inspection:** click any Pokémon while it's NOT your turn → read-only
 info card + threat range. (The old "Danger zone" button was removed for this.)
 
+**Online extras (2026-07-27):** a `prog` channel relays live draft progress —
+each side sees "Opponent has drafted N/8 Pokémon · N/2 summons" → "locked in ✓"
+(`NetProgress`, `Draft` `onProgress`/`opponentNote`, wired in `OnlineGame`). A
+`chat` channel powers an in-battle chat box (`ChatBox` in the panel side-stack,
+`Battle.sendChat`, online only). Both follow the same assignable-property
+Trystero pattern as `mode`/`draft`. The opponent's 2 summons show face-down in
+the enemy rail until cast (`EnemySide` `.enemy-summons`). `scripts/net-test.mjs`
+now covers progress relay + chat end-to-end (drafts include the 2 summons).
+
 **Legendary summons (2026-07-27):** every draft (classic AND blitz) also picks
 **2 of 4 legendaries** — one-shot effects cast for Poké Balls, never fielded,
 once per game each. `SUMMONS`/`SUMMON_ORDER`/`SUMMON_PICKS` in `data.ts`;

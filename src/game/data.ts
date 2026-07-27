@@ -353,6 +353,12 @@ export const ROSTER: Record<string, Species> = {
     special: 'Shadow Ball', hint: '4 dmg that phases straight through blockers',
     targeting: { kind: 'enemy', rangeOverride: 2, ignoreBlock: true }, pattern: 'target',
   },
+  drifblim: {
+    key: 'drifblim', name: 'Drifblim', dex: 426, role: 'tank', ptype: 'ghost', tier: 'great', cost: G(2), cooldown: 6,
+    hp: 10, atk: 2, range: 3, move: 1, chargeMax: 3,
+    special: 'Ominous Wind', hint: '4 dmg at range that phases through blockers, and Drifblim heals itself 2',
+    targeting: { kind: 'enemy', rangeOverride: 3, ignoreBlock: true }, pattern: 'target',
+  },
   hitmonlee: {
     key: 'hitmonlee', name: 'Hitmonlee', dex: 106, role: 'dealer', ptype: 'fighting', tier: 'poke', cost: P(3), cooldown: 4,
     hp: 5, atk: 3, range: 1, move: 1, chargeMax: 4,
@@ -480,6 +486,12 @@ export const ROSTER: Record<string, Species> = {
     key: 'jynx', name: 'Jynx', dex: 124, role: 'specialist', ptype: 'ice', tier: 'poke', cost: P(3), cooldown: 4,
     hp: 5, atk: 2, range: 2, move: 1, chargeMax: 4,
     special: 'Lovely Kiss', hint: '2 dmg and the target is stunned — it can’t move next turn',
+    targeting: { kind: 'enemy' }, pattern: 'target',
+  },
+  mamoswine: {
+    key: 'mamoswine', name: 'Mamoswine', dex: 473, role: 'dealer', ptype: 'ice', tier: 'ultra', cost: U(2), cooldown: 8,
+    hp: 11, atk: 6, range: 1, move: 1, chargeMax: 3,
+    special: 'Icicle Spear', hint: 'Strikes 1–4 times for 3 each — 100% / 75% / 50% / 25% per hit',
     targeting: { kind: 'enemy' }, pattern: 'target',
   },
   rotomwash: {

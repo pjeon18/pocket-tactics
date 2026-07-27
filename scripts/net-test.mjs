@@ -14,12 +14,12 @@ await B.goto('http://localhost:5202/', { waitUntil: 'networkidle' })
 await sleep(400)
 
 const click = (page, text) => page.evaluate((t) => [...document.querySelectorAll('button')].find((b) => b.textContent.includes(t))?.click(), text)
-await click(A, 'Play Online'); await sleep(250)
-await click(A, 'Create a room'); await sleep(1200)
+await click(A, 'Play Online'); await sleep(1400)
+await click(A, 'Create a room'); await sleep(1600)
 const code = await A.evaluate(() => document.querySelector('.room-code')?.textContent)
 console.log('room:', code)
 
-await click(B, 'Play Online'); await sleep(250)
+await click(B, 'Play Online'); await sleep(1400)
 await B.evaluate((c) => {
   const inp = document.querySelector('.code-input')
   Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(inp, c)
@@ -38,16 +38,29 @@ for (let t = 0; t < 30; t++) {
 console.log('handshake → both drafting:', joined)
 if (!joined) { await browser.close(); process.exit(1) }
 
-// draft on both sides
+// draft on both sides (champion + 2 summons + 8 Pokémon)
+const pickNamed = (page, name) => page.evaluate((n) => {
+  const c = [...document.querySelectorAll('.card')].find((x) => x.querySelector('.card-name')?.textContent === n)
+  if (c) { const o = { bubbles: true, cancelable: true, pointerId: 1 }; c.dispatchEvent(new PointerEvent('pointerdown', o)); c.dispatchEvent(new PointerEvent('pointerup', o)); c.click() }
+}, name)
 const draft = async (page, champ) => {
-  const pick = (n) => page.evaluate((name) => {
-    const c = [...document.querySelectorAll('.card')].find((x) => x.querySelector('.card-name')?.textContent === name)
-    if (c) { const o = { bubbles: true, cancelable: true, pointerId: 1 }; c.dispatchEvent(new PointerEvent('pointerdown', o)); c.dispatchEvent(new PointerEvent('pointerup', o)); c.click() }
-  }, n)
-  for (const n of [champ, 'Starly', 'Squirtle', 'Pikachu', 'Croagunk', 'Onix', 'Grotle', 'Haunter', 'Magneton', 'Kirlia', 'Lucario']) { await pick(n); await sleep(70) }
+  for (const n of [champ, 'Ho-Oh', 'Lugia', 'Starly', 'Squirtle', 'Pikachu', 'Croagunk', 'Onix', 'Grotle', 'Haunter', 'Magneton']) { await pickNamed(page, n); await sleep(70) }
   await page.evaluate(() => document.querySelector('.draft-foot button')?.click())
 }
-await draft(A, 'Victini')
+
+// A drafts its champion + a summon first, so B can observe live progress
+await pickNamed(A, 'Victini'); await sleep(120)
+await pickNamed(A, 'Ho-Oh'); await sleep(800)
+const noteMid = await B.evaluate(() => document.querySelector('.draft-opponent')?.textContent || '')
+console.log('B sees A mid-draft note:', JSON.stringify(noteMid))
+// finish A's draft
+for (const n of ['Lugia', 'Starly', 'Squirtle', 'Pikachu', 'Croagunk', 'Onix', 'Grotle', 'Haunter', 'Magneton']) { await pickNamed(A, n); await sleep(70) }
+await A.evaluate(() => document.querySelector('.draft-foot button')?.click())
+await sleep(900)
+const noteDone = await B.evaluate(() => document.querySelector('.draft-opponent')?.textContent || '')
+console.log('B sees A locked-in note:', JSON.stringify(noteDone))
+const progressOK = /summons/i.test(noteMid) && /lock/i.test(noteDone)
+
 await draft(B, 'Celebi')
 await sleep(3500) // intros
 
@@ -91,7 +104,20 @@ const hostTurn = await A.evaluate(() => {
 })
 console.log("back to host's turn:", hostTurn)
 
-const ok = joined && battleA && battleB && guestSynced && unitsB === 3 && guestTurn && unitsA === 4 && hostTurn
+// CHAT: host types a message, guest must receive it
+await A.evaluate(() => {
+  const inp = document.querySelector('.chat-input')
+  Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(inp, 'gg hf')
+  inp.dispatchEvent(new Event('input', { bubbles: true }))
+})
+await A.evaluate(() => document.querySelector('.chat-form')?.requestSubmit())
+await sleep(1200)
+const chatB = await B.evaluate(() => [...document.querySelectorAll('.chat-msg')].map((m) => m.textContent).join(' | '))
+const chatSeen = chatB.includes('gg hf')
+console.log('guest received chat:', JSON.stringify(chatB))
+
+console.log('draft progress relayed:', progressOK)
+const ok = joined && battleA && battleB && guestSynced && unitsB === 3 && guestTurn && unitsA === 4 && hostTurn && progressOK && chatSeen
 console.log(ok ? 'ONLINE PROTOCOL: ALL PASS' : 'ONLINE PROTOCOL: FAILURES ABOVE')
 await browser.close()
 process.exit(ok ? 0 : 1)

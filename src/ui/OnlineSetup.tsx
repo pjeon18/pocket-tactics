@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { connectRoom, makeRoomCode, type NetMode, type NetSession } from '../net'
+import { connectRoom, makeRoomCode, type NetMode, type NetProgress, type NetSession } from '../net'
 import type { DraftResult } from '../game/types'
 import { Draft } from './Draft'
 import { BattleIntro } from './BattleIntro'
@@ -136,12 +136,14 @@ export function OnlineGame({
   const [mode, setMode] = useState<NetMode | null>(null)
   const [myDraft, setMyDraft] = useState<DraftResult | null>(null)
   const [peerDraft, setPeerDraft] = useState<DraftResult | null>(null)
+  const [peerProgress, setPeerProgress] = useState<NetProgress | null>(null)
   const [intro, setIntro] = useState(true)
 
   // stash the peer's draft whenever it arrives (may beat our own lock-in)
   useEffect(() => {
     if (!net) return
     net.onDraft((d) => setPeerDraft(d))
+    net.onProgress((p) => setPeerProgress(p))
     if (net.role === 'host') {
       // the room creator's menu choices govern the match
       const m = { blitz, timer }
@@ -159,11 +161,23 @@ export function OnlineGame({
 
   if (!mode) return <OnlineWaiting note="Syncing match settings" />
 
+  const opponentNote = peerDraft
+    ? 'Opponent has locked in their team ✓'
+    : !peerProgress
+      ? 'Opponent is getting ready…'
+      : peerProgress.done
+        ? 'Opponent has locked in their team ✓'
+        : mode.blitz
+          ? `Opponent: ${peerProgress.champion ? 'champion ✓' : 'choosing champion'} · ${peerProgress.summons}/${peerProgress.summonTotal} summons`
+          : `Opponent has drafted ${peerProgress.picks}/${peerProgress.total} Pokémon · ${peerProgress.summons}/${peerProgress.summonTotal} summons`
+
   if (!myDraft) {
     return (
       <Draft
         label={net.role === 'host' ? 'You (host)' : 'You (guest)'}
         championOnly={mode.blitz}
+        onProgress={(p) => net.sendProgress(p)}
+        opponentNote={opponentNote}
         onBack={() => {
           net.leave()
           onExit()

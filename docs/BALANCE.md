@@ -2,7 +2,7 @@
 
 _Generated from `src/game/data.ts` by `scripts/balance-sheet.ts` — do not edit the tables by hand._
 
-**Roster: 60 Pokémon + 5 champions.** Cost letters: P = Poké Ball, G = Great Ball, U = Ultra Ball. Equiv = total value in Poké Balls (G=3, U=6).
+**Roster: 62 Pokémon + 5 champions.** Cost letters: P = Poké Ball, G = Great Ball, U = Ultra Ball. Equiv = total value in Poké Balls (G=3, U=6).
 
 ## Every Pokémon
 
@@ -51,6 +51,7 @@ _Generated from `src/game/data.ts` by `scripts/balance-sheet.ts` — do not edit
 | Weavile | dealer | Ice | 1G+1P | 4 | 6 | 8 | 4 | 1 | 3 | 4 | Ice Shard | 4 dmg, then Weavile retreats 2 tiles |
 | Arcanine | dealer | Fire | 1G+2P | 5 | 7 | 11 | 4 | 1 | 3 | 4 | Extreme Speed | 4 dmg that lands INSTANTLY when declared |
 | Chandelure | specialist | Fire | 1G+2P | 5 | 6 | 10 | 3 | 3 | 1 | 4 | Heat Wave | 3 dmg to every enemy within 2 tiles of Chandelure |
+| Drifblim | tank | Ghost | 1G+2P | 5 | 6 | 13 | 2 | 3 | 1 | 3 | Ominous Wind | 4 dmg at range that phases through blockers, and Drifblim heals itself 2 |
 | Escavalier | tank | Bug | 1G+2P | 5 | 6 | 14 | 3 | 1 | 1 | 4 | Megahorn | 5 dmg, lancing through the two tiles behind for 3 — its NORMAL attacks skewer the unit behind, too |
 | Gallade | dealer | Fighting | 1G+2P | 5 | 6 | 10 | 4 | 1 | 2 | 4 | Psycho Cut | 4 dmg, cutting through to whatever hides behind for 3 |
 | Lapras | tank | Water | 1G+2P | 5 | 7 | 15 | 2 | 2 | 1 | 2 | Surf | 3 dmg, plus 2 to every enemy beside the target |
@@ -62,6 +63,7 @@ _Generated from `src/game/data.ts` by `scripts/balance-sheet.ts` — do not edit
 | Dragonite | generalist | Dragon | 1U+2P | 8 | 8 | 15 | 4 | 2 | 2 | 3 | Hyper Beam | 5 dmg to the first enemy in a straight line, any distance |
 | Gengar | dealer | Ghost | 1U+2P | 8 | 8 | 10 | 5 | 2 | 3 | 3 | Shadow Ball | 5 dmg through blockers, +2 against full-HP targets |
 | Machamp | dealer | Fighting | 1U+2P | 8 | 8 | 14 | 5 | 1 | 2 | 3 | Cross Chop | 6 dmg and knocks the target back a tile |
+| Mamoswine | dealer | Ice | 1U+2P | 8 | 8 | 14 | 6 | 1 | 1 | 3 | Icicle Spear | Strikes 1–4 times for 3 each — 100% / 75% / 50% / 25% per hit |
 | Rhyperior | tank | Rock | 1U+2P | 8 | 8 | 17 | 4 | 1 | 1 | 2 | Rock Wrecker | 6 dmg and knocks the target back a tile |
 | Serperior | dealer | Grass | 1U+2P | 8 | 8 | 12 | 4 | 2 | 2 | 3 | Leaf Storm | A regal tempest: 5 dmg, plus 2 to every enemy beside the target |
 | Snorlax | tank | Normal | 1U+2P | 8 | 8 | 19 | 3 | 1 | 1 | 2 | Body Slam | 5 dmg and the target is stunned — it can’t move next turn |
@@ -104,19 +106,19 @@ Drafted 2 per player (classic and blitz). One-shot battlefield effects cast for 
 | Dark | 5 | ✓ Ambush | 3 / 5 |
 | Rock | 4 | ✓ Sturdy | 3 / 5 |
 | Steel | 4 | ✓ Bulwark | 3 / 5 |
+| Ice | 4 | ✓ Frostbite | 3 / 5 |
 | Bug | 4 | ✓ Swarm | 3 / 5 |
 | Psychic | 4 | ✓ Mindlink | 3 / 5 |
-| Ice | 3 | ✓ Frostbite | 3 / 5 |
+| Ghost | 3 | — | — |
 | Electric | 3 | ✓ Static | 3 / 5 |
-| Ghost | 2 | — | — |
 | Dragon | 2 | — | — |
 
 ### By role
 
 | Role | Count |
 |---|---|
-| dealer | 20 |
-| tank | 19 |
+| dealer | 21 |
+| tank | 20 |
 | generalist | 12 |
 | specialist | 9 |
 
@@ -128,16 +130,16 @@ Drafted 2 per player (classic and blitz). One-shot battlefield effects cast for 
 | 2 | 7 | Onix, Grotle, Metapod, Starly, Pikachu, Kirlia, Audino |
 | 3 | 7 | Quagsire, Haunter, Hitmonlee, Ponyta, Magneton, Porygon2, Jynx |
 | 4 | 19 | Gigalith, Ferrothorn, Carracosta, Beartic, Bronzong, Golem, Umbreon, Accelgor, Scyther, Luxray, Weavile, Houndoom, Primeape, Rotom-Mow, Rotom-Wash, Espeon, Magmortar, Chansey, Lucario |
-| 5 | 6 | Lapras, Escavalier, Gallade, Arcanine, Zoroark, Chandelure |
+| 5 | 7 | Lapras, Escavalier, Drifblim, Gallade, Arcanine, Zoroark, Chandelure |
 | 6 | 3 | Steelix, Blaziken, Krookodile |
-| 8 | 8 | Rhyperior, Snorlax, Gengar, Machamp, Tangrowth, Serperior, Alakazam, Dragonite |
+| 8 | 9 | Rhyperior, Snorlax, Gengar, Machamp, Tangrowth, Serperior, Mamoswine, Alakazam, Dragonite |
 | 9 | 2 | Gyarados, Garchomp |
 
 ### Movement
 
 | MOV | Count |
 |---|---|
-| 1 | 37 |
+| 1 | 39 |
 | 2 | 15 |
 | 3 | 8 |
 
@@ -145,15 +147,15 @@ Drafted 2 per player (classic and blitz). One-shot battlefield effects cast for 
 
 | RNG | Count |
 |---|---|
-| 1 | 39 |
+| 1 | 40 |
 | 2 | 17 |
-| 3 | 4 |
+| 3 | 5 |
 
 ### Special-effect census
 
 - **Stun sources (7):** Onix, Beartic, Bronzong, Snorlax, Magneton, Jynx, Pikachu
 - **Healers/self-healers (8):** Grotle, Ferroseed, Squirtle, Metapod, Sunkern, Kirlia, Audino, Chansey
-- **Targeting kinds:** enemy ×47 · self ×7 · ally ×3 · aoe ×2 · blink ×1
+- **Targeting kinds:** enemy ×49 · self ×7 · ally ×3 · aoe ×2 · blink ×1
 
 ## Items
 

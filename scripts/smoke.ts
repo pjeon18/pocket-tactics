@@ -238,6 +238,27 @@ const surfShore = mr.units.find((u) => u.id === 951)!
 const surfAlly = mr.units.find((u) => u.id === 952)!
 ok(surfMid.hp < 12 && surfShore.hp === 7 && surfAlly.hp < 7, 'Surf soaks midfield (both sides) but spares her back two rows')
 
+/* --- Mamoswine Icicle Spear: 1–4 hits of 3, declining odds --- */
+let ice = newBattle(draftA, draftB)
+ice.rocks = []
+spawn(ice, 960, 'mamoswine', 'A', 2, 5, { charge: 3, chargeMax: 3 })
+spawn(ice, 961, 'snorlax', 'B', 2, 4, { hp: 22, maxHp: 22 }) // ice vs normal = neutral, big body to survive
+const spearPlan = planAttack(ice, 960, 961, true)!
+const allSpears = withRandom(0, () => resolveStep(spearPlan)!) // 0 < every chance → all four land
+ok(allSpears.units.find((u) => u.id === 961)!.hp === 22 - 12, 'Icicle Spear can strike four times (4×3 dmg)')
+const oneSpear = withRandom(0.99, () => resolveStep(planAttack(ice, 960, 961, true)!)!) // first lands, second (0.99≥0.75) stops
+ok(oneSpear.units.find((u) => u.id === 961)!.hp === 22 - 3, 'Icicle Spear stops after the first hit misses (min 1 hit)')
+
+/* --- Drifblim Ominous Wind: ranged phasing hit + self-heal --- */
+let dbl = newBattle(draftA, draftB)
+dbl.rocks = []
+spawn(dbl, 970, 'drifblim', 'A', 2, 6, { charge: 3, chargeMax: 3, hp: 5, maxHp: 13 })
+spawn(dbl, 971, 'blaziken', 'B', 2, 4, { hp: 15, maxHp: 15 }) // ghost vs fire = neutral, two rows away
+const windPlan = planAttack(dbl, 970, 971, true)!
+const windRes = resolveStep(windPlan)!
+ok(windRes.units.find((u) => u.id === 971)!.hp === 15 - 4, 'Ominous Wind hits for 4 at range')
+ok(windRes.units.find((u) => u.id === 970)!.hp === 7, 'Ominous Wind heals Drifblim by 2')
+
 /* --- crits & misses (normal attacks only, deterministic RNG) --- */
 let cm = newBattle(draftA, draftB)
 cm.rocks = []

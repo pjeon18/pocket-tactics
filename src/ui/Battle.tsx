@@ -149,6 +149,7 @@ export function Battle({
   const [winnerShown, setWinnerShown] = useState(false)
   const [reviewing, setReviewing] = useState(false) // hide the result to study the final board
   const [quitConfirm, setQuitConfirm] = useState(false)
+  const [chatMsgs, setChatMsgs] = useState<{ me: boolean; text: string }[]>([])
   const { waveActive, go: waveGo } = useWave()
 
   /* per-turn clock — each client times only the seat it controls */
@@ -282,9 +283,17 @@ export function Battle({
         }
       })
     }
+    net.onChat((c) => setChatMsgs((m) => [...m, { me: false, text: c.text }]))
     net.onPeerLeave(() => onExit())
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [net])
+
+  const sendChat = (text: string) => {
+    const t = text.trim().slice(0, 160)
+    if (!t || !net) return
+    net.sendChat({ text: t })
+    setChatMsgs((m) => [...m, { me: true, text: t }])
+  }
 
   /* the win screen arrives behind a wave sweep */
   useEffect(() => {
@@ -612,10 +621,12 @@ export function Battle({
     onItem: onItemPress,
     onSummon: (key: string) => run('useSummon', state.current, key),
     onEndTurn: doEndTurn,
+    chat: online ? { msgs: chatMsgs, send: sendChat } : undefined,
   }
 
   return (
     <div className="battle">
+      <div className="ball-wallpaper" aria-hidden="true" />
       <div className="toolbar">
         <button className="btn btn-tiny" onClick={() => (state.winner ? onExit() : setQuitConfirm(true))}>‹ Menu</button>
         <span className="round-label">Round {state.round}</span>
@@ -689,7 +700,7 @@ export function Battle({
 
       {quitConfirm && !state.winner && (
         <div className="overlay">
-          <div className="overlay-card">
+          <div className="overlay-card overlay-confirm">
             <div className="overlay-title">Quit this game?</div>
             <div className="overlay-sub">This game will be lost.</div>
             <div className="overlay-btns">
@@ -801,6 +812,7 @@ interface PanelProps {
   onInspect: (key: string) => void
   onSummon: (key: string) => void
   onEndTurn: () => void
+  chat?: { msgs: { me: boolean; text: string }[]; send: (text: string) => void }
 }
 
 function PlayerPanel(props: PanelProps) {
@@ -921,9 +933,48 @@ function PlayerPanel(props: PanelProps) {
           ))}
         </div>
 
+        {props.chat && <ChatBox chat={props.chat} />}
+
         <MusicCorner />
       </div>
     </section>
+  )
+}
+
+/* ---------- online in-game chat ---------- */
+function ChatBox({ chat }: { chat: NonNullable<PanelProps['chat']> }) {
+  const [draft, setDraft] = useState('')
+  const logRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight
+  }, [chat.msgs.length])
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault()
+    chat.send(draft)
+    setDraft('')
+  }
+  return (
+    <div className="chat">
+      <div className="chat-head">Chat</div>
+      <div className="chat-log" ref={logRef}>
+        {chat.msgs.length === 0 && <div className="chat-empty">Say hi to your opponent.</div>}
+        {chat.msgs.map((m, i) => (
+          <div key={i} className={`chat-msg ${m.me ? 'chat-msg-me' : 'chat-msg-them'}`}>
+            <b>{m.me ? 'You' : 'Them'}:</b> {m.text}
+          </div>
+        ))}
+      </div>
+      <form className="chat-form" onSubmit={submit}>
+        <input
+          className="chat-input"
+          placeholder="Message…"
+          maxLength={160}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+        />
+        <button type="submit" className="btn btn-primary chat-send" disabled={!draft.trim()}>Send</button>
+      </form>
+    </div>
   )
 }
 
@@ -1031,6 +1082,27 @@ function EnemySide(props: PanelProps) {
         })}
         {state.shopMode && fp.bench.length === 0 && <span className="enemy-empty">No purchases yet</span>}
       </div>
+      {fp.summons.length > 0 && (
+        <div className="enemy-summons" title="The rival's legendary summons — revealed once cast">
+          <span className="enemy-summons-label">Summons</span>
+          {fp.summons.map((key, i) => {
+            const used = fp.usedSummons.includes(key)
+            const sm = SUMMONS[key]
+            if (!used)
+              return (
+                <span key={i} className="enemy-summon enemy-summon-hidden" title="Not yet cast">
+                  <i>?</i> Unknown summon
+                </span>
+              )
+            return (
+              <span key={i} className="enemy-summon enemy-summon-used" title={sm.desc}>
+                <Sprite dex={sm.dex} name={sm.name} tokenColor="#C9930A" />
+                {sm.name} <em>cast</em>
+              </span>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

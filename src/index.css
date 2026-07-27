@@ -81,7 +81,7 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 /* ---------- menu ---------- */
 .menu {
   min-height: 100vh; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; padding: 32px 20px; max-width: 620px;
+  align-items: center; justify-content: center; padding: 32px 20px; max-width: 1040px;
   text-align: center;
 }
 .menu-marks { display: flex; gap: 26px; margin-bottom: 6px; }
@@ -367,7 +367,11 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
   display: flex; align-items: center; gap: 14px; flex-wrap: nowrap;
   background: var(--paper); border: 2px solid var(--line); border-radius: 16px; padding: 8px 14px;
 }
-.hud .endturn-hud { margin-left: auto; padding: 11px 22px; font-size: 15px; white-space: nowrap; flex-shrink: 0; }
+.hud .endturn-hud {
+  margin-left: auto; padding: 8px 18px; font-size: 13.5px; white-space: nowrap; flex-shrink: 0;
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.3), 0 2px 0 rgba(0, 0, 0, 0.22);
+}
+.hud .endturn-hud:active:not(:disabled) { box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25); }
 .hud .hud-block { flex-shrink: 0; }
 .hud-block { display: flex; flex-direction: column; gap: 2px; }
 .hud-label { font-size: 10.5px; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mist); }
@@ -738,6 +742,10 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45); display: flex; flex-direction: column; gap: 14px;
 }
 .overlay-review { align-self: center; }
+/* confirm dialogs (quit) sit on a light card — keep their copy dark and readable */
+.overlay-confirm .overlay-title { color: #3A3F46; font-size: 40px; }
+.overlay-confirm .overlay-sub { color: var(--mist); }
+.overlay-confirm .btn-ghost { color: #3A3F46; border-color: #3A3F46; }
 .review-return {
   position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%); z-index: 25;
 }
@@ -755,8 +763,8 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 /* ---------- iteration: help corner, compendium, econ pop, wave wipe ---------- */
 
 /* menu: How-to-play and synergies expand side by side */
-.rules-row { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; justify-content: center; max-width: 980px; }
-.rules-row .rules { flex: 1 1 380px; margin-top: 34px; }
+.rules-row { display: flex; gap: 22px; align-items: flex-start; flex-wrap: wrap; justify-content: center; max-width: 980px; }
+.rules-row .rules { flex: 1 1 400px; max-width: 480px; margin-top: 34px; }
 .rules-wide { width: 100%; max-width: 980px; }
 
 /* the readable game doc */
@@ -771,6 +779,9 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 .comp-name .sprite-token { width: 22px; height: 22px; font-size: 10px; }
 .comp-special { white-space: normal !important; min-width: 260px; line-height: 1.4; }
 .comp-drops table { max-width: 380px; }
+.comp-two { display: flex; gap: 12px; align-items: flex-start; }
+.comp-two > .comp-scroll { flex: 1; min-width: 0; }
+@media (max-width: 720px) { .comp-two { flex-direction: column; } }
 .comp-note { font-size: 12px; opacity: 0.75; }
 
 /* in-match help corner */
@@ -860,17 +871,23 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
     url('https://raw.githubusercontent.com/msikma/pokesprite/master/items/ball/poke.png'),
     url('https://raw.githubusercontent.com/msikma/pokesprite/master/items/ball/great.png'),
     url('https://raw.githubusercontent.com/msikma/pokesprite/master/items/ball/ultra.png');
-  background-size: 44px 44px;
-  background-position: 0 0, 60px 90px, 120px 30px;
+  background-size: 30px 30px;
+  background-position: 0 0, 46px 70px, 92px 24px;
   background-repeat: space;
   image-rendering: pixelated;
-  animation: wallpaperDrift 52s linear infinite;
+  animation: wallpaperDrift 34s linear infinite;
 }
-@keyframes wallpaperDrift { to { transform: translate(180px, 180px); } }
-.menu > *:not(.ball-wallpaper), .draft > *:not(.ball-wallpaper) { position: relative; z-index: 1; }
+@keyframes wallpaperDrift { to { transform: translate(150px, 150px); } }
+.menu > *:not(.ball-wallpaper), .draft > *:not(.ball-wallpaper):not(.modal-backdrop) { position: relative; z-index: 1; }
+.battle > .toolbar, .battle > .panels { position: relative; z-index: 1; }
 
 /* draft chrome */
 .draft-back { display: inline-flex; margin-bottom: 14px; }
+.draft-opponent {
+  display: inline-flex; align-items: center; gap: 8px; margin: 10px 0 0; padding: 6px 14px;
+  border: 2px solid rgba(201, 147, 10, 0.5); border-radius: 99px;
+  color: var(--amber); font-weight: 900; font-size: 13.5px; letter-spacing: 0.02em;
+}
 .draft-search {
   border: 2.5px solid rgba(242, 242, 237, 0.25); border-radius: 99px; background: transparent;
   color: var(--on-dark); padding: 8px 18px; font-size: 14px; font-weight: 700; min-width: 200px;
@@ -898,3 +915,36 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 .summon-name { flex: 1; text-align: left; }
 .summon-cost { display: inline-flex; align-items: center; gap: 3px; font-variant-numeric: tabular-nums; }
 .summon-used { filter: grayscale(1); }
+
+/* the opponent's two summons, shown face-down until they're spent */
+.enemy-summons { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.enemy-summons-label { font-size: 10px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mist); }
+.enemy-summon {
+  display: flex; align-items: center; gap: 7px; padding: 5px 9px; border-radius: 10px;
+  border: 2px dashed color-mix(in srgb, var(--amber) 55%, var(--line)); font-size: 12px; font-weight: 800; color: var(--ink);
+}
+.enemy-summon .sprite { width: 26px; height: 26px; object-fit: contain; image-rendering: pixelated; flex-shrink: 0; }
+.enemy-summon-hidden { color: var(--mist); }
+.enemy-summon-hidden i { font-style: normal; font-weight: 900; margin-right: 4px; }
+.enemy-summon-used { opacity: 0.85; }
+.enemy-summon-used em { font-style: normal; font-size: 10px; color: var(--danger); font-weight: 900; margin-left: auto; }
+
+/* ---------- online in-game chat ---------- */
+.chat {
+  width: 100%; margin-top: 10px; border: 2px solid var(--line); border-radius: 14px;
+  background: var(--paper); display: flex; flex-direction: column; overflow: hidden;
+}
+.chat-head { font-size: 10.5px; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mist); padding: 8px 12px 4px; }
+.chat-log { display: flex; flex-direction: column; gap: 4px; padding: 4px 12px 8px; max-height: 128px; overflow-y: auto; }
+.chat-msg { font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.35; }
+.chat-msg b { font-weight: 900; }
+.chat-msg-me b { color: var(--team-blue); }
+.chat-msg-them b { color: var(--amber); }
+.chat-empty { font-size: 12px; color: var(--mist); font-weight: 700; padding: 2px 0 6px; }
+.chat-form { display: flex; gap: 6px; padding: 8px 10px; border-top: 2px solid var(--line); }
+.chat-input {
+  flex: 1; min-width: 0; border: 2px solid var(--line); border-radius: 99px; background: #fff;
+  padding: 7px 14px; font-size: 13px; font-weight: 600; color: var(--ink); font-family: var(--font-game);
+}
+.chat-input:focus { outline: none; border-color: var(--amber); }
+.chat-send { padding: 7px 16px; font-size: 13px; }

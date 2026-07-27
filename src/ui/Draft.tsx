@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   CHAMPIONS,
   CHAMPION_ORDER,
@@ -75,16 +75,31 @@ export function SynergyLegend() {
   )
 }
 
+export interface DraftProgress {
+  champion: boolean
+  picks: number
+  total: number
+  summons: number
+  summonTotal: number
+  done: boolean
+}
+
 export function Draft({
   label,
   championOnly = false,
   onBack,
   onDone,
+  onProgress,
+  opponentNote,
 }: {
   label: string
   championOnly?: boolean
   onBack?: () => void
   onDone: (r: DraftResult) => void
+  /** Fires whenever the local selection changes — used to mirror progress online. */
+  onProgress?: (p: DraftProgress) => void
+  /** A live note about the opponent's drafting progress (online only). */
+  opponentNote?: string
 }) {
   const [champion, setChampion] = useState<string | null>(null)
   const [picks, setPicks] = useState<string[]>([])
@@ -124,6 +139,19 @@ export function Draft({
   }, [roleFilter, tierFilter, sort, search])
 
   const ready = champion && summons.length === SUMMON_PICKS && (championOnly || picks.length === DRAFT_SIZE)
+
+  useEffect(() => {
+    onProgress?.({
+      champion: !!champion,
+      picks: picks.length,
+      total: championOnly ? 0 : DRAFT_SIZE,
+      summons: summons.length,
+      summonTotal: SUMMON_PICKS,
+      done: !!ready,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [champion, picks.length, summons.length, ready, championOnly])
+
   const detailSpecies: Species | ChampionSpecies | null = detail
     ? (ROSTER[detail] ?? CHAMPIONS[detail] ?? null)
     : null
@@ -138,6 +166,7 @@ export function Draft({
         <div className="draft-player">{label}</div>
         <h2>Draft your team</h2>
         <p className="draft-sub">One Mythical champion, {DRAFT_SIZE} Pokémon. Tap to pick — hold a card for the full breakdown.</p>
+        {opponentNote && <p className="draft-opponent">{opponentNote}</p>}
       </header>
 
       <div className="section-label">Champion</div>

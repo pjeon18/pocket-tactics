@@ -24,6 +24,21 @@ export interface NetMode {
   timer: boolean
 }
 
+/** Live draft progress, so each side can see how far the other has gotten. */
+export interface NetProgress {
+  champion: boolean
+  picks: number
+  total: number
+  summons: number
+  summonTotal: number
+  done: boolean
+}
+
+/** A one-line chat message. */
+export interface NetChat {
+  text: string
+}
+
 export interface NetSession {
   code: string
   role: 'host' | 'guest'
@@ -35,6 +50,10 @@ export interface NetSession {
   onDraft: (cb: (d: DraftResult) => void) => void
   sendMode: (m: NetMode) => void
   onMode: (cb: (m: NetMode) => void) => void
+  sendProgress: (p: NetProgress) => void
+  onProgress: (cb: (p: NetProgress) => void) => void
+  sendChat: (c: NetChat) => void
+  onChat: (cb: (c: NetChat) => void) => void
   onPeerJoin: (cb: () => void) => void
   onPeerLeave: (cb: () => void) => void
   peerCount: () => number
@@ -55,6 +74,8 @@ export function connectRoom(code: string, role: 'host' | 'guest'): NetSession {
   const st = room.makeAction('st')
   const draft = room.makeAction('draft')
   const modeCh = room.makeAction('mode')
+  const prog = room.makeAction('prog')
+  const chat = room.makeAction('chat')
 
   // NOTE: in this trystero version, onMessage / onPeerJoin / onPeerLeave are
   // ASSIGNABLE PROPERTIES (initially null), not registration methods — calling
@@ -70,6 +91,10 @@ export function connectRoom(code: string, role: 'host' | 'guest'): NetSession {
     onDraft: (cb) => { draft.onMessage = (d: any) => cb(d as DraftResult) },
     sendMode: (m) => void modeCh.send(m as any),
     onMode: (cb) => { modeCh.onMessage = (m: any) => cb(m as NetMode) },
+    sendProgress: (p) => void prog.send(p as any),
+    onProgress: (cb) => { prog.onMessage = (p: any) => cb(p as NetProgress) },
+    sendChat: (c) => void chat.send(c as any),
+    onChat: (cb) => { chat.onMessage = (c: any) => cb(c as NetChat) },
     onPeerJoin: (cb) => { room.onPeerJoin = () => cb() },
     onPeerLeave: (cb) => { room.onPeerLeave = () => cb() },
     peerCount: () => Object.keys(room.getPeers()).length,
