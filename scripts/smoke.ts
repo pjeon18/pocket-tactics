@@ -245,9 +245,9 @@ spawn(ice, 960, 'mamoswine', 'A', 2, 5, { charge: 3, chargeMax: 3 })
 spawn(ice, 961, 'snorlax', 'B', 2, 4, { hp: 30, maxHp: 30 }) // ice vs normal = neutral, big body to survive
 const spearPlan = planAttack(ice, 960, 961, true)!
 const allSpears = withRandom(0, () => resolveStep(spearPlan)!) // 0 < every chance → all four land
-ok(allSpears.units.find((u) => u.id === 961)!.hp === 30 - 24, 'Icicle Spear can strike four times (4×6 dmg)')
+ok(allSpears.units.find((u) => u.id === 961)!.hp === 30 - 16, 'Icicle Spear can strike four times (4×4 dmg)')
 const oneSpear = withRandom(0.99, () => resolveStep(planAttack(ice, 960, 961, true)!)!) // first lands, second (0.99≥0.75) stops
-ok(oneSpear.units.find((u) => u.id === 961)!.hp === 30 - 6, 'Icicle Spear stops after the first hit misses (min 1 hit, 6 each)')
+ok(oneSpear.units.find((u) => u.id === 961)!.hp === 30 - 4, 'Icicle Spear stops after the first hit misses (min 1 hit, 4 each)')
 
 /* --- Drifblim Ominous Wind: ranged phasing hit + self-heal --- */
 let dbl = newBattle(draftA, draftB)
@@ -256,7 +256,7 @@ spawn(dbl, 970, 'drifblim', 'A', 2, 6, { charge: 3, chargeMax: 3, hp: 5, maxHp: 
 spawn(dbl, 971, 'blaziken', 'B', 2, 4, { hp: 15, maxHp: 15 }) // ghost vs fire = neutral, two rows away
 const windPlan = planAttack(dbl, 970, 971, true)!
 const windRes = resolveStep(windPlan)!
-ok(windRes.units.find((u) => u.id === 971)!.hp === 15 - 5, 'Ominous Wind hits for 5 at range (premium +1)')
+ok(windRes.units.find((u) => u.id === 971)!.hp === 15 - 4, 'Ominous Wind hits for 4 at range')
 ok(windRes.units.find((u) => u.id === 970)!.hp === 7, 'Ominous Wind heals Drifblim by 2')
 
 /* --- crits & misses (normal attacks only, deterministic RNG) --- */
@@ -416,21 +416,29 @@ ok(grCast.units.find((u) => u.id === 985)!.hp === 12, 'eruption is telegraphed, 
 const grDone = endTurnFully(grCast) // A ends: fuse 1→0, erupts for 6
 ok(grDone.units.find((u) => u.id === 985)!.hp === 6, 'eruption hits its row for 6 at end of turn')
 
-/* --- premium (Great/Ultra) Pokémon get +1 on their special --- */
+/* --- specials deal exactly their coded value (no premium +1 buff) --- */
 let pr = newBattle(draftA, draftB)
 pr.rocks = []
-spawn(pr, 990, 'lucario', 'A', 2, 5, { charge: 5, chargeMax: 5 }) // great-tier, Aura Sphere 4 → 5
+spawn(pr, 990, 'lucario', 'A', 2, 5, { charge: 5, chargeMax: 5 }) // great-tier Aura Sphere: a flat 4
 spawn(pr, 991, 'blaziken', 'B', 2, 4, { hp: 15, maxHp: 15 }) // fighting vs fire = neutral
 const prRes = resolveStep(planAttack(pr, 990, 991, true)!)!
-ok(prRes.units.find((u) => u.id === 991)!.hp === 15 - 5, 'premium special hits +1 harder (Lucario 4→5)')
+ok(prRes.units.find((u) => u.id === 991)!.hp === 15 - 4, 'premium special has no +1 buff (Lucario stays 4)')
 
-/* --- the hand-tuned "flat 6" specials do exactly 6, no premium bonus --- */
-let f6 = newBattle(draftA, draftB)
-f6.rocks = []
-spawn(f6, 992, 'gengar', 'A', 2, 5, { charge: 8, chargeMax: 8 }) // ultra, but SPECIAL_SIX → flat 6
-spawn(f6, 993, 'blaziken', 'B', 2, 4, { hp: 15, maxHp: 15 }) // ghost vs fire = neutral
-const f6Res = resolveStep(planAttack(f6, 992, 993, true)!)!
-ok(f6Res.units.find((u) => u.id === 993)!.hp === 15 - 6, 'flat-6 special deals exactly 6 (Gengar, no premium +1)')
+/* --- Gengar: 6, +4 more against a full-HP target --- */
+let ge = newBattle(draftA, draftB)
+ge.rocks = []
+spawn(ge, 992, 'gengar', 'A', 2, 5, { charge: 8, chargeMax: 8 })
+spawn(ge, 993, 'blaziken', 'B', 2, 4, { hp: 15, maxHp: 15 }) // ghost vs fire = neutral, at full HP
+const geRes = resolveStep(planAttack(ge, 992, 993, true)!)!
+ok(geRes.units.find((u) => u.id === 993)!.hp === 15 - 10, 'Gengar bursts a full-HP target for 10 (6+4)')
+
+/* --- Krookodile: 5, +5 more when the target is below half HP --- */
+let kr = newBattle(draftA, draftB)
+kr.rocks = []
+spawn(kr, 994, 'krookodile', 'A', 2, 5, { charge: 5, chargeMax: 5 })
+spawn(kr, 995, 'snorlax', 'B', 2, 4, { hp: 12, maxHp: 30 }) // dark vs normal neutral, below half, survives 10
+const krRes = resolveStep(planAttack(kr, 994, 995, true)!)!
+ok(krRes.units.find((u) => u.id === 995)!.hp === 12 - 10, 'Krookodile finishes a low-HP target for 10 (5+5)')
 
 /* --- stun now blocks acting too, not just movement --- */
 let st = newBattle(draftA, draftB)

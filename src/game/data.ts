@@ -430,7 +430,7 @@ export const ROSTER: Record<string, Species> = {
   gengar: {
     key: 'gengar', name: 'Gengar', dex: 94, role: 'dealer', ptype: 'ghost', tier: 'ultra', cost: U(2), cooldown: 8,
     hp: 7, atk: 5, range: 2, move: 3, chargeMax: 3,
-    special: 'Shadow Ball', hint: '6 dmg that phases straight through blockers',
+    special: 'Shadow Ball', hint: 'Shadow Ball — 6 dmg through blockers, +4 against a full-HP target',
     targeting: { kind: 'enemy', rangeOverride: 2, ignoreBlock: true }, pattern: 'target',
   },
   machamp: {
@@ -499,7 +499,7 @@ export const ROSTER: Record<string, Species> = {
   mamoswine: {
     key: 'mamoswine', name: 'Mamoswine', dex: 473, role: 'dealer', ptype: 'ice', tier: 'ultra', cost: U(2), cooldown: 8,
     hp: 11, atk: 6, range: 1, move: 1, chargeMax: 3,
-    special: 'Icicle Spear', hint: 'Strikes 1–4 times for 6 each — 100% / 75% / 50% / 25% per hit',
+    special: 'Icicle Spear', hint: 'Strikes 1–4 times for 4 each — 100% / 75% / 50% / 25% per hit',
     targeting: { kind: 'enemy' }, pattern: 'target',
   },
   rotomwash: {
@@ -597,7 +597,7 @@ export const ROSTER: Record<string, Species> = {
   krookodile: {
     key: 'krookodile', name: 'Krookodile', dex: 553, role: 'generalist', ptype: 'dark', tier: 'great', cost: G(3), cooldown: 6,
     hp: 9, atk: 3, range: 1, move: 1, chargeMax: 3,
-    special: 'Crunch', hint: '6 dmg (Crunch)',
+    special: 'Crunch', hint: 'Crunch — 5 dmg, +5 more if the target is below half HP',
     targeting: { kind: 'enemy' }, pattern: 'target',
   },
   dragonite: {
@@ -655,7 +655,6 @@ export const isPremium = (cost: Cost): boolean => cost.great > 0 || cost.ultra >
    special gets +1 too, applied in the damage pipeline). */
 for (const s of Object.values(ROSTER)) {
   if (!isPremium(s.cost) && s.cost.poke < 4) s.cooldown += 3
-  if (isPremium(s.cost)) s.atk += 1
   // tanks are meant to be committed, not spammed — floor their redeploy at 6
   if (s.role === 'tank') s.cooldown = Math.max(s.cooldown, 6)
 }

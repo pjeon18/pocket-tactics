@@ -11,7 +11,6 @@ import {
   FIELD_CAP,
   INCOME_CAP,
   INCOME_BREAKS,
-  isPremium,
   KILL_BOUNTY,
   ITEMS,
   MISS_CHANCE,
@@ -215,12 +214,6 @@ export const fieldedCount = (state: GameState, owner: Owner) =>
  * +1 Focus on specials (fighting synergy), −1 Bulwark (steel-synergy defender);
  * floor 1. Attributed damage feeds the battle-stats panel.
  */
-/** These premium specials are hand-tuned to a flat 6, so they skip the +1. */
-const SPECIAL_SIX = new Set([
-  'krookodile', 'gengar', 'machamp', 'tangrowth', 'serperior',
-  'mamoswine', 'alakazam', 'dragonite', 'gyarados', 'garchomp',
-])
-
 function dealDamage(
   state: GameState,
   src: Unit | null,
@@ -246,9 +239,6 @@ function dealDamage(
       sub = 'Not very effective…'
     }
     if (src.heldItem === 'life-orb') amt += 1
-    // premium (Great/Ultra) Pokémon hit +1 harder with their special too —
-    // except the hand-tuned "flat 6" specials, which are already set to 6
-    if (kind === 'special' && !src.isChampion && ROSTER[src.key] && isPremium(ROSTER[src.key].cost) && !SPECIAL_SIX.has(src.key)) amt += 1
     // synergy riders scale with tier (1 at three uniques, 2 at five)
     const srcTier = tierOf(state.units, src)
     if (kind === 'special' && ptypeOf(src) === 'fighting') amt += srcTier
@@ -918,7 +908,7 @@ function resolveEnemySpecial(state: GameState, a: Unit, t: Unit) {
       const chances = [1, 0.75, 0.5, 0.25]
       for (const c of chances) {
         if (t.hp <= 0 || Math.random() >= c) break
-        dealDamage(state, a, t, 6, S)
+        dealDamage(state, a, t, 4, S)
       }
       break
     }
@@ -938,7 +928,8 @@ function resolveEnemySpecial(state: GameState, a: Unit, t: Unit) {
       break
     }
     case 'gengar': {
-      dealDamage(state, a, t, 6, S)
+      // 6, plus a 4-damage burst against a full-HP target
+      dealDamage(state, a, t, t.hp === t.maxHp ? 10 : 6, S)
       break
     }
     case 'escavalier': {
@@ -1109,7 +1100,8 @@ function resolveEnemySpecial(state: GameState, a: Unit, t: Unit) {
       break
     }
     case 'krookodile': {
-      dealDamage(state, a, t, 6, S)
+      // 5, plus a 5-damage finisher when the target is below half HP
+      dealDamage(state, a, t, t.hp * 2 < t.maxHp ? 10 : 5, S)
       break
     }
     case 'dragonite': {
