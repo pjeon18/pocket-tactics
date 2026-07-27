@@ -51,6 +51,8 @@ import {
   rockAt,
   targetsFrom,
 } from './rules'
+import { SUMMONS, synergyThresholds } from './data'
+import { synergyTier } from './rules'
 import type { DraftResult, GameState, ItemKey, Owner, Season, Unit } from './types'
 
 let UID = 1
@@ -135,8 +137,8 @@ export function newBattle(
       makeChampion(draftB.champion, 'B', mid, 0),
     ],
     players: {
-      A: { championKey: draftA.champion, bench: shopMode ? [] : [...draftA.picks], fainted: [], cooldowns: {}, revealed: [], shop: [], poke: START_POKE_A, great: 0, ultra: 0, turns: 0, items: [] },
-      B: { championKey: draftB.champion, bench: shopMode ? [] : [...draftB.picks], fainted: [], cooldowns: {}, revealed: [], shop: [], poke: START_POKE_B, great: START_GREAT_B, ultra: 0, turns: 0, items: [] },
+      A: { championKey: draftA.champion, bench: shopMode ? [] : [...draftA.picks], fainted: [], cooldowns: {}, revealed: [], shop: [], poke: START_POKE_A, great: 0, ultra: 0, turns: 0, items: [], summons: draftA.summons ?? [], usedSummons: [] },
+      B: { championKey: draftB.champion, bench: shopMode ? [] : [...draftB.picks], fainted: [], cooldowns: {}, revealed: [], shop: [], poke: START_POKE_B, great: START_GREAT_B, ultra: 0, turns: 0, items: [], summons: draftB.summons ?? [], usedSummons: [] },
     },
     current: 'A',
     round: 1,
@@ -149,6 +151,7 @@ export function newBattle(
     season: season ?? SEASONS[Math.floor(Math.random() * SEASONS.length)],
     seq: 1,
     tick: 0,
+    lugiaLock: null,
     acting: null,
     log: [],
     events: [],
@@ -192,7 +195,9 @@ function grantIncome(state: GameState) {
   p.turns++
   // income growth is CAPPED — late game pays a steady trickle, not a flood
   const income = Math.min(INCOME_CAP, 1 + Math.floor((state.round - 1) / INCOME_STEP_ROUNDS))
-  p.poke = Math.min(POKE_CAP, p.poke + income)
+  // Payday: Normal-type synergy pays out extra Poké Balls (2 uniques → +1, 4 → +2)
+  const payday = synergyTier(state.units, state.current, 'normal')
+  p.poke = Math.min(POKE_CAP, p.poke + income + payday)
   for (const key in p.cooldowns) {
     if (p.cooldowns[key] > 0) p.cooldowns[key]--
   }
@@ -349,6 +354,7 @@ export function deploy(state0: GameState, owner: Owner, key: string, col: number
   }
   if (!inBounds(col, row) || !inDeployZone(owner, row, deployDepthFor(sp.tier)) || blockedAt(state0, col, row)) return null
   if (fieldedCount(state0, owner) >= FIELD_CAP) return null // quality over quantity
+  if (state0.lugiaLock === owner) return null // Lugia's roar grounds new arrivals too
 
   const state = clone(state0)
   state.events = []
@@ -364,6 +370,55 @@ export function deploy(state0: GameState, owner: Owner, key: string, col: number
   u.summoned = true
   state.units.push(u)
   state.log.push(`${sp.name} joined the battle.`)
+  return state
+}
+
+/**
+ * Unleash a drafted legendary summon: a one-shot, field-wide effect. Free action
+ * besides its Poké Ball cost; each summon fires once per game.
+ */
+export function useSummon(state0: GameState, owner: Owner, key: string): GameState | null {
+  if (state0.winner || owner !== state0.current) return null
+  const def = SUMMONS[key]
+  const p0 = state0.players[owner]
+  if (!def || !p0.summons.includes(key) || p0.usedSummons.includes(key)) return null
+  if (p0.poke < def.cost) return null
+
+  const state = clone(state0)
+  const p = state.players[owner]
+  p.poke -= def.cost
+  p.usedSummons.push(key)
+  const mine = state.units.filter((u) => u.owner === owner)
+
+  switch (key) {
+    case 'hooh':
+      for (const u of mine) {
+        u.maxHp += 3
+        u.hp += 3
+        state.events.push({ col: u.col, row: u.row, text: '+3', color: '#3E9B63' })
+      }
+      break
+    case 'lugia':
+      state.lugiaLock = otherOwner(owner)
+      break
+    case 'dialga':
+      for (const u of mine) {
+        if (u.charge < u.chargeMax) {
+          u.charge = u.chargeMax
+          state.events.push({ col: u.col, row: u.row, text: 'CHARGED', color: '#C9930A' })
+        }
+      }
+      break
+    case 'palkia':
+      for (const u of mine) {
+        u.moveBuff = Math.max(u.moveBuff, 5 - u.move)
+        state.events.push({ col: u.col, row: u.row, text: 'WARP', color: '#C9930A' })
+      }
+      break
+    default:
+      return null
+  }
+  state.log.push(`${def.name} answered the call! ${def.desc}.`)
   return state
 }
 
@@ -1119,6 +1174,7 @@ export function finishTurn(state0: GameState): GameState {
     u.charge = Math.min(u.chargeMax, u.charge + 1)
   }
   state.movesLeft = MOVE_CAP
+  if (state.lugiaLock === ending) state.lugiaLock = null // the grounded turn is over
   state.current = otherOwner(ending)
   if (state.current === 'A') {
     state.round++

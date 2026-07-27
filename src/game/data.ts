@@ -33,6 +33,24 @@ export const START_GREAT_B = 0
 
 export const DRAFT_SIZE = 8
 
+/** Legendary summons: one-shot battlefield effects, never fielded. Pick 2. */
+export const SUMMON_PICKS = 2
+export interface SummonDef {
+  key: string
+  name: string
+  dex: number
+  /** Poké Ball cost to unleash it (once per game). */
+  cost: number
+  desc: string
+}
+export const SUMMONS: Record<string, SummonDef> = {
+  hooh: { key: 'hooh', name: 'Ho-Oh', dex: 250, cost: 4, desc: 'Sacred Fire — every Pokémon you have fielded gains +3 max HP, right away' },
+  lugia: { key: 'lugia', name: 'Lugia', dex: 249, cost: 4, desc: 'Aeroblast — next turn your opponent can neither move nor deploy' },
+  dialga: { key: 'dialga', name: 'Dialga', dex: 483, cost: 6, desc: 'Roar of Time — every one of your Pokémon gets its special fully charged' },
+  palkia: { key: 'palkia', name: 'Palkia', dex: 484, cost: 6, desc: 'Spacial Rend — all of your Pokémon have 5 movement this turn' },
+}
+export const SUMMON_ORDER = ['hooh', 'lugia', 'dialga', 'palkia']
+
 /** From this round on, both champions take 1 fatigue damage per round — games must end. */
 export const FATIGUE_ROUND = 20
 
@@ -48,6 +66,9 @@ export const HP_INFLATE = 3
     tier 1 at 3, tier 2 at 5 — numeric bonuses double, boolean ones gain a rider. */
 export const SYNERGY_THRESHOLD = 3
 export const SYNERGY_TIER2 = 5
+/** Normal's economy synergy comes online earlier: 2 uniques, upgraded at 4. */
+export const synergyThresholds = (t: PType): [number, number] =>
+  t === 'normal' ? [2, 4] : [SYNERGY_THRESHOLD, SYNERGY_TIER2]
 export interface SynergyDef {
   name: string
   desc: string
@@ -60,7 +81,7 @@ export const SYNERGIES: Partial<Record<PType, SynergyDef>> = {
   electric: { name: 'Static', desc: 'Your Electric Pokémon crit twice as often', desc2: 'crit three times as often' },
   psychic: { name: 'Mindlink', desc: 'Your Psychic Pokémon get +1 range', desc2: '+2 range' },
   grass: { name: 'Photosynthesis', desc: 'Your Grass Pokémon heal 1 at the end of your turn', desc2: 'heal 2' },
-  normal: { name: 'Guts', desc: 'Your Normal Pokémon get +1 ATK below half HP', desc2: '+2 ATK below half' },
+  normal: { name: 'Payday', desc: '+1 Poké Ball at the start of your turn', desc2: '+2 Poké Balls' },
   fighting: { name: 'Focus', desc: 'Your Fighting Pokémon deal +1 with specials', desc2: '+2 with specials' },
   steel: { name: 'Bulwark', desc: 'Your Steel Pokémon take 1 less damage', desc2: '2 less damage' },
   ice: { name: 'Frostbite', desc: 'Your Ice Pokémon deal +1 to stunned targets', desc2: '+2 to stunned' },
@@ -86,26 +107,26 @@ export const ITEMS: Record<ItemKey, { name: string; desc: string; attach: boolea
 /** Weighted field-drop table. Ball drops convert to currency the moment they're grabbed. */
 export type Drop = { type: 'item'; key: ItemKey } | { type: 'ball'; tier: 'great' | 'ultra' }
 export const DROPS: { drop: Drop; weight: number }[] = [
-  { drop: { type: 'item', key: 'potion' }, weight: 16 },
+  { drop: { type: 'item', key: 'potion' }, weight: 10 },
   { drop: { type: 'item', key: 'super-potion' }, weight: 10 },
-  { drop: { type: 'item', key: 'max-potion' }, weight: 5 },
+  { drop: { type: 'item', key: 'max-potion' }, weight: 7 },
   { drop: { type: 'item', key: 'revive' }, weight: 10 },
   { drop: { type: 'item', key: 'assault-vest' }, weight: 12 },
   { drop: { type: 'item', key: 'life-orb' }, weight: 12 },
   /* currency drops trimmed (anti-flood) in favor of consumables */
   { drop: { type: 'ball', tier: 'great' }, weight: 15 },
-  { drop: { type: 'ball', tier: 'ultra' }, weight: 7 },
+  { drop: { type: 'ball', tier: 'ultra' }, weight: 10 },
   { drop: { type: 'item', key: 'lum-berry' }, weight: 6 },
   /* the game-warping attachments stay VERY rare */
-  { drop: { type: 'item', key: 'choice-scarf' }, weight: 2 },
-  { drop: { type: 'item', key: 'choice-specs' }, weight: 2 },
-  { drop: { type: 'item', key: 'power-herb' }, weight: 2 },
+  { drop: { type: 'item', key: 'choice-scarf' }, weight: 4 },
+  { drop: { type: 'item', key: 'choice-specs' }, weight: 4 },
+  { drop: { type: 'item', key: 'power-herb' }, weight: 4 },
 ]
 
 /** One rock cluster: two touching tiles, mirrored to the other side (4 blocked tiles total). */
 export const ROCK_CLUSTERS = 1
 export const CHEST_MAX = 2
-export const CHEST_EVERY = 4 // a field Poké Ball drops every 4 rounds
+export const CHEST_EVERY = 3 // a field Poké Ball drops every 3 rounds
 
 export const ROLE_META: Record<Role, { label: string }> = {
   tank: { label: 'Tank' },

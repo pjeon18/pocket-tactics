@@ -855,17 +855,22 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 
 /* ---------- Poké Ball wallpaper: a quiet diagonal drift behind menus ---------- */
 .ball-wallpaper {
-  position: fixed; inset: -120px; z-index: 0; pointer-events: none; opacity: 0.05;
-  background-image: url('https://raw.githubusercontent.com/msikma/pokesprite/master/items/ball/poke.png');
-  background-size: 64px 64px; image-rendering: pixelated;
-  animation: wallpaperDrift 46s linear infinite;
+  position: fixed; inset: -180px; z-index: 0; pointer-events: none; opacity: 0.055;
+  background-image:
+    url('https://raw.githubusercontent.com/msikma/pokesprite/master/items/ball/poke.png'),
+    url('https://raw.githubusercontent.com/msikma/pokesprite/master/items/ball/great.png'),
+    url('https://raw.githubusercontent.com/msikma/pokesprite/master/items/ball/ultra.png');
+  background-size: 44px 44px;
+  background-position: 0 0, 60px 90px, 120px 30px;
+  background-repeat: space;
+  image-rendering: pixelated;
+  animation: wallpaperDrift 52s linear infinite;
 }
-@keyframes wallpaperDrift { to { background-position: 640px 640px; } }
+@keyframes wallpaperDrift { to { transform: translate(180px, 180px); } }
 .menu > *:not(.ball-wallpaper), .draft > *:not(.ball-wallpaper) { position: relative; z-index: 1; }
 
 /* draft chrome */
-.draft-back { position: absolute; left: 0; top: 4px; }
-.draft-head { position: relative; }
+.draft-back { display: inline-flex; margin-bottom: 14px; }
 .draft-search {
   border: 2.5px solid rgba(242, 242, 237, 0.25); border-radius: 99px; background: transparent;
   color: var(--on-dark); padding: 8px 18px; font-size: 14px; font-weight: 700; min-width: 200px;
@@ -874,3 +879,22 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 .draft-search:focus { outline: none; border-color: var(--amber); }
 .syn-legend-note { color: var(--on-dark); font-weight: 700; margin: 2px 0 10px; line-height: 1.5; }
 .rules .syn-legend-note, .help-pop .syn-legend-note { color: inherit; }
+
+
+/* ---------- legendary summons ---------- */
+.summon-grid .card { border-style: dashed; }
+.summon-sub { margin: -4px 0 10px; }
+.summon-row { display: flex; gap: 10px; }
+.summon-btn {
+  flex: 1; display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+  border: 3px dashed color-mix(in srgb, var(--amber) 70%, #fff); border-radius: 14px;
+  background: color-mix(in srgb, var(--amber) 10%, #FFFFFF); color: var(--ink);
+  font-weight: 900; font-size: 14px; cursor: pointer;
+  transition: transform 0.12s, opacity 0.2s;
+}
+.summon-btn:hover:not(:disabled) { transform: translateY(-2px); }
+.summon-btn:disabled { opacity: 0.4; cursor: default; }
+.summon-btn .sprite { width: 34px; height: 34px; object-fit: contain; image-rendering: pixelated; }
+.summon-name { flex: 1; text-align: left; }
+.summon-cost { display: inline-flex; align-items: center; gap: 3px; font-variant-numeric: tabular-nums; }
+.summon-used { filter: grayscale(1); }

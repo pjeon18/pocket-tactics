@@ -1,6 +1,7 @@
 /* Headless engine smoke test: rules, planning/resolution, specials, abilities, AI games. */
 import {
   cancelPlan,
+  useSummon,
   deploy,
   finishTurn,
   moveUnit,
@@ -331,6 +332,37 @@ vul.atk = 2
 ok(effAtk(syT2.units, vul) === 4, 'Blaze tier 2 grants +2 ATK')
 syT2.units = syT2.units.filter((u) => u.id !== 988) // drop to four fires
 ok(synergyTier(syT2.units, 'A', 'fire') === 1 && effAtk(syT2.units, vul) === 3, 'tier falls back to 1 at four uniques')
+
+/* --- legendary summons --- */
+const draftS = { champion: 'victini', picks: draftA.picks, summons: ['hooh', 'lugia'] }
+let sm = newBattle(draftS, draftB)
+sm.rocks = []
+spawn(sm, 970, 'pikachu', 'A', 0, 8, { hp: 7, maxHp: 7 })
+sm.players.A.poke = 8
+ok(useSummon(sm, 'A', 'dialga') === null, 'cannot use a summon you did not draft')
+const smh = useSummon(sm, 'A', 'hooh')!
+const buffed = smh.units.find((u) => u.id === 970)!
+ok(smh !== null && buffed.maxHp === 10 && buffed.hp === 10, 'Ho-Oh grants +3 max HP to fielded allies')
+ok(smh.players.A.poke === 4, 'summons cost Poké Balls')
+ok(useSummon(smh, 'A', 'hooh') === null, 'each summon fires once per game')
+const sml = useSummon(smh, 'A', 'lugia')!
+ok(sml !== null && sml.lugiaLock === 'B', 'Lugia grounds the opponent')
+const smlB = endTurnFully(sml) // now B's turn, locked
+const bUnit0 = smlB.units.find((u) => u.owner === 'B' && u.isChampion)!
+ok(!canMoveNow(smlB, bUnit0), "Lugia: the grounded side can't move")
+smlB.players.B.poke = 8
+ok(deploy(smlB, 'B', 'pikachu', 0, 0) === null, "Lugia: the grounded side can't deploy")
+const smlDone = endTurnFully(smlB)
+ok(smlDone.lugiaLock === null, "Lugia's roar fades after the grounded turn")
+
+/* --- Payday: Normal synergy pays Poké Balls (2 uniques → +1) --- */
+let pd = newBattle(draftA, draftB)
+pd.rocks = []
+spawn(pd, 975, 'snorlax', 'A', 0, 8)
+spawn(pd, 976, 'porygon2', 'A', 1, 8)
+pd.players.A.poke = 0
+const pd2 = endTurnFully(endTurnFully(pd)) // B, then back to A's income
+ok(pd2.players.A.poke >= 2, 'Payday: two unique Normals pay +1 extra ball')
 
 /* --- full AI vs AI games run to completion --- */
 for (let g2 = 0; g2 < 5; g2++) {

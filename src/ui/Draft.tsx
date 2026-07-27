@@ -3,6 +3,9 @@ import {
   CHAMPIONS,
   CHAMPION_ORDER,
   DRAFT_SIZE,
+  SUMMONS,
+  SUMMON_ORDER,
+  SUMMON_PICKS,
   ROLE_META,
   ROSTER,
   SYNERGIES,
@@ -10,6 +13,7 @@ import {
   TYPE_META,
   costEquiv,
 } from '../game/data'
+import { synergyThresholds } from '../game/data'
 import type { BallTier, ChampionSpecies, DraftResult, Role, Species } from '../game/types'
 import { CostDots, Sprite } from './Sprite'
 import { PatternGrid, buildMoveAtk, buildSpecial } from './PatternGrid'
@@ -57,14 +61,14 @@ export function SynergyLegend() {
   return (
     <div className="syn-legend">
       <p className="syn-legend-note">
-        The numbers are how many UNIQUE same-type Pokémon you need fielded at once
-        (3 unlocks the effect, 5 upgrades it). Your champion counts — duplicates don't.
+        The numbers are how many UNIQUE same-type Pokémon you need fielded at once —
+        the first unlocks the effect, the second upgrades it. Your champion counts; duplicates don't.
       </p>
       {(Object.keys(SYNERGIES) as (keyof typeof SYNERGIES)[]).map((t) => (
         <div key={t} className="syn-legend-row">
           <em className="type-chip" style={{ background: TYPE_META[t]!.color }}>{TYPE_META[t]!.label}</em>
           <b>{SYNERGIES[t]!.name}</b>
-          <span><b>3:</b> {SYNERGIES[t]!.desc} · <b>5:</b> {SYNERGIES[t]!.desc2}</span>
+          <span><b>{synergyThresholds(t)[0]}:</b> {SYNERGIES[t]!.desc} · <b>{synergyThresholds(t)[1]}:</b> {SYNERGIES[t]!.desc2}</span>
         </div>
       ))}
     </div>
@@ -89,6 +93,11 @@ export function Draft({
   const [tierFilter, setTierFilter] = useState<BallTier | 'all'>('all')
   const [sort, setSort] = useState<SortKey>('cost')
   const [search, setSearch] = useState('')
+  const [summons, setSummons] = useState<string[]>([])
+  const toggleSummon = (key: string) =>
+    setSummons((cur) =>
+      cur.includes(key) ? cur.filter((k) => k !== key) : cur.length < SUMMON_PICKS ? [...cur, key] : cur,
+    )
 
   const toggle = (key: string) =>
     setPicks((p) =>
@@ -114,7 +123,7 @@ export function Draft({
     return list
   }, [roleFilter, tierFilter, sort, search])
 
-  const ready = champion && (championOnly || picks.length === DRAFT_SIZE)
+  const ready = champion && summons.length === SUMMON_PICKS && (championOnly || picks.length === DRAFT_SIZE)
   const detailSpecies: Species | ChampionSpecies | null = detail
     ? (ROSTER[detail] ?? CHAMPIONS[detail] ?? null)
     : null
@@ -150,6 +159,32 @@ export function Draft({
               <div className="card-type" style={{ color: TYPE_META[c.ptype].color }}>{TYPE_META[c.ptype].label}</div>
               <div className="card-hint"><b>{c.ability}</b></div>
             </HoldButton>
+          )
+        })}
+      </div>
+
+      <div className="section-label">
+        Legendary summons — pick {SUMMON_PICKS}
+        <span className="pick-count">{summons.length}/{SUMMON_PICKS}</span>
+      </div>
+      <p className="draft-sub summon-sub">One-shot battlefield effects, cast anywhere for Poké Balls. Once per game each.</p>
+      <div className="champ-grid summon-grid">
+        {SUMMON_ORDER.map((key) => {
+          const sm = SUMMONS[key]
+          const sel = summons.includes(key)
+          return (
+            <button
+              key={key}
+              className={`card summon-card ${sel ? 'sel' : ''}`}
+              style={{ ['--tc' as string]: '#C9930A' }}
+              onClick={() => toggleSummon(key)}
+            >
+              {sel && <span className="picked-mark">✓</span>}
+              <Sprite dex={sm.dex} name={sm.name} tokenColor="#C9930A" className="card-sprite" />
+              <div className="card-name">{sm.name}</div>
+              <div className="card-stats">{sm.cost} Poké Balls · once per game</div>
+              <div className="card-hint">{sm.desc}</div>
+            </button>
           )
         })}
       </div>
@@ -242,7 +277,7 @@ export function Draft({
         <button
           className="btn btn-primary"
           disabled={!ready}
-          onClick={() => ready && onDone({ champion: champion!, picks })}
+          onClick={() => ready && onDone({ champion: champion!, picks, summons })}
         >
           {ready
             ? championOnly ? 'Lock in champion' : 'Lock in team'

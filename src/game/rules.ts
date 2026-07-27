@@ -1,4 +1,4 @@
-import { COLS, DEPLOY_DEPTH, ROSTER, ROWS, SYNERGIES, SYNERGY_THRESHOLD, SYNERGY_TIER2, ptypeOf } from './data'
+import { COLS, DEPLOY_DEPTH, ROSTER, ROWS, SYNERGIES, SYNERGY_THRESHOLD, ptypeOf, synergyThresholds } from './data'
 import type { BallTier, BoardLike, GameState, Owner, PType, PlayerState, Species, Unit } from './types'
 
 export const inBounds = (c: number, r: number) => c >= 0 && c < COLS && r >= 0 && r < ROWS
@@ -52,8 +52,9 @@ export function synergyCounts(units: Unit[], owner: Owner): Partial<Record<PType
 export function synergyTier(units: Unit[], owner: Owner, t: PType): 0 | 1 | 2 {
   if (!SYNERGIES[t]) return 0
   const n = synergyCounts(units, owner)[t] ?? 0
-  if (n >= SYNERGY_TIER2) return 2
-  if (n >= SYNERGY_THRESHOLD) return 1
+  const [t1, t2] = synergyThresholds(t)
+  if (n >= t2) return 2
+  if (n >= t1) return 1
   return 0
 }
 
@@ -80,7 +81,6 @@ export function effAtk(units: Unit[], u: Unit): number {
   const tier = tierOf(units, u)
   if (tier >= 1) {
     if (t === 'fire') a += tier
-    if (t === 'normal' && u.hp * 2 <= u.maxHp) a += tier
     if (t === 'bug' && tier >= 2) a += 1
   }
   return a
@@ -116,6 +116,7 @@ export const othersMovedThisTurn = (state: GameState) =>
  */
 export function canMoveNow(state: GameState, u: Unit): boolean {
   if (state.winner || u.owner !== state.current) return false
+  if (state.lugiaLock === u.owner) return false // Lugia's roar grounds the whole side
   if (u.moved || u.stunned) return false // freshly deployed units may move — just not attack
   if (u.isChampion) return !othersMovedThisTurn(state) && !championMovedThisTurn(state)
   return state.movesLeft > 0 && !championMovedThisTurn(state)

@@ -13,10 +13,13 @@ import {
   undoMove,
   useAbility,
   useItem,
+  useSummon,
 } from '../game/actions'
 import {
   CHAMPIONS,
   COLS,
+  SUMMONS,
+  synergyThresholds,
   FIELD_CAP,
   GREAT_CAP,
   ITEMS,
@@ -92,7 +95,7 @@ const TURN_SECONDS = (() => {
 const tierRank = { poke: 0, great: 1, ultra: 2 } as const
 
 const ACTIONS = {
-  deploy, moveUnit, undoMove, planAttack, planArea, cancelPlan, useAbility, useItem, tradeBalls,
+  deploy, moveUnit, undoMove, planAttack, planArea, cancelPlan, useAbility, useItem, tradeBalls, useSummon,
 } as const
 type ActionName = keyof typeof ACTIONS
 
@@ -607,6 +610,7 @@ export function Battle({
       else if (selUnit) setSel({ type: 'revive', id: selUnit.id, reviveKey: key })
     },
     onItem: onItemPress,
+    onSummon: (key: string) => run('useSummon', state.current, key),
     onEndTurn: doEndTurn,
   }
 
@@ -795,6 +799,7 @@ interface PanelProps {
   onPickRevive: (key: string) => void
   onItem: (item: ItemKey) => void
   onInspect: (key: string) => void
+  onSummon: (key: string) => void
   onEndTurn: () => void
 }
 
@@ -887,6 +892,8 @@ function PlayerPanel(props: PanelProps) {
         </div>
 
         <ActionBar {...props} />
+
+        <SummonRow {...props} />
 
         <Inventory {...props} />
 
@@ -1082,20 +1089,21 @@ function SynergyTracker({ state, owner }: { state: GameState; owner: Owner }) {
     <div className="synergies">
       {entries.map((t) => {
         const raw = counts[t] ?? 0
-        const tier = raw >= SYNERGY_TIER2 ? 2 : raw >= SYNERGY_THRESHOLD ? 1 : 0
-        // progress reads toward the NEXT tier: n/3, then n/5, then a maxed badge
+        const [th1, th2] = synergyThresholds(t)
+        const tier = raw >= th2 ? 2 : raw >= th1 ? 1 : 0
+        // progress reads toward the NEXT tier, using each type's own thresholds
         const label =
           tier === 2
             ? `${SYNERGIES[t]!.name} MAX`
             : tier === 1
-              ? `${SYNERGIES[t]!.name} ${raw}/${SYNERGY_TIER2}`
-              : `${TYPE_META[t].label} ${raw}/${SYNERGY_THRESHOLD}`
+              ? `${SYNERGIES[t]!.name} ${raw}/${th2}`
+              : `${TYPE_META[t].label} ${raw}/${th1}`
         return (
           <span
             key={t}
             className={`syn-chip ${tier >= 1 ? 'syn-on' : ''} ${tier === 2 ? 'syn-t2' : ''}`}
             style={{ ['--tc' as string]: TYPE_META[t].color }}
-            title={`${SYNERGIES[t]!.name} — 3: ${SYNERGIES[t]!.desc} · 5: ${SYNERGIES[t]!.desc2} (unique Pokémon only)`}
+            title={`${SYNERGIES[t]!.name} — ${synergyThresholds(t)[0]}: ${SYNERGIES[t]!.desc} · ${synergyThresholds(t)[1]}: ${SYNERGIES[t]!.desc2} (unique Pokémon only)`}
           >
             <span className="syn-dot" />
             {label}
@@ -1107,6 +1115,36 @@ function SynergyTracker({ state, owner }: { state: GameState; owner: Owner }) {
 }
 
 /* ---------- inventory ---------- */
+
+function SummonRow({ state, owner, interactive, onSummon }: PanelProps) {
+  const p = state.players[owner]
+  if (!p.summons.length) return null
+  return (
+    <div className="summon-row">
+      {p.summons.map((key) => {
+        const sm = SUMMONS[key]
+        if (!sm) return null
+        const used = p.usedSummons.includes(key)
+        const affordable = p.poke >= sm.cost
+        return (
+          <button
+            key={key}
+            className={`summon-btn ${used ? 'summon-used' : ''}`}
+            disabled={!interactive || used || !affordable}
+            onClick={() => onSummon(key)}
+            title={`${sm.name} — ${sm.desc} (${sm.cost} Poké Balls, once per game)`}
+          >
+            <Sprite dex={sm.dex} name={sm.name} tokenColor="#C9930A" />
+            <span className="summon-name">{used ? 'Answered' : sm.name}</span>
+            {!used && (
+              <span className="summon-cost"><BallSprite tier="poke" size={15} />{sm.cost}</span>
+            )}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
 
 function Inventory({ state, owner, sel, interactive, onItem, onPickRevive }: PanelProps) {
   const p = state.players[owner]

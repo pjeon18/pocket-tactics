@@ -143,6 +143,9 @@ export interface PlayerState {
   turns: number
   /** Items collected from field Poké Balls, usable freely on your turn. */
   items: ItemKey[]
+  /** The two drafted legendary summons, and which have been spent. */
+  summons: string[]
+  usedSummons: string[]
 }
 
 export interface FloatEvent {
@@ -181,6 +184,8 @@ export interface GameState {
   seq: number
   /** Bumps on every action — lets an online guest reconcile optimistic states. */
   tick: number
+  /** Lugia's roar: this owner can neither move nor deploy on their next turn. */
+  lugiaLock: Owner | null
   /** Transient: the unit acting this resolution step + its attack direction (drives the lunge). */
   acting: { id: number; dc: number; dr: number } | null
   log: string[]
@@ -194,4 +199,6 @@ export type BoardLike = Pick<GameState, 'units' | 'rocks'>
 export interface DraftResult {
   champion: string
   picks: string[]
+  /** Two legendary summons — one-shot battlefield effects, not units. */
+  summons?: string[]
 }

@@ -1,5 +1,5 @@
-import { CHAMPION_ORDER, DRAFT_SIZE, GREAT_CAP, ROSTER, TRADE_GREAT_COST, TRADE_ULTRA_COST, ULTRA_CAP, costEquiv, metaOf, ptypeOf, typeMod } from './data'
-import { deploy, moveUnit, planArea, planAttack, tradeBalls, useAbility } from './actions'
+import { CHAMPION_ORDER, DRAFT_SIZE, SUMMONS, SUMMON_ORDER, GREAT_CAP, ROSTER, TRADE_GREAT_COST, TRADE_ULTRA_COST, ULTRA_CAP, costEquiv, metaOf, ptypeOf, typeMod } from './data'
+import { deploy, moveUnit, planArea, planAttack, tradeBalls, useAbility, useSummon } from './actions'
 import {
   canActNow,
   deployDepthFor,
@@ -36,7 +36,8 @@ export function aiDraft(): DraftResult {
   take(byTier('ultra'), 2)
   take(byTier('great'), 4)
   take(byTier('poke'), DRAFT_SIZE - picks.length)
-  return { champion, picks }
+  const summons = [...SUMMON_ORDER].sort(() => Math.random() - 0.5).slice(0, 2)
+  return { champion, picks, summons }
 }
 
 /* ---------- battle ---------- */
@@ -260,6 +261,22 @@ export function aiStep(state: GameState): GameState | null {
   if (wantsGreat && p.great < GREAT_CAP && p.poke >= TRADE_GREAT_COST + 1) {
     const next = tradeBalls(state, me, 'great')
     if (next) return next
+  }
+
+  // 1a½. unleash a summon when the moment is right
+  for (const key of p.summons) {
+    if (p.usedSummons.includes(key) || p.poke < (SUMMONS[key]?.cost ?? 99)) continue
+    const mine = state.units.filter((u) => u.owner === me && !u.isChampion).length
+    const theirs = state.units.filter((u) => u.owner !== me && !u.isChampion).length
+    const worth =
+      (key === 'hooh' && mine >= 3) ||
+      (key === 'dialga' && mine >= 3) ||
+      (key === 'lugia' && theirs >= 4) ||
+      (key === 'palkia' && mine >= 3 && state.round >= 6)
+    if (worth) {
+      const next = useSummon(state, me, key)
+      if (next) return next
+    }
   }
 
   // 1b. deploy the best deployable Pokémon
