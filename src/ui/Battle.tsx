@@ -108,6 +108,9 @@ export function Battle({
   net,
   onExit,
   onRedraft,
+  tutorial = false,
+  initialState,
+  rebuild,
 }: {
   mode: 'ai' | 'local'
   blitz: boolean
@@ -117,12 +120,18 @@ export function Battle({
   net?: NetSession
   onExit: () => void
   onRedraft: () => void
+  /** Guided tutorial: passive rival, coach overlay, no draft. */
+  tutorial?: boolean
+  /** Start from a prepared state instead of a fresh random battle. */
+  initialState?: GameState
+  /** How to rebuild the starting state on "Try again" (tutorial). */
+  rebuild?: () => GameState
 }) {
   const seasonOverride = (() => {
     const q = new URLSearchParams(window.location.search).get('season')
     return q === 'spring' || q === 'summer' || q === 'autumn' || q === 'winter' ? q : undefined
   })()
-  const [state, setState] = useState<GameState>(() => newBattle(draftA, draftB, blitz, seasonOverride))
+  const [state, setState] = useState<GameState>(() => initialState ?? newBattle(draftA, draftB, blitz, seasonOverride))
   const [sel, setSel] = useState<Sel>(null)
   const [floats, setFloats] = useState<FloatView[]>([])
   const [tabletop, setTabletop] = useState(false)
@@ -364,16 +373,16 @@ export function Battle({
     return () => clearTimeout(t)
   }, [resolving, state])
 
-  /* AI planning loop */
+  /* AI planning loop — the tutorial's rival is passive and simply passes */
   useEffect(() => {
     if (mode !== 'ai' || state.current !== 'B' || state.winner || resolving) return
     const t = window.setTimeout(() => {
-      const next = aiStep(state)
+      const next = tutorial ? null : aiStep(state)
       if (next) apply(next)
       else setResolving(true)
     }, AI_STEP_MS)
     return () => clearTimeout(t)
-  }, [state, mode, resolving])
+  }, [state, mode, resolving, tutorial])
 
   const findUnit = (id: number) => state.units.find((u) => u.id === id)
   const selUnit = sel && 'id' in sel ? findUnit(sel.id) : undefined
@@ -575,7 +584,7 @@ export function Battle({
 
   const restart = () => {
     // online rematches would need a fresh handshake; offline only
-    const fresh = newBattle(draftA, draftB, blitz)
+    const fresh = rebuild ? rebuild() : newBattle(draftA, draftB, blitz)
     setState(fresh)
     setSel(null)
     setFloats([])
@@ -711,7 +720,24 @@ export function Battle({
         </div>
       )}
 
-      {state.winner && winnerShown && !reviewing && (
+      {state.winner && winnerShown && !reviewing && tutorial && (
+        <div className="overlay">
+          <div className="overlay-card overlay-confirm">
+            <div className="overlay-title">{state.winner === 'A' ? 'Tutorial complete!' : 'Try again'}</div>
+            <div className="overlay-sub">
+              {state.winner === 'A'
+                ? "That's the whole loop — deploy, rest, move, declare, and resolve at End turn. You're ready for a real match."
+                : 'The rival champion is still standing. Give it another go.'}
+            </div>
+            <div className="overlay-btns">
+              <button className="btn btn-primary" onClick={onExit}>Battle the Rival</button>
+              <button className="btn btn-ghost" onClick={restart}>Replay tutorial</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {state.winner && winnerShown && !reviewing && !tutorial && (
         <div className="overlay">
           <div className="overlay-card">
             <div className="overlay-title">
@@ -734,6 +760,76 @@ export function Battle({
           </div>
         </div>
       )}
+
+      {tutorial && !state.winner && <TutorialCoach state={state} resolving={resolving} sel={sel} onExit={onExit} />}
+    </div>
+  )
+}
+
+/* ---------- guided tutorial coach ---------- */
+
+type TutorialStep = 'deploy' | 'restTurn' | 'wait' | 'move' | 'restMove' | 'attack' | 'resolveTurn'
+
+function tutorialStep(state: GameState, resolving: boolean): TutorialStep {
+  if (resolving || state.current !== 'A') return 'wait'
+  const unit = state.units.find((u) => u.owner === 'A' && !u.isChampion)
+  if (!unit) return 'deploy'
+  if (unit.summoned) return 'restTurn'
+  if (unit.planned) return 'resolveTurn'
+  const champB = state.units.find((u) => u.owner === 'B' && u.isChampion)
+  const inRange =
+    !!champB && Math.max(Math.abs(unit.col - champB.col), Math.abs(unit.row - champB.row)) <= unit.range
+  if (inRange) return 'attack'
+  // out of range: move if it still can, otherwise end the turn and continue next one
+  if (unit.moved || state.movesLeft <= 0) return 'restMove'
+  return 'move'
+}
+
+const TUTORIAL_COPY: Record<TutorialStep, { title: string; body: string }> = {
+  deploy: {
+    title: 'Step 1 — Deploy',
+    body: 'Tap Pikachu on your bench (right side), then tap a glowing tile near your side to send it onto the field.',
+  },
+  restTurn: {
+    title: 'Step 2 — End your turn',
+    body: "A Pokémon can't attack the turn it deploys — it needs a turn to settle in. Press End turn.",
+  },
+  wait: {
+    title: 'Rival’s turn',
+    body: 'Your rival is passive in the tutorial, so it just passes. Hang tight…',
+  },
+  move: {
+    title: 'Step 3 — Move in',
+    body: 'Tap your Pikachu, then a blue tile to move it toward the gold enemy champion until it’s in range.',
+  },
+  restMove: {
+    title: 'Step 3 — Keep closing in',
+    body: 'That’s this turn’s move. Press End turn, then move again next turn until Pikachu is beside the champion.',
+  },
+  attack: {
+    title: 'Step 4 — Declare an attack',
+    body: 'Tap the enemy champion to plan an attack. Attacks are declared now and all land when the turn ends.',
+  },
+  resolveTurn: {
+    title: 'Step 5 — Resolve',
+    body: 'Press End turn — your planned attack lands and knocks out the champion. That wins the match.',
+  },
+}
+
+function TutorialCoach({
+  state, resolving, sel, onExit,
+}: { state: GameState; resolving: boolean; sel: Sel; onExit: () => void }) {
+  void sel
+  const step = tutorialStep(state, resolving)
+  const copy = TUTORIAL_COPY[step]
+  return (
+    <div className="tutorial-coach">
+      <div className="tutorial-coach-head">
+        <span className="tutorial-tag">Tutorial</span>
+        <button className="btn btn-tiny tutorial-skip" onClick={onExit}>Skip</button>
+      </div>
+      <div className="tutorial-coach-title">{copy.title}</div>
+      <div className="tutorial-coach-body">{copy.body}</div>
     </div>
   )
 }

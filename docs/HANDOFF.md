@@ -148,6 +148,19 @@ all three modes. (Added after a 16-min/10-round 2P game.)
 **Off-turn inspection:** click any Pokémon while it's NOT your turn → read-only
 info card + threat range. (The old "Danger zone" button was removed for this.)
 
+**Guided tutorial (2026-07-27):** menu → "New here? Play the tutorial" mounts
+`Battle` with `tutorial`, `initialState`, and `rebuild` props (App phase
+`{t:'tutorial'}`). Scenario in `src/game/tutorial.ts`: player = Victini +
+one Pikachu bench, rival = a wounded Manaphy champion parked at (3,3), rocks
+cleared. The rival is passive (the AI loop passes when `tutorial`). A
+state-driven `TutorialCoach` overlay walks the real store actions through
+deploy → rest (deployed units can't attack) → move → declare → resolve → win,
+with a `restMove` fallback if the unit is stranded out of range. Electric beats
+water so one clean Pikachu hit ends it. Drive/verify with
+`scripts/tut-test.mjs`. The How-to-play menu expander now shows the rules in a
+left column and Type Synergies in a right column (`.howto-cols`); the standalone
+Type-synergies toggle is gone.
+
 **Online extras (2026-07-27):** a `prog` channel relays live draft progress —
 each side sees "Opponent has drafted N/8 Pokémon · N/2 summons" → "locked in ✓"
 (`NetProgress`, `Draft` `onProgress`/`opponentNote`, wired in `OnlineGame`). A

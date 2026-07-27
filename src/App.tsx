@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { aiDraft } from './game/ai'
+import { makeTutorialDrafts, makeTutorialState } from './game/tutorial'
 import type { DraftResult } from './game/types'
 import { Battle } from './ui/Battle'
 import { BattleIntro } from './ui/BattleIntro'
@@ -12,6 +13,7 @@ type Mode = 'ai' | 'local'
 
 type Phase =
   | { t: 'menu' }
+  | { t: 'tutorial' }
   | { t: 'online'; blitz: boolean; timer: boolean }
   | { t: 'draftA'; mode: Mode; blitz: boolean; timer: boolean }
   | { t: 'pass'; mode: 'local'; blitz: boolean; timer: boolean; draftA: DraftResult }
@@ -30,6 +32,22 @@ export default function App() {
         <ModeSelect
           onPick={(mode, blitz, timer) => go(() => setPhase({ t: 'draftA', mode, blitz, timer }))}
           onOnline={(blitz, timer) => go(() => setPhase({ t: 'online', blitz, timer }))}
+          onTutorial={() => go(() => setPhase({ t: 'tutorial' }))}
+        />
+      )}
+
+      {phase.t === 'tutorial' && (
+        <Battle
+          mode="ai"
+          blitz={false}
+          timerOn={false}
+          tutorial
+          initialState={makeTutorialState()}
+          rebuild={makeTutorialState}
+          draftA={makeTutorialDrafts().draftA}
+          draftB={makeTutorialDrafts().draftB}
+          onExit={() => setPhase({ t: 'menu' })}
+          onRedraft={() => setPhase({ t: 'menu' })}
         />
       )}
 

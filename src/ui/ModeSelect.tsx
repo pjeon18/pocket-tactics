@@ -145,9 +145,11 @@ export function Compendium() {
 export function ModeSelect({
   onPick,
   onOnline,
+  onTutorial,
 }: {
   onPick: (mode: 'ai' | 'local', blitz: boolean, timer: boolean) => void
   onOnline: (blitz: boolean, timer: boolean) => void
+  onTutorial: () => void
 }) {
   const [blitz, setBlitz] = useState(false)
   const [timer, setTimer] = useState(true)
@@ -188,19 +190,23 @@ export function ModeSelect({
         <button className="btn btn-ghost" onClick={() => onOnline(blitz, timer)}>
           Play Online · Private Room
         </button>
+        <button className="btn btn-tutorial" onClick={onTutorial}>
+          New here? Play the tutorial
+        </button>
       </div>
 
-      <div className="rules-row">
-        <details className="rules">
-          <summary>How to play</summary>
-          <HowToPlay />
-        </details>
-
-        <details className="rules">
-          <summary>Type synergies</summary>
-          <SynergyLegend />
-        </details>
-      </div>
+      <details className="rules rules-wide">
+        <summary>How to play</summary>
+        <div className="howto-cols">
+          <div className="howto-col">
+            <HowToPlay />
+          </div>
+          <div className="howto-col">
+            <h4 className="howto-col-head">Type synergies</h4>
+            <SynergyLegend />
+          </div>
+        </div>
+      </details>
 
       <details className="rules rules-wide">
         <summary>Pokédex &amp; odds — every stat, ability, and drop rate</summary>
