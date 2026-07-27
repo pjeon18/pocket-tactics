@@ -28,7 +28,7 @@ Push only when Paul asks; keychain token (`pjeon18`, repo+workflow scopes) makes
 
 ## 1. Core loop & the non-negotiable rules
 
-Draft → deploy from your back two rows → **move live**, **declare attacks** (they
+Draft → deploy into your tiered zone → **move live**, **declare attacks** (they
 resolve together at End Turn with a telegraph) → KO the enemy champion. Rules that
 are load-bearing and must not be broken:
 
@@ -48,7 +48,9 @@ are load-bearing and must not be broken:
 
 ## 2. The numbers (current, `src/game/data.ts`)
 
-**Board:** 7 cols × 10 rows. Deploy zones = each side's back 2 rows. Terrain =
+**Board:** 7 cols × 10 rows. **Tiered deploy zones:** Poké-tier lands up to 4
+rows deep, Great-tier 3, Ultra-tier 2 (cheap bodies reach the front, premiums
+start at the back). Revives follow the revived species' tier. Terrain =
 one mirrored 2-tile **tree** domino (impassable, blocks line of fire).
 
 **Economy (deliberately slow — the anti-flood design):**
@@ -90,10 +92,10 @@ and *more incentive to invest in stronger Pokémon* (open question if fully solv
 **Champions** (~8–9 HP, MOV 1, all obey the champion-move lock; ability on a
 charge meter):
 - **Mew** — Genesis: redeploy a fainted ally free.
-- **Celebi** — Healing Wish: heal all your units 2.
-- **Jirachi** — Doom Desire: once/game, 5 dmg in a 5-tile cross within 4.
+- **Celebi** — Healing Wish: heal all your units 3.
+- **Jirachi** — Doom Desire: repeatable (charge 5), 5 dmg in a 5-tile cross within 5.
 - **Victini** — V-Create: your whole team +2 ATK/+2 MOV this turn.
-- **Manaphy** — Surf: hits **every** Pokémon on the field for 3 (friend + foe).
+- **Manaphy** — Surf: 4 dmg to every Pokémon outside her own back two rows (friend + foe).
 
 Every "plain N damage" special was given a distinct identity (instant Extreme
 Speed, risky High Jump Kick, multi-hit Rock Blast, Power Whip *pull*, Flame Charge
@@ -128,7 +130,7 @@ full-HP), Swarm(bug double normal attack). Logic in `rules.ts`
   0.25 `makeAction` returns `{send, onMessage}`, NOT a tuple — this bit us once.
   Verified two-page handshake works. Online = classic-draft only.
 
-**Draft styles:** **Classic** (pick champion + 10 up front) or **Blitz** (pick
+**Draft styles:** **Classic** (pick champion + 8 up front) or **Blitz** (pick
 champion only; a 5-card shop restocks every turn, you **deploy straight from the
 shop and keep nothing**). Draft screen sorts by cost/atk/hp/range/**type** and
 filters by role/ball-tier; **hold** a card for the full detail modal (pattern

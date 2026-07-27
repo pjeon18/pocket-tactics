@@ -2,6 +2,7 @@ import { CHAMPION_ORDER, DRAFT_SIZE, GREAT_CAP, ROSTER, TRADE_GREAT_COST, TRADE_
 import { deploy, moveUnit, planArea, planAttack, tradeBalls, useAbility } from './actions'
 import {
   canActNow,
+  deployDepthFor,
   canAfford,
   canDeployCard,
   canMoveNow,
@@ -42,8 +43,8 @@ export function aiDraft(): DraftResult {
 
 const tierRank = { poke: 0, great: 1, ultra: 2 } as const
 
-function pickDeploySpot(state: GameState, me: Owner): [number, number] | null {
-  const open = openDeployTiles(state, me)
+function pickDeploySpot(state: GameState, me: Owner, depth = 2): [number, number] | null {
+  const open = openDeployTiles(state, me, depth)
   if (!open.length) return null
   const enemies = state.units.filter((u) => u.owner !== me && !u.isChampion)
   const advanced = enemies.sort((a, b) => (me === 'B' ? a.row - b.row : b.row - a.row))[0]
@@ -241,7 +242,7 @@ export function aiStep(state: GameState): GameState | null {
       .filter((k) => canAfford(p, ROSTER[k]))
       .sort((a, b) => costEquiv(ROSTER[b].cost) - costEquiv(ROSTER[a].cost))
     if (buyable.length) {
-      const spot = pickDeploySpot(state, me)
+      const spot = pickDeploySpot(state, me, deployDepthFor(ROSTER[buyable[0]].tier))
       if (spot) {
         const next = deploy(state, me, buyable[0], spot[0], spot[1])
         if (next) return next
@@ -266,7 +267,7 @@ export function aiStep(state: GameState): GameState | null {
     .filter((k) => canDeployCard(p, k, state.shopMode))
     .sort((a, b) => tierRank[ROSTER[b].tier] - tierRank[ROSTER[a].tier])
   if (deployable.length) {
-    const spot = pickDeploySpot(state, me)
+    const spot = pickDeploySpot(state, me, deployDepthFor(ROSTER[deployable[0]].tier))
     if (spot) {
       const next = deploy(state, me, deployable[0], spot[0], spot[1])
       if (next) return next

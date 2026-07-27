@@ -42,6 +42,7 @@ import {
 import { aiStep } from '../game/ai'
 import {
   blockedAt,
+  deployDepthFor,
   canActNow,
   canAfford,
   canDeployCard,
@@ -367,7 +368,7 @@ export function Battle({
     }
     if (resolving) return v
     if (sel?.type === 'bench') {
-      v.specialTiles = openDeployTiles(state, state.current)
+      v.specialTiles = openDeployTiles(state, state.current, deployDepthFor(ROSTER[sel.key].tier))
       return v
     }
     if (sel?.type === 'item') {
@@ -382,7 +383,7 @@ export function Battle({
       return v
     }
     if (sel?.type === 'itemRevive') {
-      if (sel.reviveKey) v.specialTiles = openDeployTiles(state, state.current)
+      if (sel.reviveKey) v.specialTiles = openDeployTiles(state, state.current, deployDepthFor(ROSTER[sel.reviveKey].tier))
       return v
     }
     if (!selUnit) return v
@@ -419,7 +420,7 @@ export function Battle({
         v.specialTiles = tiles
       }
     } else if (sel?.type === 'revive' && sel.reviveKey) {
-      v.specialTiles = openDeployTiles(state, selUnit.owner)
+      v.specialTiles = openDeployTiles(state, selUnit.owner, deployDepthFor(ROSTER[sel.reviveKey].tier))
     }
     return v
   }, [state, sel, selUnit, resolving])
@@ -462,7 +463,7 @@ export function Battle({
     if (state.winner || resolving) return
     if (sel?.type === 'bench') {
       if (run('deploy', state.current, sel.key, c, r)) setSel(null)
-      else if (!inDeployZone(state.current, r)) setSel(null)
+      else if (!inDeployZone(state.current, r, 4)) setSel(null)
       return
     }
     if (sel?.type === 'itemRevive' && sel.reviveKey) {

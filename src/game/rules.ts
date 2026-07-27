@@ -1,5 +1,5 @@
 import { COLS, DEPLOY_DEPTH, ROSTER, ROWS, SYNERGIES, SYNERGY_THRESHOLD, SYNERGY_TIER2, ptypeOf } from './data'
-import type { BoardLike, GameState, Owner, PType, PlayerState, Species, Unit } from './types'
+import type { BallTier, BoardLike, GameState, Owner, PType, PlayerState, Species, Unit } from './types'
 
 export const inBounds = (c: number, r: number) => c >= 0 && c < COLS && r >= 0 && r < ROWS
 
@@ -15,9 +15,15 @@ export const blockedAt = (board: BoardLike, c: number, r: number) =>
 
 export const otherOwner = (o: Owner): Owner => (o === 'A' ? 'B' : 'A')
 
-/** A's deploy zone is the bottom two rows, B's the top two. */
-export const inDeployZone = (o: Owner, r: number) =>
-  o === 'A' ? r >= ROWS - DEPLOY_DEPTH : r < DEPLOY_DEPTH
+/**
+ * Tiered deploy zones: the cheaper the Pokémon, the closer to the front it may
+ * land — Poké-tier reaches 4 rows deep, Great-tier 3, Ultra-tier 2.
+ */
+export const deployDepthFor = (tier: BallTier): number =>
+  tier === 'poke' ? 4 : tier === 'great' ? 3 : 2
+
+export const inDeployZone = (o: Owner, r: number, depth: number = DEPLOY_DEPTH) =>
+  o === 'A' ? r >= ROWS - depth : r < depth
 
 export const canAfford = (p: PlayerState, sp: Species) =>
   p.poke >= sp.cost.poke && p.great >= sp.cost.great && p.ultra >= sp.cost.ultra
@@ -230,8 +236,9 @@ export function threatTiles(state: GameState, u: Unit): Set<string> {
 }
 
 /** Empty tiles in `owner`'s deploy zone. */
-export function openDeployTiles(state: GameState, owner: Owner): [number, number][] {
-  const rows = owner === 'A' ? [ROWS - 2, ROWS - 1] : [0, 1]
+export function openDeployTiles(state: GameState, owner: Owner, depth: number = DEPLOY_DEPTH): [number, number][] {
+  const rows: number[] = []
+  for (let d = 1; d <= depth; d++) rows.push(owner === 'A' ? ROWS - d : d - 1)
   const out: [number, number][] = []
   for (const r of rows)
     for (let c = 0; c < COLS; c++) if (!blockedAt(state, c, r)) out.push([c, r])

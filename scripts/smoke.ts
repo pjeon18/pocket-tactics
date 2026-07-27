@@ -192,7 +192,7 @@ spawn(v, 930, 'pikachu', 'A', 0, 8)
 const vUsed = useAbility(v, vChamp.id, {})!
 ok(vUsed !== null && vUsed.units.find((u) => u.id === 930)!.moveBuff === 2, 'V-Create is instant (buffs before you move)')
 
-/* --- Jirachi plans, resolves once --- */
+/* --- Jirachi plans, resolves, and is REPEATABLE (no more once-per-game) --- */
 let j = newBattle({ ...draftA, champion: 'jirachi' }, draftB)
 j.rocks = []
 const jir = j.units.find((u) => u.isChampion && u.owner === 'A')!
@@ -207,7 +207,34 @@ ok(jr.units.find((u) => u.id === 940)!.hp === 9 - 8, 'Doom Desire resolves (5 ba
 const jir2 = jr.units.find((u) => u.isChampion && u.owner === 'A')!
 jir2.charge = jir2.chargeMax
 jir2.acted = false
-ok(planArea(jr, jir2.id, { col: 3, row: 3 }) === null, 'Doom Desire is once per game')
+ok(planArea(jr, jir2.id, { col: 3, row: 3 }) !== null, 'Doom Desire is repeatable once recharged')
+
+/* --- tiered deploy zones: cheap units reach deeper --- */
+let tz = newBattle(draftA, draftB)
+tz.rocks = []
+tz.players.A.poke = 8
+tz.players.A.great = 1
+tz.players.A.ultra = 1
+ok(deploy(tz, 'A', 'pikachu', 0, 6) !== null, 'Poké-tier deploys 4 rows deep (row 6)')
+ok(deploy(tz, 'A', 'lucario', 1, 6) === null, 'Great-tier refused at row 6')
+ok(deploy(tz, 'A', 'lucario', 1, 7) !== null, 'Great-tier deploys 3 rows deep (row 7)')
+ok(deploy(tz, 'A', 'snorlax', 2, 7) === null, 'Ultra-tier refused at row 7')
+ok(deploy(tz, 'A', 'snorlax', 2, 8) !== null, 'Ultra-tier deploys 2 rows deep (row 8)')
+
+/* --- Manaphy Surf: 4 dmg, her own shore stays dry --- */
+let mn = newBattle({ ...draftA, champion: 'manaphy' }, draftB)
+mn.rocks = []
+const mana = mn.units.find((u) => u.isChampion && u.owner === 'A')!
+mana.charge = mana.chargeMax
+spawn(mn, 950, 'krookodile', 'B', 2, 4, { hp: 12 })            // midfield enemy: hit
+spawn(mn, 951, 'pikachu', 'A', 0, 8, { hp: 7 })                 // ally on her shore: dry
+spawn(mn, 952, 'haunter', 'A', 1, 5, { hp: 7 })                 // midfield ally: soaked
+let mp = planArea(mn, mana.id)!
+let mr = resolveStep(mp)!
+const surfMid = mr.units.find((u) => u.id === 950)!
+const surfShore = mr.units.find((u) => u.id === 951)!
+const surfAlly = mr.units.find((u) => u.id === 952)!
+ok(surfMid.hp < 12 && surfShore.hp === 7 && surfAlly.hp < 7, 'Surf soaks midfield (both sides) but spares her back two rows')
 
 /* --- crits & misses (normal attacks only, deterministic RNG) --- */
 let cm = newBattle(draftA, draftB)

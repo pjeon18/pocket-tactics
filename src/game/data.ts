@@ -31,7 +31,7 @@ export const START_POKE_A = 1 // +1 income on turn 1 → opens with 2
 export const START_POKE_B = 2 // one extra Poké Ball as second-player compensation
 export const START_GREAT_B = 0
 
-export const DRAFT_SIZE = 10
+export const DRAFT_SIZE = 8
 
 /** From this round on, both champions take 1 fatigue damage per round — games must end. */
 export const FATIGUE_ROUND = 20
@@ -233,8 +233,8 @@ export const ROSTER: Record<string, Species> = {
     targeting: { kind: 'enemy', rangeOverride: 2 }, pattern: 'target',
   },
   steelix: {
-    key: 'steelix', name: 'Steelix', dex: 208, role: 'tank', ptype: 'steel', tier: 'great', cost: G(2), cooldown: 6,
-    hp: 12, atk: 3, range: 1, move: 1, chargeMax: 2,
+    key: 'steelix', name: 'Steelix', dex: 208, role: 'tank', ptype: 'steel', tier: 'ultra', cost: U(0), cooldown: 8,
+    hp: 14, atk: 3, range: 1, move: 1, chargeMax: 2,
     special: 'Iron Tail', hint: '4 dmg and knocks the target back a tile',
     targeting: { kind: 'enemy' }, pattern: 'target',
   },
@@ -288,7 +288,7 @@ export const ROSTER: Record<string, Species> = {
   },
   snorlax: {
     key: 'snorlax', name: 'Snorlax', dex: 143, role: 'tank', ptype: 'normal', tier: 'ultra', cost: U(2), cooldown: 8,
-    hp: 14, atk: 3, range: 1, move: 1, chargeMax: 2,
+    hp: 16, atk: 3, range: 1, move: 1, chargeMax: 2,
     special: 'Body Slam', hint: '5 dmg and the target is stunned — it can’t move next turn',
     targeting: { kind: 'enemy' }, pattern: 'target',
   },
@@ -302,7 +302,7 @@ export const ROSTER: Record<string, Species> = {
   },
   escavalier: {
     key: 'escavalier', name: 'Escavalier', dex: 589, role: 'tank', ptype: 'bug', tier: 'great', cost: G(2), cooldown: 6, pierceBasic: true,
-    hp: 11, atk: 3, range: 1, move: 1, chargeMax: 5,
+    hp: 11, atk: 3, range: 1, move: 1, chargeMax: 4,
     special: 'Megahorn', hint: '5 dmg, lancing through the two tiles behind for 3 — its NORMAL attacks skewer the unit behind, too',
     targeting: { kind: 'enemy' }, pattern: 'pierce',
   },
@@ -315,7 +315,7 @@ export const ROSTER: Record<string, Species> = {
 
   /* dealers — frail, fast, hit hard, specials charge slowly */
   starly: {
-    key: 'starly', name: 'Starly', dex: 396, role: 'dealer', ptype: 'normal', tier: 'poke', cost: P(1), cooldown: 3,
+    key: 'starly', name: 'Starly', dex: 396, role: 'dealer', ptype: 'normal', tier: 'poke', cost: P(2), cooldown: 3,
     hp: 3, atk: 2, range: 1, move: 3, chargeMax: 3,
     special: 'Fly-by', hint: '3 dmg, then Starly darts 2 tiles back',
     targeting: { kind: 'enemy' }, pattern: 'target',
@@ -358,13 +358,13 @@ export const ROSTER: Record<string, Species> = {
   },
   gallade: {
     key: 'gallade', name: 'Gallade', dex: 475, role: 'dealer', ptype: 'fighting', tier: 'great', cost: G(2), cooldown: 6,
-    hp: 6, atk: 4, range: 1, move: 2, chargeMax: 4,
+    hp: 7, atk: 4, range: 1, move: 2, chargeMax: 4,
     special: 'Psycho Cut', hint: '4 dmg, cutting through to whatever hides behind for 3',
     targeting: { kind: 'enemy' }, pattern: 'pierce',
   },
   arcanine: {
     key: 'arcanine', name: 'Arcanine', dex: 59, role: 'dealer', ptype: 'fire', tier: 'great', cost: G(2), cooldown: 7,
-    hp: 7, atk: 4, range: 1, move: 3, chargeMax: 4,
+    hp: 8, atk: 4, range: 1, move: 3, chargeMax: 4,
     special: 'Extreme Speed', hint: '4 dmg that lands INSTANTLY when declared',
     targeting: { kind: 'enemy', instant: true }, pattern: 'target',
   },
@@ -375,7 +375,7 @@ export const ROSTER: Record<string, Species> = {
     targeting: { kind: 'enemy' }, pattern: 'target',
   },
   ponyta: {
-    key: 'ponyta', name: 'Ponyta', dex: 77, role: 'dealer', ptype: 'fire', tier: 'poke', cost: P(2), cooldown: 4,
+    key: 'ponyta', name: 'Ponyta', dex: 77, role: 'dealer', ptype: 'fire', tier: 'poke', cost: P(3), cooldown: 4,
     hp: 5, atk: 3, range: 1, move: 3, chargeMax: 3,
     special: 'Flame Charge', hint: '3 dmg, and Ponyta permanently gains +1 movement',
     targeting: { kind: 'enemy' }, pattern: 'target',
@@ -388,31 +388,31 @@ export const ROSTER: Record<string, Species> = {
   },
   zoroark: {
     key: 'zoroark', name: 'Zoroark', dex: 571, role: 'dealer', ptype: 'dark', tier: 'great', cost: G(2), cooldown: 6,
-    hp: 6, atk: 4, range: 1, move: 3, chargeMax: 4,
+    hp: 7, atk: 4, range: 1, move: 3, chargeMax: 4,
     special: 'Night Daze', hint: '5 dmg — a KO refunds the full charge',
     targeting: { kind: 'enemy' }, pattern: 'target',
   },
   gengar: {
     key: 'gengar', name: 'Gengar', dex: 94, role: 'dealer', ptype: 'ghost', tier: 'ultra', cost: U(2), cooldown: 8,
-    hp: 6, atk: 5, range: 2, move: 3, chargeMax: 4,
+    hp: 7, atk: 5, range: 2, move: 3, chargeMax: 3,
     special: 'Shadow Ball', hint: '5 dmg through blockers, +2 against full-HP targets',
     targeting: { kind: 'enemy', rangeOverride: 2, ignoreBlock: true }, pattern: 'target',
   },
   machamp: {
     key: 'machamp', name: 'Machamp', dex: 68, role: 'dealer', ptype: 'fighting', tier: 'ultra', cost: U(2), cooldown: 8,
-    hp: 9, atk: 5, range: 1, move: 2, chargeMax: 4,
+    hp: 11, atk: 5, range: 1, move: 2, chargeMax: 3,
     special: 'Cross Chop', hint: '6 dmg and knocks the target back a tile',
     targeting: { kind: 'enemy' }, pattern: 'target',
   },
   gyarados: {
     key: 'gyarados', name: 'Gyarados', dex: 130, role: 'dealer', ptype: 'water', tier: 'ultra', cost: U(3), cooldown: 8,
-    hp: 10, atk: 5, range: 1, move: 2, chargeMax: 4,
+    hp: 10, atk: 5, range: 1, move: 2, chargeMax: 3,
     special: 'Dragon Rage', hint: '5 dmg and hurls the target back 2 tiles',
     targeting: { kind: 'enemy' }, pattern: 'target',
   },
   garchomp: {
     key: 'garchomp', name: 'Garchomp', dex: 445, role: 'dealer', ptype: 'dragon', tier: 'ultra', cost: U(3), cooldown: 8,
-    hp: 8, atk: 5, range: 1, move: 2, chargeMax: 4,
+    hp: 10, atk: 6, range: 1, move: 2, chargeMax: 3,
     special: 'Earthquake', hint: '4 dmg to every enemy in the 8 tiles around Garchomp',
     targeting: { kind: 'aoe' }, pattern: 'ring1',
   },
@@ -425,13 +425,13 @@ export const ROSTER: Record<string, Species> = {
   },
   tangrowth: {
     key: 'tangrowth', name: 'Tangrowth', dex: 465, role: 'tank', ptype: 'grass', tier: 'ultra', cost: U(2), cooldown: 8,
-    hp: 13, atk: 3, range: 2, move: 1, chargeMax: 2,
+    hp: 15, atk: 3, range: 2, move: 1, chargeMax: 2,
     special: 'Giga Drain', hint: '4 dmg, and Tangrowth drinks 2 HP back',
     targeting: { kind: 'enemy' }, pattern: 'target',
   },
   serperior: {
     key: 'serperior', name: 'Serperior', dex: 497, role: 'dealer', ptype: 'grass', tier: 'ultra', cost: U(2), cooldown: 8,
-    hp: 8, atk: 4, range: 2, move: 2, chargeMax: 4,
+    hp: 9, atk: 4, range: 2, move: 2, chargeMax: 3,
     special: 'Leaf Storm', hint: 'A regal tempest: 5 dmg, plus 2 to every enemy beside the target',
     targeting: { kind: 'enemy' }, pattern: 'splash',
   },
@@ -469,25 +469,25 @@ export const ROSTER: Record<string, Species> = {
   },
   chandelure: {
     key: 'chandelure', name: 'Chandelure', dex: 609, role: 'specialist', ptype: 'fire', tier: 'great', cost: G(2), cooldown: 6,
-    hp: 6, atk: 3, range: 3, move: 1, chargeMax: 5,
+    hp: 7, atk: 3, range: 3, move: 1, chargeMax: 4,
     special: 'Heat Wave', hint: '3 dmg to every enemy within 2 tiles of Chandelure',
     targeting: { kind: 'aoe' }, pattern: 'ring2',
   },
   espeon: {
     key: 'espeon', name: 'Espeon', dex: 196, role: 'specialist', ptype: 'psychic', tier: 'great', cost: G(1), cooldown: 6,
-    hp: 6, atk: 3, range: 2, move: 1, chargeMax: 5,
+    hp: 6, atk: 3, range: 2, move: 1, chargeMax: 4,
     special: 'Psyshock', hint: '4 dmg and hurls the target back 2 tiles',
     targeting: { kind: 'enemy' }, pattern: 'target',
   },
   magmortar: {
     key: 'magmortar', name: 'Magmortar', dex: 467, role: 'specialist', ptype: 'fire', tier: 'great', cost: G(1), cooldown: 6,
-    hp: 6, atk: 3, range: 3, move: 1, chargeMax: 5,
+    hp: 7, atk: 3, range: 3, move: 1, chargeMax: 4,
     special: 'Lava Plume', hint: '3 dmg, plus 2 to every enemy beside the target',
     targeting: { kind: 'enemy' }, pattern: 'splash',
   },
   alakazam: {
     key: 'alakazam', name: 'Alakazam', dex: 65, role: 'specialist', ptype: 'psychic', tier: 'ultra', cost: U(2), cooldown: 8,
-    hp: 5, atk: 4, range: 3, move: 1, chargeMax: 5,
+    hp: 6, atk: 4, range: 3, move: 1, chargeMax: 3,
     special: 'Psychic', hint: '5 dmg and hurls the target back 2 tiles',
     targeting: { kind: 'enemy' }, pattern: 'target',
   },
@@ -537,7 +537,7 @@ export const ROSTER: Record<string, Species> = {
   },
   chansey: {
     key: 'chansey', name: 'Chansey', dex: 113, role: 'generalist', ptype: 'normal', tier: 'great', cost: G(1), cooldown: 6,
-    hp: 10, atk: 1, range: 1, move: 1, chargeMax: 3,
+    hp: 12, atk: 1, range: 1, move: 1, chargeMax: 3,
     special: 'Soft-Boiled', hint: 'Restore 5 HP to an ally within 2 tiles, right away',
     targeting: { kind: 'ally', rangeOverride: 2 }, pattern: 'ally',
   },
@@ -549,7 +549,7 @@ export const ROSTER: Record<string, Species> = {
   },
   blaziken: {
     key: 'blaziken', name: 'Blaziken', dex: 257, role: 'generalist', ptype: 'fire', tier: 'great', cost: G(3), cooldown: 6,
-    hp: 8, atk: 3, range: 1, move: 2, chargeMax: 3,
+    hp: 9, atk: 3, range: 1, move: 2, chargeMax: 3,
     special: 'Blaze Kick', hint: '4 dmg, a guaranteed CRIT against full-HP targets',
     targeting: { kind: 'enemy' }, pattern: 'target',
   },
@@ -561,7 +561,7 @@ export const ROSTER: Record<string, Species> = {
   },
   dragonite: {
     key: 'dragonite', name: 'Dragonite', dex: 149, role: 'generalist', ptype: 'dragon', tier: 'ultra', cost: U(2), cooldown: 8,
-    hp: 9, atk: 4, range: 1, move: 2, chargeMax: 3,
+    hp: 12, atk: 4, range: 2, move: 2, chargeMax: 3,
     special: 'Hyper Beam', hint: '5 dmg to the first enemy in a straight line, any distance',
     targeting: { kind: 'enemy', rangeOverride: 9 }, pattern: 'line',
   },
@@ -579,14 +579,14 @@ export const CHAMPIONS: Record<string, ChampionSpecies> = {
   celebi: {
     key: 'celebi', name: 'Celebi', dex: 251, ptype: 'grass',
     hp: 8, atk: 1, range: 1, move: 1, chargeMax: 4,
-    ability: 'Healing Wish', hint: 'Restore 2 HP to every one of your Pokémon, right away',
+    ability: 'Healing Wish', hint: 'Restore 3 HP to every one of your Pokémon, right away',
     targeting: { kind: 'team' }, pattern: 'team',
   },
   jirachi: {
     key: 'jirachi', name: 'Jirachi', dex: 385, ptype: 'steel',
-    hp: 8, atk: 1, range: 2, move: 1, chargeMax: 6, once: true,
-    ability: 'Doom Desire', hint: 'Once per game: a meteor deals 5 dmg in a cross of 5 tiles, anywhere within 4 tiles',
-    targeting: { kind: 'tile', rangeOverride: 4 }, pattern: 'cross',
+    hp: 8, atk: 1, range: 2, move: 1, chargeMax: 5,
+    ability: 'Doom Desire', hint: 'A meteor deals 5 dmg in a cross of 5 tiles, anywhere within 5 tiles',
+    targeting: { kind: 'tile', rangeOverride: 5 }, pattern: 'cross',
   },
   victini: {
     key: 'victini', name: 'Victini', dex: 494, ptype: 'fire',
@@ -597,7 +597,7 @@ export const CHAMPIONS: Record<string, ChampionSpecies> = {
   manaphy: {
     key: 'manaphy', name: 'Manaphy', dex: 490, ptype: 'water',
     hp: 9, atk: 1, range: 2, move: 1, chargeMax: 6,
-    ability: 'Surf', hint: 'A tidal wave hits EVERY other Pokémon on the field for 3 — friend and foe alike',
+    ability: 'Surf', hint: 'A tidal wave hits every Pokémon outside her own back two rows for 4 — friend and foe alike',
     targeting: { kind: 'aoe' }, pattern: 'anywhere',
   },
 }

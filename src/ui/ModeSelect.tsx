@@ -16,8 +16,8 @@ import {
 export function HowToPlay() {
   return (
     <ul>
-      <li>Pick a Mythical champion and draft 10 Pokémon (or buy live from the shop in Blitz). Type matchups are real — super effective hits do +3, resisted hits −2.</li>
-      <li>Deploy onto your back two rows with Poké Balls (max {FIELD_CAP} fielded at once). Trade 3 for a Great Ball, 6 for an Ultra Ball. Basics fight the turn they land; stronger Pokémon need a turn to arrive.</li>
+      <li>Pick a Mythical champion and draft 8 Pokémon (or buy live from the shop in Blitz). Type matchups are real — super effective hits do +3, resisted hits −2.</li>
+      <li>Deploy zones scale with cost: Poké-tier lands up to 4 rows deep, Great-tier 3, Ultra-tier 2 (max {FIELD_CAP} fielded at once). Trade 3 Poké Balls for a Great Ball, 6 for an Ultra. Basics fight the turn they land; stronger Pokémon need a turn to arrive.</li>
       <li>Each turn, up to 3 of your Pokémon may move, and the turn clock gives you 60 seconds — when it runs out, the turn ends itself. Undo is free until you declare an attack.</li>
       <li>Attacks are declared during your turn and all land together when you end it. Every KO pays you a Poké Ball.</li>
       <li>If your champion moves, nothing else may move that turn. Guard it well.</li>
@@ -133,7 +133,7 @@ export function ModeSelect({
 
       <div className="draft-style">
         <button className={`chip ${!blitz ? 'chip-on' : ''}`} onClick={() => setBlitz(false)}>
-          Classic draft — pick 10 before the battle
+          Classic draft — pick 8 before the battle
         </button>
         <button className={`chip ${blitz ? 'chip-on' : ''}`} onClick={() => setBlitz(true)}>
           Blitz draft — buy from a shop that restocks every turn

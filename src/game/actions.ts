@@ -43,6 +43,7 @@ import {
   hasSynergy,
   tierOf,
   inBounds,
+  deployDepthFor,
   inDeployZone,
   openDeployTiles,
   otherOwner,
@@ -346,7 +347,7 @@ export function deploy(state0: GameState, owner: Owner, key: string, col: number
   } else {
     if (!p0.bench.includes(key) || !canDeployCard(p0, key)) return null
   }
-  if (!inBounds(col, row) || !inDeployZone(owner, row) || blockedAt(state0, col, row)) return null
+  if (!inBounds(col, row) || !inDeployZone(owner, row, deployDepthFor(sp.tier)) || blockedAt(state0, col, row)) return null
   if (fieldedCount(state0, owner) >= FIELD_CAP) return null // quality over quantity
 
   const state = clone(state0)
@@ -414,7 +415,7 @@ export function moveUnit(state0: GameState, unitId: number, col: number, row: nu
 function reviveUnit(state: GameState, owner: Owner, key: string, col: number, row: number): boolean {
   const p = state.players[owner]
   if (!p.fainted.includes(key)) return false
-  if (!inDeployZone(owner, row) || blockedAt(state, col, row)) return false
+  if (!inDeployZone(owner, row, deployDepthFor(ROSTER[key].tier)) || blockedAt(state, col, row)) return false
   if (fieldedCount(state, owner) >= FIELD_CAP) return false
   p.fainted.splice(p.fainted.indexOf(key), 1)
   const nu = makeUnit(key, owner, col, row)
@@ -632,7 +633,7 @@ export function useAbility(state0: GameState, unitId: number, payload: AbilityPa
     }
     case 'team': {
       if (u.key === 'celebi') {
-        for (const s of state.units) if (s.owner === u.owner) dealHeal(state, s, 2)
+        for (const s of state.units) if (s.owner === u.owner) dealHeal(state, s, 3)
       } else if (u.key === 'victini') {
         for (const s of state.units) {
           if (s.owner !== u.owner) continue
@@ -1054,10 +1055,12 @@ export function resolveStep(state0: GameState): GameState | null {
     state.log.push(`${nameOf(u)} used ${specialNameOf(u)}!`)
     state.acting = { id: u.id, dc: 0, dr: 0 }
     if (u.key === 'manaphy') {
-      // Surf: a tidal wave over the whole field — friend and foe alike
+      // Surf: a tidal wave over the field — friend and foe alike, but it never
+      // reaches Manaphy's own back two rows (her shore stays dry)
+      const dry = (r: number) => (u.owner === 'A' ? r >= ROWS - 2 : r < 2)
       for (const s of state.units) {
-        if (s.id === u.id) continue
-        dealDamage(state, u, s, 3, COLOR.special)
+        if (s.id === u.id || dry(s.row)) continue
+        dealDamage(state, u, s, 4, COLOR.special)
       }
     } else {
       const radius = u.key === 'chandelure' ? 2 : 1
