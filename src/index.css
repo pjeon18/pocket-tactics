@@ -881,18 +881,19 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 
 /* ---------- Poké Ball wallpaper: a quiet diagonal drift behind menus ---------- */
 .ball-wallpaper {
-  position: fixed; inset: -180px; z-index: 0; pointer-events: none; opacity: 0.055;
+  position: fixed; inset: -420px; z-index: 0; pointer-events: none; opacity: 0.06;
+  /* self-contained SVG pokéballs with baked-in padding, tiled with a big cell so
+     the gaps between them are large and directly controllable */
   background-image:
-    url('https://raw.githubusercontent.com/msikma/pokesprite/master/items/ball/poke.png'),
-    url('https://raw.githubusercontent.com/msikma/pokesprite/master/items/ball/great.png'),
-    url('https://raw.githubusercontent.com/msikma/pokesprite/master/items/ball/ultra.png');
-  background-size: 30px 30px;
-  background-position: 0 0, 46px 70px, 92px 24px;
-  background-repeat: space;
-  image-rendering: pixelated;
-  animation: wallpaperDrift 34s linear infinite;
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='10' fill='%23fff'/%3E%3Cpath d='M40 50 a10 10 0 0 1 20 0 z' fill='%23E24B4B'/%3E%3Ccircle cx='50' cy='50' r='10' fill='none' stroke='%23181818' stroke-width='2.4'/%3E%3Cline x1='40' y1='50' x2='60' y2='50' stroke='%23181818' stroke-width='2.4'/%3E%3Ccircle cx='50' cy='50' r='3' fill='%23fff' stroke='%23181818' stroke-width='2.4'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='10' fill='%23fff'/%3E%3Cpath d='M40 50 a10 10 0 0 1 20 0 z' fill='%233E77D6'/%3E%3Ccircle cx='50' cy='50' r='10' fill='none' stroke='%23181818' stroke-width='2.4'/%3E%3Cline x1='40' y1='50' x2='60' y2='50' stroke='%23181818' stroke-width='2.4'/%3E%3Ccircle cx='50' cy='50' r='3' fill='%23fff' stroke='%23181818' stroke-width='2.4'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='10' fill='%23fff'/%3E%3Cpath d='M40 50 a10 10 0 0 1 20 0 z' fill='%23E3A72E'/%3E%3Ccircle cx='50' cy='50' r='10' fill='none' stroke='%23181818' stroke-width='2.4'/%3E%3Cline x1='40' y1='50' x2='60' y2='50' stroke='%23181818' stroke-width='2.4'/%3E%3Ccircle cx='50' cy='50' r='3' fill='%23fff' stroke='%23181818' stroke-width='2.4'/%3E%3C/svg%3E");
+  background-size: 190px 190px;
+  background-position: 0 0, 95px 60px, 48px 132px;
+  background-repeat: repeat;
+  animation: wallpaperDrift 8s linear infinite;
 }
-@keyframes wallpaperDrift { to { transform: translate(150px, 150px); } }
+@keyframes wallpaperDrift { to { transform: translate(380px, 380px); } }
 .menu > *:not(.ball-wallpaper), .draft > *:not(.ball-wallpaper):not(.modal-backdrop) { position: relative; z-index: 1; }
 .battle > .toolbar, .battle > .panels { position: relative; z-index: 1; }
 
