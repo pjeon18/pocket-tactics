@@ -470,18 +470,20 @@ export function useSummon(
 function resolveHazards(state: GameState) {
   const survivors: Hazard[] = []
   for (const hz of state.hazards) {
-    hz.fuse -= 1
-    if (hz.fuse > 0) {
-      survivors.push(hz)
-      continue
-    }
+    // a hazard strikes on EVERY turn end while it's alive — Kyogre's whirlpool
+    // (fuse 2) hits at the end of the summon turn and again after the foe moves;
+    // Groudon's eruption (fuse 1) strikes once, at the end of the summon turn.
+    let hit = false
     for (const [c, r] of hz.tiles) {
       const u = at(state.units, c, r)
       if (!u) continue
       const amt = Math.max(1, hz.dmg + (hz.ptype ? typeMod(hz.ptype, ptypeOf(u)) : 0))
       dealDamage(state, null, u, amt, COLOR.special, 'raw', '')
+      hit = true
     }
-    state.log.push(`${SUMMONS[hz.key]?.name ?? hz.label} crashes down!`)
+    if (hit) state.log.push(`${SUMMONS[hz.key]?.name ?? hz.label} crashes down!`)
+    hz.fuse -= 1
+    if (hz.fuse > 0) survivors.push(hz)
   }
   state.hazards = survivors
   cleanup(state)

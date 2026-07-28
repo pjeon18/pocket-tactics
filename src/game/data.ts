@@ -54,7 +54,7 @@ export const SUMMONS: Record<string, SummonDef> = {
   lugia: { key: 'lugia', name: 'Lugia', dex: 249, cost: 6, desc: 'Aeroblast — next turn your opponent can neither move nor deploy' },
   dialga: { key: 'dialga', name: 'Dialga', dex: 483, cost: 6, desc: 'Roar of Time — every one of your Pokémon gets its special fully charged' },
   palkia: { key: 'palkia', name: 'Palkia', dex: 484, cost: 6, desc: 'Spacial Rend — all of your Pokémon have 5 movement this turn' },
-  kyogre: { key: 'kyogre', name: 'Kyogre', dex: 382, cost: 4, target: 'tile', desc: 'Origin Pulse — mark a 3×3 whirlpool; at the end of the round it hits everything still inside for 4 (water). Opponents can flee it on their turn.' },
+  kyogre: { key: 'kyogre', name: 'Kyogre', dex: 382, cost: 4, target: 'tile', desc: 'Origin Pulse — mark a 3×3 whirlpool; it hits everything inside for 4 (water) at the end of your turn and again at the end of the opponent’s turn. They can flee it between hits.' },
   groudon: { key: 'groudon', name: 'Groudon', dex: 383, cost: 4, target: 'row', desc: 'Precipice Blades — choose a row; at the end of your turn it erupts for 6 to everyone standing on it.' },
 }
 export const SUMMON_ORDER = ['hooh', 'lugia', 'dialga', 'palkia', 'kyogre', 'groudon']

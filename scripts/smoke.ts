@@ -392,7 +392,7 @@ pd.players.A.poke = 0
 const pd2 = endTurnFully(endTurnFully(pd)) // B, then back to A's income
 ok(pd2.players.A.poke >= 2, 'Payday: two unique Normals pay +1 extra ball')
 
-/* --- Kyogre: a 3×3 whirlpool that crashes down after one round --- */
+/* --- Kyogre: a 3×3 whirlpool that hits at the end of BOTH turns of the round --- */
 const draftKG = { champion: 'victini', picks: draftA.picks, summons: ['kyogre', 'groudon'] }
 let ky = newBattle(draftKG, draftB)
 ky.rocks = []
@@ -401,10 +401,10 @@ spawn(ky, 980, 'magneton', 'B', 3, 4, { hp: 10, maxHp: 10 }) // electric: neutra
 ok(useSummon(ky, 'A', 'kyogre', { row: 0 }) === null, 'Kyogre cannot be aimed at the foe’s back rows')
 const kyCast = useSummon(ky, 'A', 'kyogre', { col: 3, row: 4 })!
 ok(kyCast !== null && kyCast.units.find((u) => u.id === 980)!.hp === 10, 'whirlpool does not hit the moment it is placed')
-const kyMid = endTurnFully(kyCast) // A ends: fuse 2→1, still no hit
-ok(kyMid.units.find((u) => u.id === 980)!.hp === 10, 'whirlpool waits a full round')
-const kyDone = endTurnFully(kyMid) // B ends: fuse 1→0, crashes down for 4
-ok(kyDone.units.find((u) => u.id === 980)!.hp === 6, 'whirlpool hits everything still inside for 4')
+const kyMid = endTurnFully(kyCast) // A ends its turn: first hit for 4
+ok(kyMid.units.find((u) => u.id === 980)!.hp === 6, 'whirlpool hits at the end of the summon turn')
+const kyDone = endTurnFully(kyMid) // B ends its turn: second hit for 4
+ok(kyDone.units.find((u) => u.id === 980)!.hp === 2, 'whirlpool hits again at the end of the opponent’s turn')
 
 /* --- Groudon: a row erupts for 6 at the end of your own turn --- */
 let gr = newBattle(draftKG, draftB)
