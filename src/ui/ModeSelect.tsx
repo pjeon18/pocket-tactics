@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { Difficulty } from '../game/ai'
 import { BallSprite, CostDots, Sprite } from './Sprite'
 import { SynergyLegend } from './Draft'
 import {
@@ -144,12 +145,13 @@ export function ModeSelect({
   onOnline,
   onTutorial,
 }: {
-  onPick: (mode: 'ai' | 'local', blitz: boolean, timer: boolean) => void
+  onPick: (mode: 'ai' | 'local', blitz: boolean, timer: boolean, difficulty: Difficulty) => void
   onOnline: (blitz: boolean, timer: boolean) => void
   onTutorial: () => void
 }) {
   const [blitz, setBlitz] = useState(false)
   const [timer, setTimer] = useState(true)
+  const [difficulty, setDifficulty] = useState<Difficulty>('normal')
   return (
     <div className="menu">
       <div className="ball-wallpaper" aria-hidden="true" />
@@ -177,11 +179,25 @@ export function ModeSelect({
         </button>
       </div>
 
+      <div className="difficulty-row" role="group" aria-label="Rival difficulty">
+        <span className="difficulty-label">Rival</span>
+        {(['easy', 'normal', 'hard'] as const).map((d) => (
+          <button
+            key={d}
+            className={`chip ${difficulty === d ? 'chip-on' : ''}`}
+            onClick={() => setDifficulty(d)}
+            aria-pressed={difficulty === d}
+          >
+            {d === 'easy' ? 'Relaxed' : d === 'normal' ? 'Trainer' : 'Champion'}
+          </button>
+        ))}
+      </div>
+
       <div className="menu-btns">
-        <button className="btn btn-primary" onClick={() => onPick('ai', blitz, timer)}>
+        <button className="btn btn-primary" onClick={() => onPick('ai', blitz, timer, difficulty)}>
           Battle the Rival
         </button>
-        <button className="btn btn-ghost" onClick={() => onPick('local', blitz, timer)}>
+        <button className="btn btn-ghost" onClick={() => onPick('local', blitz, timer, difficulty)}>
           Two Players · One Screen
         </button>
         <button className="btn btn-ghost" onClick={() => onOnline(blitz, timer)}>

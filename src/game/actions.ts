@@ -18,8 +18,6 @@ import {
   ROSTER,
   ROWS,
   START_POKE_A,
-  START_GREAT_B,
-  START_POKE_B,
   TRADE_GREAT_COST,
   TRADE_ULTRA_COST,
   ULTRA_CAP,
@@ -137,7 +135,7 @@ export function newBattle(
     ],
     players: {
       A: { championKey: draftA.champion, bench: shopMode ? [] : [...draftA.picks], fainted: [], cooldowns: {}, revealed: [], shop: [], poke: START_POKE_A, great: 0, ultra: 0, turns: 0, items: [], summons: draftA.summons ?? [], usedSummons: [] },
-      B: { championKey: draftB.champion, bench: shopMode ? [] : [...draftB.picks], fainted: [], cooldowns: {}, revealed: [], shop: [], poke: START_POKE_B, great: START_GREAT_B, ultra: 0, turns: 0, items: [], summons: draftB.summons ?? [], usedSummons: [] },
+      B: { championKey: draftB.champion, bench: shopMode ? [] : [...draftB.picks], fainted: [], cooldowns: {}, revealed: [], shop: [], poke: TUNING.startPokeB, great: TUNING.startGreatB, ultra: 0, turns: 0, items: [], summons: draftB.summons ?? [], usedSummons: [] },
     },
     current: 'A',
     round: 1,

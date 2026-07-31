@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { aiDraft } from './game/ai'
+import { aiDraft, type Difficulty } from './game/ai'
 import { makeTutorialDrafts, makeTutorialState } from './game/tutorial'
 import type { DraftResult } from './game/types'
 import { Battle } from './ui/Battle'
@@ -15,11 +15,11 @@ type Phase =
   | { t: 'menu' }
   | { t: 'tutorial' }
   | { t: 'online'; blitz: boolean; timer: boolean }
-  | { t: 'draftA'; mode: Mode; blitz: boolean; timer: boolean }
-  | { t: 'pass'; mode: 'local'; blitz: boolean; timer: boolean; draftA: DraftResult }
-  | { t: 'draftB'; mode: 'local'; blitz: boolean; timer: boolean; draftA: DraftResult }
-  | { t: 'intro'; mode: Mode; blitz: boolean; timer: boolean; draftA: DraftResult; draftB: DraftResult }
-  | { t: 'battle'; mode: Mode; blitz: boolean; timer: boolean; draftA: DraftResult; draftB: DraftResult }
+  | { t: 'draftA'; mode: Mode; blitz: boolean; timer: boolean; difficulty: Difficulty }
+  | { t: 'pass'; mode: 'local'; blitz: boolean; timer: boolean; difficulty: Difficulty; draftA: DraftResult }
+  | { t: 'draftB'; mode: 'local'; blitz: boolean; timer: boolean; difficulty: Difficulty; draftA: DraftResult }
+  | { t: 'intro'; mode: Mode; blitz: boolean; timer: boolean; difficulty: Difficulty; draftA: DraftResult; draftB: DraftResult }
+  | { t: 'battle'; mode: Mode; blitz: boolean; timer: boolean; difficulty: Difficulty; draftA: DraftResult; draftB: DraftResult }
 
 export default function App() {
   const [phase, setPhase] = useState<Phase>({ t: 'menu' })
@@ -30,7 +30,7 @@ export default function App() {
       <WaveWipe active={waveActive} />
       {phase.t === 'menu' && (
         <ModeSelect
-          onPick={(mode, blitz, timer) => go(() => setPhase({ t: 'draftA', mode, blitz, timer }))}
+          onPick={(mode, blitz, timer, difficulty) => go(() => setPhase({ t: 'draftA', mode, blitz, timer, difficulty }))}
           onOnline={(blitz, timer) => go(() => setPhase({ t: 'online', blitz, timer }))}
           onTutorial={() => go(() => setPhase({ t: 'tutorial' }))}
         />
@@ -60,8 +60,8 @@ export default function App() {
           onBack={() => setPhase({ t: 'menu' })}
           onDone={(draftA) =>
             phase.mode === 'ai'
-              ? setPhase({ t: 'intro', mode: 'ai', blitz: phase.blitz, timer: phase.timer, draftA, draftB: aiDraft() })
-              : setPhase({ t: 'pass', mode: 'local', blitz: phase.blitz, timer: phase.timer, draftA })
+              ? setPhase({ t: 'intro', mode: 'ai', blitz: phase.blitz, timer: phase.timer, difficulty: phase.difficulty, draftA, draftB: aiDraft(phase.difficulty) })
+              : setPhase({ t: 'pass', mode: 'local', blitz: phase.blitz, timer: phase.timer, difficulty: phase.difficulty, draftA })
           }
         />
       )}
@@ -73,7 +73,7 @@ export default function App() {
           <div className="menu-btns">
             <button
               className="btn btn-primary"
-              onClick={() => setPhase({ t: 'draftB', mode: 'local', blitz: phase.blitz, timer: phase.timer, draftA: phase.draftA })}
+              onClick={() => setPhase({ t: 'draftB', mode: 'local', blitz: phase.blitz, timer: phase.timer, difficulty: phase.difficulty, draftA: phase.draftA })}
             >
               {phase.blitz ? 'Player 2, pick your champion' : 'Player 2, draft your team'}
             </button>
@@ -87,7 +87,7 @@ export default function App() {
           championOnly={phase.blitz}
           onBack={() => setPhase({ t: 'menu' })}
           onDone={(draftB) =>
-            setPhase({ t: 'intro', mode: 'local', blitz: phase.blitz, timer: phase.timer, draftA: phase.draftA, draftB })
+            setPhase({ t: 'intro', mode: 'local', blitz: phase.blitz, timer: phase.timer, difficulty: phase.difficulty, draftA: phase.draftA, draftB })
           }
         />
       )}
@@ -95,7 +95,7 @@ export default function App() {
       {phase.t === 'intro' && (
         <BattleIntro
           onDone={() =>
-            setPhase({ t: 'battle', mode: phase.mode, blitz: phase.blitz, timer: phase.timer, draftA: phase.draftA, draftB: phase.draftB })
+            setPhase({ t: 'battle', mode: phase.mode, blitz: phase.blitz, timer: phase.timer, difficulty: phase.difficulty, draftA: phase.draftA, draftB: phase.draftB })
           }
         />
       )}
@@ -105,10 +105,11 @@ export default function App() {
           mode={phase.mode}
           blitz={phase.blitz}
           timerOn={phase.timer}
+          difficulty={phase.difficulty}
           draftA={phase.draftA}
           draftB={phase.draftB}
           onExit={() => setPhase({ t: 'menu' })}
-          onRedraft={() => setPhase({ t: 'draftA', mode: phase.mode, blitz: phase.blitz, timer: phase.timer })}
+          onRedraft={() => setPhase({ t: 'draftA', mode: phase.mode, blitz: phase.blitz, timer: phase.timer, difficulty: phase.difficulty })}
         />
       )}
     </div>

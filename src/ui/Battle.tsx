@@ -42,7 +42,7 @@ import {
   specialHintOf,
   specialNameOf,
 } from '../game/data'
-import { aiStep } from '../game/ai'
+import { aiStep, type Difficulty } from '../game/ai'
 import {
   blockedAt,
   deployDepthFor,
@@ -105,6 +105,7 @@ export function Battle({
   mode,
   blitz,
   timerOn = true,
+  difficulty = 'normal',
   draftA,
   draftB,
   net,
@@ -117,6 +118,7 @@ export function Battle({
   mode: 'ai' | 'local'
   blitz: boolean
   timerOn?: boolean
+  difficulty?: Difficulty
   draftA: DraftResult
   draftB: DraftResult
   net?: NetSession
@@ -379,12 +381,12 @@ export function Battle({
   useEffect(() => {
     if (mode !== 'ai' || state.current !== 'B' || state.winner || resolving) return
     const t = window.setTimeout(() => {
-      const next = tutorial ? null : aiStep(state)
+      const next = tutorial ? null : aiStep(state, difficulty)
       if (next) apply(next)
       else setResolving(true)
     }, AI_STEP_MS)
     return () => clearTimeout(t)
-  }, [state, mode, resolving, tutorial])
+  }, [state, mode, resolving, tutorial, difficulty])
 
   const findUnit = (id: number) => state.units.find((u) => u.id === id)
   const selUnit = sel && 'id' in sel ? findUnit(sel.id) : undefined

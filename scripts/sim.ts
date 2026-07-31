@@ -11,7 +11,7 @@
  */
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { finishTurn, newBattle, resolveStep } from '../src/game/actions'
-import { aiDraft, aiStep } from '../src/game/ai'
+import { aiDraft, aiStep, type Difficulty } from '../src/game/ai'
 import { CHAMPIONS, FATIGUE_ROUND, ROSTER, SUMMONS, TUNING, costEquiv } from '../src/game/data'
 import type { DraftResult, GameState, Owner, Unit } from '../src/game/types'
 
@@ -50,6 +50,16 @@ if (tuneArg) {
 }
 
 const STEP_CAP = 6000 // a game that exceeds this is a genuine stall
+
+/** --vs=hard:easy → A plays hard, B plays easy. Default: both normal. */
+const vsArg = (argv.find((a) => a.startsWith('--vs=')) ?? '--vs=normal:normal').slice('--vs='.length)
+const [DIFF_A, DIFF_B] = vsArg.split(':') as [Difficulty, Difficulty]
+for (const d of [DIFF_A, DIFF_B]) {
+  if (!['easy', 'normal', 'hard'].includes(d)) {
+    console.error(`bad difficulty "${d}" — use easy|normal|hard`)
+    process.exit(1)
+  }
+}
 
 /** One game's worth of observations. */
 interface GameRecord {
@@ -96,8 +106,8 @@ function endTurnFully(s: GameState): GameState {
 function playOne(seed: number): GameRecord {
   Math.random = mulberry32(seed)
 
-  const draftA: DraftResult = aiDraft()
-  const draftB: DraftResult = aiDraft()
+  const draftA: DraftResult = aiDraft(DIFF_A)
+  const draftB: DraftResult = aiDraft(DIFF_B)
   let g = newBattle(draftA, draftB)
 
   const rec: GameRecord = {
@@ -177,7 +187,7 @@ function playOne(seed: number): GameRecord {
       lastRoundSampled = g.round
     }
     const before = g
-    const next = aiStep(g)
+    const next = aiStep(g, g.current === 'A' ? DIFF_A : DIFF_B)
     g = next ?? endTurnFully(g)
     diffKos(before, g)
     noteUnits(g)
@@ -378,6 +388,7 @@ writeFileSync(
 const h = out.headline
 const p = (x: number) => `${(x * 100).toFixed(1)}%`
 console.log(`\n=== ${TAG}: ${out.meta.finished}/${out.meta.games} games in ${elapsed.toFixed(1)}s ===`)
+console.log(`matchup               A=${DIFF_A} vs B=${DIFF_B}`)
 console.log(`first-player win rate  ${p(h.firstPlayerWinRate)}   (50% = fair)`)
 console.log(`snowball index         ${p(h.snowballIndex)}   (first KO predicts winner; 50% = no snowball)`)
 console.log(`rounds  avg ${h.avgRounds.toFixed(1)}  median ${h.medianRounds}  p90 ${h.p90Rounds}  max ${h.maxRounds}`)

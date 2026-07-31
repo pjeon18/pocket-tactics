@@ -32,7 +32,7 @@ export const INCOME_STEP_ROUNDS = 5
 export const TRADE_GREAT_COST = 3 // 3 Poké Balls → 1 Great Ball
 export const TRADE_ULTRA_COST = 6 // 6 Poké Balls → 1 Ultra Ball
 export const START_POKE_A = 1 // +1 income on turn 1 → opens with 2
-export const START_POKE_B = 2 // one extra Poké Ball as second-player compensation
+export const START_POKE_B = 3 // second-player compensation (see TUNING.startPokeB)
 export const START_GREAT_B = 0
 
 export const DRAFT_SIZE = 8
@@ -80,6 +80,14 @@ export const TUNING = {
   /** Super effective / resisted. Applies to normal attacks AND specials. */
   seMult: 1.5,
   resistMult: 0.5,
+  /**
+   * Second-player compensation. Raised 2 -> 3 after the AI overhaul: the old
+   * value was tuned against a weak AI that could not exploit tempo. Competent
+   * play pushed the first-player win rate to 60.7%; at 3 it sits near 50% for
+   * easy/normal and ~54% in hard mirrors.
+   */
+  startPokeB: 3,
+  startGreatB: 0,
 }
 
 /** Every Pokémon gains this much HP over its "true" statline (attack/HP ratio fix). */
