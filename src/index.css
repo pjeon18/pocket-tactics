@@ -995,7 +995,15 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 
 
 /* ---------- legendary summons ---------- */
-.summon-grid .card { border-style: dashed; }
+/* Six summons need column counts that divide evenly — the champion grid's
+   auto-fill lands on 5 and orphans the last card. Fixed counts per breakpoint,
+   and grid stretch keeps every card in a row the same height however long its
+   description runs (Kyogre's is roughly double the others). */
+.summon-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+@media (max-width: 1180px) { .summon-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 720px) { .summon-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.summon-grid .card { border-style: dashed; min-width: 0; }
+.summon-grid .card-name { overflow-wrap: anywhere; }
 .summon-sub { margin: -4px 0 10px; }
 .summon-row { display: flex; gap: 10px; }
 .summon-btn {
