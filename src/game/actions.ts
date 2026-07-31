@@ -3,8 +3,6 @@ import {
   CHEST_EVERY,
   CHEST_MAX,
   COLS,
-  CRIT_BONUS,
-  CRIT_CHANCE,
   DROPS,
   FATIGUE_ROUND,
   GREAT_CAP,
@@ -13,7 +11,7 @@ import {
   INCOME_BREAKS,
   KILL_BOUNTY,
   ITEMS,
-  MISS_CHANCE,
+  TUNING,
   MOVE_CAP,
   POKE_CAP,
   ROCK_CLUSTERS,
@@ -30,7 +28,8 @@ import {
   nameOf,
   ptypeOf,
   specialNameOf,
-  typeMod,
+  typeMult,
+  typeSign,
 } from './data'
 import {
   at,
@@ -222,24 +221,14 @@ function dealDamage(
   color: string,
   kind: 'normal' | 'special' | 'raw' = 'special',
   suffix = '',
+  crit = false,
 ) {
   let amt = base
   let mark = ''
   let sub: string | undefined
   if (src && kind !== 'raw') {
-    const mod = typeMod(ptypeOf(src), ptypeOf(tgt))
-    amt += mod
-    mark = mod > 0 ? '!' : ''
-    if (mod > 0) {
-      color = COLOR.strong
-      sub = 'Super effective!'
-    }
-    if (mod < 0) {
-      color = COLOR.resist
-      sub = 'Not very effective…'
-    }
+    // 1. flat modifiers (items, synergy riders) adjust the base hit …
     if (src.heldItem === 'life-orb') amt += 1
-    // synergy riders scale with tier (1 at three uniques, 2 at five)
     const srcTier = tierOf(state.units, src)
     if (kind === 'special' && ptypeOf(src) === 'fighting') amt += srcTier
     if (tgt.stunned && ptypeOf(src) === 'ice') amt += srcTier
@@ -248,7 +237,19 @@ function dealDamage(
     if (ptypeOf(tgt) === 'steel') amt -= tgtTier
     if (ptypeOf(tgt) === 'rock' && tgtTier >= 2) amt -= 1 // Sturdy tier 2
     amt = Math.max(1, amt)
+
+    // 2. … then the matchup scales it proportionally
+    const sign = typeSign(ptypeOf(src), ptypeOf(tgt))
+    if (sign !== 0) {
+      amt = Math.max(1, Math.ceil(amt * typeMult(ptypeOf(src), ptypeOf(tgt))))
+      mark = sign > 0 ? '!' : ''
+      color = sign > 0 ? COLOR.strong : COLOR.resist
+      sub = sign > 0 ? 'Super effective!' : 'Not very effective…'
+    }
   }
+  // 3. a critical hit scales whatever survived the above
+  if (crit) amt = Math.ceil(amt * TUNING.critMult)
+  amt = Math.max(1, amt)
   tgt.hp -= amt
   if (src) state.stats[src.owner][src.key] = (state.stats[src.owner][src.key] ?? 0) + amt
   state.events.push({ col: tgt.col, row: tgt.row, text: `-${amt}${mark}${suffix}`, color, sub })
@@ -477,7 +478,7 @@ function resolveHazards(state: GameState) {
     for (const [c, r] of hz.tiles) {
       const u = at(state.units, c, r)
       if (!u) continue
-      const amt = Math.max(1, hz.dmg + (hz.ptype ? typeMod(hz.ptype, ptypeOf(u)) : 0))
+      const amt = Math.max(1, Math.ceil(hz.dmg * (hz.ptype ? typeMult(hz.ptype, ptypeOf(u)) : 1)))
       dealDamage(state, null, u, amt, COLOR.special, 'raw', '')
       hit = true
     }
@@ -1098,7 +1099,7 @@ function resolveEnemySpecial(state: GameState, a: Unit, t: Unit) {
     }
     case 'blaziken': {
       const kick = t.hp === t.maxHp
-      dealDamage(state, a, t, 4 + (kick ? CRIT_BONUS : 0), S, 'special', kick ? ' CRIT' : '')
+      dealDamage(state, a, t, kick ? 6 : 4, S, 'special', kick ? ' CRIT' : '')
       break
     }
     case 'krookodile': {
@@ -1138,22 +1139,22 @@ export function resolveStep(state0: GameState): GameState | null {
       state.acting = { id: u.id, dc: Math.sign(t.col - u.col), dr: Math.sign(t.row - u.row) }
       if (plan.kind === 'attack') {
         // normal attacks roll the dice: small miss chance, small crit chance
-        if (Math.random() < MISS_CHANCE) {
+        if (Math.random() < TUNING.missChance) {
           state.events.push({ col: t.col, row: t.row, text: 'MISS', color: COLOR.resist })
           state.log.push(`${nameOf(u)} missed ${nameOf(t)}!`)
         } else {
           // Static: crit chance ×2 at tier 1, ×3 at tier 2
           const critChance =
-            ptypeOf(u) === 'electric' ? CRIT_CHANCE * (1 + tierOf(state.units, u)) : CRIT_CHANCE
+            ptypeOf(u) === 'electric' ? TUNING.critChance * (1 + tierOf(state.units, u)) : TUNING.critChance
           const critProof = ptypeOf(t) === 'rock' && hasSynergy(state.units, t) // Sturdy
           const crit = !critProof && Math.random() < critChance
           const before = t.hp
           dealDamage(
             state, u, t,
-            effAtk(state.units, u) + (crit ? CRIT_BONUS : 0),
-            COLOR.normal, 'normal', crit ? ' CRIT' : '',
+            effAtk(state.units, u),
+            COLOR.normal, 'normal', crit ? ' CRIT' : '', crit,
           )
-          const mod = typeMod(ptypeOf(u), ptypeOf(t))
+          const mod = typeSign(ptypeOf(u), ptypeOf(t))
           const eff = mod > 0 ? ' — super effective!' : mod < 0 ? ' — not very effective' : ''
           state.log.push(
             `${nameOf(u)} hit ${nameOf(t)} for ${before - t.hp}${crit ? ' — CRITICAL!' : ''}${eff}`,
@@ -1164,8 +1165,8 @@ export function resolveStep(state0: GameState): GameState | null {
             const b2 = t.hp
             dealDamage(
               state, u, t,
-              effAtk(state.units, u) + (crit2 ? CRIT_BONUS : 0),
-              COLOR.normal, 'normal', crit2 ? ' CRIT' : '',
+              effAtk(state.units, u),
+              COLOR.normal, 'normal', crit2 ? ' CRIT' : '', crit2,
             )
             state.log.push(`${nameOf(u)} struck again for ${b2 - t.hp} (Swarm).`)
           }

@@ -15,7 +15,7 @@ import {
   useItem,
 } from '../src/game/actions'
 import { aiDraft, aiStep } from '../src/game/ai'
-import { MOVE_CAP, ROSTER, costEquiv, typeMod } from '../src/game/data'
+import { MOVE_CAP, ROSTER, TUNING, costEquiv, typeMult } from '../src/game/data'
 import { canActNow, canMoveNow, openDeployTiles, reachable, targetsFrom } from '../src/game/rules'
 import type { GameState, Unit } from '../src/game/types'
 
@@ -65,10 +65,10 @@ const draftA = { champion: 'victini', picks: ['pikachu', 'onix', 'kirlia', 'haun
 const draftB = { champion: 'celebi', picks: ['pikachu', 'onix', 'magneton', 'scyther', 'gigalith', 'weavile', 'krookodile', 'garchomp'] }
 
 /* --- type chart --- */
-ok(typeMod('water', 'fire') === 3, 'water beats fire (+3)')
-ok(typeMod('fire', 'water') === -2, 'fire resisted by water (−2)')
-ok(typeMod('normal', 'normal') === 0, 'neutral is 0')
-ok(typeMod('electric', 'grass') === -2, 'electric resisted by grass')
+ok(typeMult('water', 'fire') === TUNING.seMult, 'water beats fire (x1.5)')
+ok(typeMult('fire', 'water') === TUNING.resistMult, 'fire resisted by water (x0.5)')
+ok(typeMult('normal', 'normal') === 1, 'neutral is x1')
+ok(typeMult('electric', 'grass') === TUNING.resistMult, 'electric resisted by grass')
 
 /* --- economy & deploy --- */
 let s = newBattle(draftA, draftB)
@@ -175,7 +175,7 @@ spawn(tm, 910, 'rotomwash', 'A', 1, 5, { atk: 3, range: 2, charge: 5, chargeMax:
 spawn(tm, 911, 'blaziken', 'B', 1, 3, { hp: 7 }) // fire
 let tp = planAttack(tm, 910, 911, false)!
 let tr = withRandom(0.5, () => resolveStep(tp)!)
-ok(tr.units.find((u) => u.id === 911)!.hp === 7 - 6, 'super effective adds +3 (water vs fire)')
+ok(tr.units.find((u) => u.id === 911)!.hp === 7 - 5, 'super effective scales x1.5 (3 atk -> 5)')
 
 /* --- chests --- */
 let ch = newBattle(draftA, draftB)
@@ -267,8 +267,16 @@ spawn(cm, 951, 'magneton', 'B', 2, 3, { hp: 8 })
 let cmPlan = planAttack(cm, 950, 951, false)!
 const missed = withRandom(0.01, () => resolveStep(cmPlan)!) // 0.01 < miss chance
 ok(missed.units.find((u) => u.id === 951)!.hp === 8, 'a miss deals no damage')
-const crit = withRandom(0.06, () => resolveStep(cmPlan)!) // no miss (0.06 > 0.05), crit (0.06 < 0.10)
-ok(crit.units.find((u) => u.id === 951)!.hp === 8 - 5, 'a crit adds +2 (3 atk → 5)')
+const crit = withRandom(0.04, () => resolveStep(cmPlan)!) // no miss (0.04 > 0.03), crit (0.04 < 0.06)
+ok(crit.units.find((u) => u.id === 951)!.hp === 8 - 5, 'a crit scales x1.5 (3 atk -> 5)')
+
+/* crits scale with the size of the hit — the whole point of going multiplicative */
+let bigc = newBattle(draftA, draftB)
+bigc.rocks = []
+spawn(bigc, 952, 'haunter', 'A', 2, 5, { atk: 8, range: 2 })
+spawn(bigc, 953, 'magneton', 'B', 2, 3, { hp: 20 })
+const bigCrit = withRandom(0.04, () => resolveStep(planAttack(bigc, 952, 953, false)!)!)
+ok(bigCrit.units.find((u) => u.id === 953)!.hp === 20 - 12, 'a crit on an 8-atk hit deals 12, not 10')
 const plain = withRandom(0.5, () => resolveStep(cmPlan)!)
 ok(plain.units.find((u) => u.id === 951)!.hp === 8 - 3, 'plain hit deals normal damage')
 

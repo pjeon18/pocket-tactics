@@ -12,7 +12,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { finishTurn, newBattle, resolveStep } from '../src/game/actions'
 import { aiDraft, aiStep } from '../src/game/ai'
-import { CHAMPIONS, FATIGUE_ROUND, ROSTER, SUMMONS, costEquiv } from '../src/game/data'
+import { CHAMPIONS, FATIGUE_ROUND, ROSTER, SUMMONS, TUNING, costEquiv } from '../src/game/data'
 import type { DraftResult, GameState, Owner, Unit } from '../src/game/types'
 
 /* ---------- seeded RNG so runs are reproducible and comparable ---------- */
@@ -33,6 +33,21 @@ const GAMES = Number(argv.find((a) => /^\d+$/.test(a)) ?? 2000)
 const SEED0 = Number((argv.find((a) => a.startsWith('--seed=')) ?? '--seed=1').split('=')[1])
 const TAG = (argv.find((a) => a.startsWith('--tag=')) ?? '--tag=baseline').split('=')[1]
 const QUIET = argv.includes('--quiet')
+
+/** --tune=critMult:1.5,missChance:0.03 — override combat tuning for an A/B run. */
+const tuneArg = argv.find((a) => a.startsWith('--tune='))
+if (tuneArg) {
+  for (const pair of tuneArg.slice('--tune='.length).split(',')) {
+    const [k, v] = pair.split(':')
+    if (k in TUNING && v !== undefined) {
+      ;(TUNING as unknown as Record<string, number>)[k] = Number(v)
+    } else {
+      console.error(`unknown tuning key "${k}" — valid: ${Object.keys(TUNING).join(', ')}`)
+      process.exit(1)
+    }
+  }
+  console.log(`tuning: ${JSON.stringify(TUNING)}`)
+}
 
 const STEP_CAP = 6000 // a game that exceeds this is a genuine stall
 

@@ -1,4 +1,4 @@
-import { CHAMPION_ORDER, DRAFT_SIZE, SUMMONS, SUMMON_ORDER, GREAT_CAP, ROSTER, TRADE_GREAT_COST, TRADE_ULTRA_COST, ULTRA_CAP, costEquiv, metaOf, ptypeOf, typeMod } from './data'
+import { CHAMPION_ORDER, DRAFT_SIZE, SUMMONS, SUMMON_ORDER, GREAT_CAP, ROSTER, TRADE_GREAT_COST, TRADE_ULTRA_COST, ULTRA_CAP, costEquiv, metaOf, ptypeOf, typeMult } from './data'
 import { deploy, moveUnit, planArea, planAttack, tradeBalls, useAbility, useSummon } from './actions'
 import {
   canActNow,
@@ -133,7 +133,7 @@ function bestPlan(state: GameState): Plan | null {
         const scoreTarget = (t: Unit, dmgBase: number, isSpecial: boolean) => {
           const effHp = t.hp - plannedDamageOn(state, t.id)
           if (effHp <= 0) return // already dead on paper — don't pile on
-          const dmg = Math.min(effHp, Math.max(1, dmgBase + typeMod(ptypeOf(u), ptypeOf(t))))
+          const dmg = Math.min(effHp, Math.max(1, Math.ceil(dmgBase * typeMult(ptypeOf(u), ptypeOf(t)))))
           let s = dmg + (dmg >= effHp ? 3 : 0)
           if (t.isChampion) s *= 2.2
           if (s > attackScore) {

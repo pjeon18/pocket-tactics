@@ -63,9 +63,24 @@ export const SUMMON_ORDER = ['hooh', 'lugia', 'dialga', 'palkia', 'kyogre', 'gro
 export const FATIGUE_ROUND = 20
 
 /** Normal attacks only: a small hit-roll. Specials never miss or crit. */
-export const MISS_CHANCE = 0.05
-export const CRIT_CHANCE = 0.1
-export const CRIT_BONUS = 2
+/**
+ * Combat variance and type scaling — all MULTIPLICATIVE, so a modifier is worth
+ * the same *proportion* of a hit at every point in the game. (Flat +2/+3 bonuses
+ * swung a 3-damage early attack by 100% and a late 8-damage one by 25%.)
+ *
+ * Mutable on purpose: the telemetry harness overrides these to A/B rule variants
+ * against an identical population of seeded games.
+ */
+export const TUNING = {
+  /** Normal attacks only. A miss deals nothing at all. */
+  missChance: 0.03,
+  /** Normal attacks only. */
+  critChance: 0.06,
+  critMult: 1.5,
+  /** Super effective / resisted. Applies to normal attacks AND specials. */
+  seMult: 1.5,
+  resistMult: 0.5,
+}
 
 /** Every Pokémon gains this much HP over its "true" statline (attack/HP ratio fix). */
 export const HP_INFLATE = 3
@@ -211,11 +226,16 @@ const RESIST: Record<PType, PType[]> = {
 }
 
 /** +3 super effective, −2 resisted, 0 neutral. Damage floor is 1. */
-export const TYPE_STRONG_BONUS = 3
-export const TYPE_RESIST_PENALTY = -2
-export function typeMod(a: PType, d: PType): number {
-  if (STRONG[a].includes(d)) return TYPE_STRONG_BONUS
-  if (RESIST[a].includes(d)) return TYPE_RESIST_PENALTY
+/** Damage multiplier for a matchup: 1.5 super effective, 0.5 resisted, 1 neutral. */
+export function typeMult(a: PType, d: PType): number {
+  if (STRONG[a].includes(d)) return TUNING.seMult
+  if (RESIST[a].includes(d)) return TUNING.resistMult
+  return 1
+}
+/** Just the direction of a matchup — for messaging and AI target preference. */
+export function typeSign(a: PType, d: PType): -1 | 0 | 1 {
+  if (STRONG[a].includes(d)) return 1
+  if (RESIST[a].includes(d)) return -1
   return 0
 }
 
