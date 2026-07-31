@@ -832,10 +832,14 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45); display: flex; flex-direction: column; gap: 14px;
 }
 .overlay-review { align-self: center; }
-/* confirm dialogs (quit) sit on a light card — keep their copy dark and readable */
-.overlay-confirm .overlay-title { color: #3A3F46; font-size: 40px; }
-.overlay-confirm .overlay-sub { color: var(--mist); }
-.overlay-confirm .btn-ghost { color: #3A3F46; border-color: #3A3F46; }
+/* Every overlay sits on a LIGHT card, so its contents take ink colours. This
+   was previously patched only for the quit dialog, which left the result
+   screen rendering "Defeat" in #F2F2ED on white. */
+.overlay-card .overlay-title { color: var(--ink); }
+.overlay-card .overlay-sub { color: var(--mist); }
+.overlay-card .btn-ghost { color: var(--ink); border-color: var(--ink); }
+.overlay-card .btn-ghost:hover:not(:disabled) { background: rgba(22, 25, 29, 0.06); }
+.overlay-confirm .overlay-title { font-size: 40px; }
 .review-return {
   position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%); z-index: 25;
 }
