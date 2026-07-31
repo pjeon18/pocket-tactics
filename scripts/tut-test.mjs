@@ -3,7 +3,7 @@ const { chromium } = pw
 const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1200, height: 900 } })
 p.on('pageerror', e => console.log('PAGEERR', String(e).slice(0, 160)))
 const sleep = ms => new Promise(r => setTimeout(r, ms))
-await p.goto('http://localhost:5202/', { waitUntil: 'networkidle' }); await sleep(500)
+await p.goto('http://localhost:5203/', { waitUntil: 'networkidle' }); await sleep(500)
 await p.evaluate(() => [...document.querySelectorAll('button')].find(x => x.textContent.includes('Play the tutorial'))?.click())
 await p.waitForSelector('.tutorial-coach', { timeout: 8000 }); await sleep(600)
 const title = () => p.evaluate(() => document.querySelector('.tutorial-coach-title')?.textContent || '')
