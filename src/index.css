@@ -1,8 +1,9 @@
 :root {
-  --page: #15181D;
-  --page-2: #1C2027;
+  /* the table the game is played on */
+  --page: #0F1216;
+  --page-2: #171B21;
   --on-dark: #F2F2ED;
-  --on-dark-sub: #9AA1AB;
+  --on-dark-sub: #8A9099;
   --paper: #FBFBF8;
   --ink: #16191D;
   --mist: #6E7680;
@@ -10,12 +11,23 @@
   --board: #F5F5EF;
   --board-line: #E2E2D8;
   --card: #FFFFFF;
-  --amber: #C9930A;
-  --danger: #D64545;
-  --move: #3E9B63;
+  /* one accent: turn ownership, currency, selection */
+  --amber: #E0A422;
+  --danger: #E2564D;
+  --move: #46B478;
   --team-blue: #2F6FD0;
   --team-red: #D64545;
-  --font-game: 'Inter', system-ui, sans-serif;
+  --font-game: 'M PLUS Rounded 1c', system-ui, sans-serif;
+  --font-num: 'DM Mono', ui-monospace, monospace;
+  /* spacing rhythm */
+  --gap-1: 4px; --gap-2: 8px; --gap-3: 12px; --gap-4: 18px; --gap-5: 28px;
+  --rail: 1180px;
+}
+
+/* numeric readouts get the mono face and tabular figures everywhere */
+.hud-value, .econ-item b, .econ-item-big b, .champ-hud-stats,
+.stat-chip, .cd-inline, .comp-scroll td.num, .turn-clock {
+  font-family: var(--font-num); font-variant-numeric: tabular-nums;
 }
 
 * { box-sizing: border-box; }
@@ -233,18 +245,76 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 .panel-idle .bench-row, .panel-idle .bench-rail { pointer-events: none; }
 .panel-rotated { transform: rotate(180deg); }
 
-/* solo: enemy intel rail | board | your side panel */
-@media (min-width: 980px) {
-  .panel-solo {
-    display: grid;
-    grid-template-columns: 224px minmax(0, 1fr) 420px;
-    grid-template-areas: 'eside boardarea side';
-    align-items: stretch; column-gap: 18px;
-  }
-  .panel-solo .enemy-side { grid-area: eside; }
-  .panel-solo .board-col { grid-area: boardarea; }
-  .panel-solo .side-stack { grid-area: side; }
+/* ---------- the tabletop: their side, the board, your side ----------
+   One column at every width. The board is the hero and keeps the room;
+   chrome sits at the table edges and only speaks when it has something
+   to say. Scaling this down to a phone is a matter of size, not layout. */
+.panel-solo {
+  display: flex; flex-direction: column; gap: var(--gap-3);
+  background: transparent; box-shadow: none; padding: 0;
+  max-width: var(--rail); margin: 0 auto; width: 100%;
 }
+.panel-solo.panel-active { box-shadow: none; }
+
+/* their side */
+.rival-strip {
+  display: flex; align-items: center; gap: var(--gap-3); flex-wrap: wrap;
+  background: var(--page-2); border-radius: 16px; padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+.rival-strip .champ-hud { flex: 1 1 260px; min-width: 0; background: transparent; border: none; padding: 0; box-shadow: none; }
+.rival-strip .synergies { margin: 0; }
+.rival-intel { margin-left: auto; }
+.rival-intel > summary {
+  cursor: pointer; list-style: none; font-size: 12px; font-weight: 800;
+  color: var(--on-dark-sub); padding: 6px 12px; border-radius: 99px;
+  border: 1px solid rgba(255, 255, 255, 0.14); white-space: nowrap;
+}
+.rival-intel > summary::-webkit-details-marker { display: none; }
+.rival-intel > summary:hover { color: var(--on-dark); border-color: rgba(255, 255, 255, 0.3); }
+.rival-intel > summary em { font-style: normal; opacity: 0.65; margin-left: 8px; }
+.rival-intel-body {
+  position: absolute; z-index: 12; margin-top: 8px; right: 0;
+  background: var(--card); border-radius: 14px; padding: 12px;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5); max-height: 60vh; overflow-y: auto; min-width: 240px;
+}
+.rival-intel { position: relative; }
+
+/* your side */
+.hand-zone { display: flex; flex-direction: column; gap: var(--gap-2); }
+.hand-bar {
+  display: flex; align-items: stretch; gap: var(--gap-3); flex-wrap: wrap;
+  background: var(--page-2); border-radius: 16px; padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+.hand-cards {
+  flex: 1 1 320px; min-width: 0; display: flex; gap: 8px; flex-wrap: wrap; align-content: flex-start;
+}
+.hand-rail {
+  display: flex; align-items: center; gap: var(--gap-3); flex-wrap: wrap;
+  padding-left: var(--gap-3); border-left: 1px solid rgba(255, 255, 255, 0.09);
+}
+.hand-meta { display: flex; align-items: center; gap: var(--gap-3); }
+.meta-block { display: flex; flex-direction: column; gap: 3px; }
+.spend-row { display: flex; flex-direction: column; gap: var(--gap-2); }
+.spend-row:empty { display: none; }
+
+/* board footer: status + your synergies, quiet */
+.board-foot {
+  display: flex; align-items: center; gap: var(--gap-3); flex-wrap: wrap; justify-content: center;
+}
+.status-live { color: var(--amber); }
+
+/* collapsible drawer for anything you only read when you go looking */
+.drawer { border-radius: 14px; background: var(--page-2); border: 1px solid rgba(255, 255, 255, 0.07); }
+.drawer > summary {
+  cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 9px 14px; font-size: 12.5px; font-weight: 800; color: var(--on-dark-sub);
+}
+.drawer > summary::-webkit-details-marker { display: none; }
+.drawer > summary:hover { color: var(--on-dark); }
+.drawer-hint { font-style: normal; font-family: var(--font-num); font-size: 11.5px; opacity: 0.7; }
+.drawer-body { padding: 0 14px 14px; display: flex; flex-direction: column; gap: var(--gap-2); }
 
 .board-col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 
@@ -466,6 +536,16 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
   touch-action: manipulation;
 }
 .panels-two .board { width: min(100%, calc((100vh - 400px) * 0.7)); }
+/* solo: the board takes every pixel the chrome above and below does not need,
+   and its mat hugs it rather than spanning the whole rail */
+/* The board is sized by the space left over, not by a magic number: the flex
+   chain hands it the leftover height and aspect-ratio derives the width. Its
+   width must never be a percentage of the fit-content mat — that is circular
+   and collapses the board to nothing. */
+.panel-solo .board-area {
+  flex: 1; min-height: 0; width: fit-content; margin: 0 auto; max-width: 100%; padding: 10px;
+}
+.panel-solo .board { height: 100%; width: auto; max-width: 88vw; }
 .board-locked { cursor: default; }
 
 /* ONE board-wide grid: 1px lines at exact cell fractions (7 cols × 10 rows),
@@ -1018,4 +1098,96 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 .difficulty-label {
   font-size: 11px; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase;
   color: var(--on-dark-sub); margin-right: 2px;
+}
+
+/* the battle fills the viewport exactly — no page scroll during play */
+.battle { padding: 10px 16px 14px; height: 100svh; overflow: hidden; }
+.battle > .panels { flex: 1; min-height: 0; }
+.panels-solo { display: flex; }
+.panel-solo { flex: 1; min-height: 0; }
+.panel-solo .board-col { flex: 1; min-height: 0; justify-content: center; }
+
+/* ---------- compact the table edges so the board keeps the room ---------- */
+/* the rival's champion reads as one dense line, not a stacked card */
+.rival-strip .champ-hud { display: flex; align-items: center; gap: 10px; }
+.rival-strip .champ-hud-sprite { width: 42px; height: 42px; }
+.rival-strip .champ-hud-name { font-size: 14px; }
+.rival-strip .champ-hud-stats { font-size: 11px; }
+.rival-strip .champ-hud-hpbar { height: 6px; }
+.rival-strip .champ-hud-balls { font-size: 12px; }
+
+.hand-bar .bench-card { width: 58px; height: 58px; }
+.hand-bar .bench-card .sprite { width: 34px; height: 34px; }
+
+/* ---------- phone: same layout, tighter everything ---------- */
+@media (max-width: 640px) {
+  .battle { padding: 6px 8px 8px; }
+  .toolbar { gap: 6px; margin-bottom: 6px; }
+  .toolbar .btn-tiny { padding: 5px 10px; font-size: 12px; }
+  .round-label { font-size: 12px; }
+  .volume-ctl { display: none; }
+
+  .rival-strip { padding: 6px 10px; gap: 8px; border-radius: 12px; }
+  .rival-strip .champ-hud-sprite { width: 34px; height: 34px; }
+  .rival-strip .champ-hud-balls, .rival-strip .synergies { display: none; }
+  .rival-intel > summary { padding: 4px 10px; font-size: 11px; }
+  .rival-intel-body { position: fixed; left: 8px; right: 8px; top: 64px; min-width: 0; }
+
+  /* the board is width-bound on a phone, so give it the full column */
+  .panel-solo .board-area { padding: 4px; }
+  .panel-solo .board { max-width: 94vw; }
+  .board-foot { display: none; }
+
+  .hand-bar { padding: 6px 8px; gap: 8px; flex-wrap: nowrap; border-radius: 12px; }
+  /* the hand scrolls sideways rather than wrapping into a second row */
+  .hand-cards {
+    flex: 1 1 auto; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-bottom: 2px;
+  }
+  .hand-cards::-webkit-scrollbar { display: none; }
+  .hand-bar .bench-card { width: 52px; height: 52px; flex-shrink: 0; }
+  .hand-rail { padding-left: 8px; gap: 8px; flex-wrap: nowrap; }
+  .hand-meta { display: none; }
+  .hand-rail .econ-row { gap: 6px; }
+  .hand-rail .trade-btn { display: none; }
+  .endturn-hud { padding: 9px 14px; font-size: 13px; }
+  .drawer > summary { padding: 7px 12px; font-size: 12px; }
+}
+
+/* ---------- wide screens: chrome moves to the flanks, board goes full height ----------
+   Same DOM and the same tabletop reading order (theirs / board / yours) — but
+   on a wide display the side room is spent on chrome so the board can use the
+   entire column height instead of being squeezed by it. */
+@media (min-width: 1100px) {
+  .panel-solo {
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr) 330px;
+    grid-template-areas: 'rival board hand';
+    gap: var(--gap-3); align-items: stretch;
+  }
+  .panel-solo .rival-strip {
+    grid-area: rival; flex-direction: column; align-items: stretch;
+    align-content: flex-start; overflow-y: auto;
+  }
+  .panel-solo .rival-strip .champ-hud { flex: 0 0 auto; }
+  .panel-solo .rival-intel { margin-left: 0; }
+  .panel-solo .rival-intel > summary { text-align: center; }
+  .panel-solo .rival-intel-body { position: static; box-shadow: none; max-height: none; margin-top: 6px; }
+  .panel-solo .board-col { grid-area: board; }
+  .panel-solo .hand-zone { grid-area: hand; overflow-y: auto; }
+  .panel-solo .hand-bar { flex-direction: column; align-items: stretch; }
+  .panel-solo .hand-rail {
+    padding-left: 0; border-left: none; padding-top: var(--gap-3);
+    border-top: 1px solid rgba(255, 255, 255, 0.09); justify-content: space-between;
+  }
+  .panel-solo .hand-cards { flex: 0 0 auto; }
+}
+
+/* side columns hug their content — an empty panel is worse than empty table */
+@media (min-width: 1100px) {
+  .panel-solo { align-items: start; }
+  .panel-solo .rival-strip, .panel-solo .hand-bar, .panel-solo .drawer { align-self: start; }
+  .panel-solo .board-col { align-self: stretch; height: 100%; }
+  .panel-solo .hand-zone { align-self: start; max-height: 100%; }
+  .panel-solo .hand-cards { min-height: 0; }
 }

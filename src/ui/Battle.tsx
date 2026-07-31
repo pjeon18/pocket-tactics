@@ -1018,8 +1018,16 @@ function PlayerPanel(props: PanelProps) {
 
   return (
     <section className={`panel ${solo ? 'panel-solo' : ''} ${interactive ? 'panel-active' : 'panel-idle'} ${rotated ? 'panel-rotated' : ''}`}>
-      {solo && <EnemySide {...props} />}
+      {/* their side of the table */}
+      {solo ? (
+        <RivalStrip {...props} />
+      ) : (
+        <div className="panel-head">
+          <span className="panel-label">{label}</span>
+        </div>
+      )}
 
+      {/* the board is the whole point — everything else defers to it */}
       <div className="board-col">
         <div className="board-area">
           <SkyMat />
@@ -1041,82 +1049,100 @@ function PlayerPanel(props: PanelProps) {
             <div key={banner.key} className="turn-banner">{banner.text}</div>
           )}
         </div>
-        <SynergyTracker state={state} owner={owner} />
+        <div className="board-foot">
+          <span className={`status-line ${myTurn && !resolving ? 'status-live' : ''}`}>{status}</span>
+          <SynergyTracker state={state} owner={owner} />
+        </div>
       </div>
 
-      <div className="side-stack">
-        {!solo && (
-          <div className="panel-head">
-            <span className="panel-label">{label}</span>
-          </div>
-        )}
-
-        {solo && <ChampionCard state={state} owner={owner} label={label} />}
-        <div className="status-line">{status}</div>
-
-        <div className="hud">
-          <div className="hud-block">
-            <span className="hud-label">Round</span>
-            <span className="hud-value">{state.round}</span>
-          </div>
-          <div className="hud-block">
-            <span className="hud-label">Time</span>
-            <span className="hud-value">{mm}:{ss}</span>
-          </div>
-          <div className="hud-block">
-            <span className="hud-label">Turn clock</span>
-            <span className={`hud-value turn-clock ${myTurn && turnLeft <= 10 ? 'turn-clock-low' : ''}`}>
-              {!timerOn ? 'off' : myTurn && !resolving ? `${Math.max(0, turnLeft)}s` : '—'}
-            </span>
-          </div>
-          <div className="hud-block hud-moves">
-            <span className="hud-label">Moves</span>
-            <span className="moves-left">
-              {Array.from({ length: MOVE_CAP }).map((_, i) => (
-                <span key={i} className={`move-pip ${myTurn && i < state.movesLeft ? 'move-pip-on' : ''}`} />
-              ))}
-            </span>
-          </div>
-          <button className="btn btn-primary endturn endturn-hud" disabled={!interactive} onClick={onEndTurn}>
-            End turn
-          </button>
-        </div>
-
+      {/* your side of the table */}
+      <div className="hand-zone">
         <ActionBar {...props} />
 
-        <SummonRow {...props} />
-
-        <Inventory {...props} />
-
-        {state.shopMode && <Shop {...props} />}
-
-        {solo && !state.shopMode && (
-          <div className="bench bench-grid">
-            <BenchCards {...props} />
+        <div className="hand-bar">
+          <div className="hand-cards">
+            {state.shopMode
+              ? <Shop {...props} />
+              : solo
+                ? <BenchCards {...props} />
+                : <BenchStrip {...props} />}
           </div>
-        )}
-        {!solo && !state.shopMode && <BenchStrip {...props} />}
 
-        {/* the ball purse lives where End turn used to be — with a +N pop on gains */}
-        <EconomyRow
-          p={p}
-          interactive={interactive}
-          onTrade={onTrade}
-        />
-
-        <BattleStats state={state} owner={owner} />
-
-        <div className="log">
-          {state.log.slice(-6).map((l, i, arr) => (
-            <div key={i} className={i === arr.length - 1 ? 'log-latest' : ''}>{l}</div>
-          ))}
+          <div className="hand-rail">
+            <EconomyRow p={p} interactive={interactive} onTrade={onTrade} />
+            <div className="hand-meta">
+              <span className="meta-block">
+                <span className="hud-label">Moves</span>
+                <span className="moves-left">
+                  {Array.from({ length: MOVE_CAP }).map((_, i) => (
+                    <span key={i} className={`move-pip ${myTurn && i < state.movesLeft ? 'move-pip-on' : ''}`} />
+                  ))}
+                </span>
+              </span>
+              {timerOn && (
+                <span className="meta-block">
+                  <span className="hud-label">Clock</span>
+                  <span className={`hud-value turn-clock ${myTurn && turnLeft <= 10 ? 'turn-clock-low' : ''}`}>
+                    {myTurn && !resolving ? `${Math.max(0, turnLeft)}s` : '—'}
+                  </span>
+                </span>
+              )}
+            </div>
+            <button className="btn btn-primary endturn endturn-hud" disabled={!interactive} onClick={onEndTurn}>
+              End turn
+            </button>
+          </div>
         </div>
 
-        {props.chat && <ChatBox chat={props.chat} />}
+        {/* things you can spend: summons and field items */}
+        <div className="spend-row">
+          <SummonRow {...props} />
+          <Inventory {...props} />
+        </div>
 
-        <MusicCorner />
+        {/* everything you only look at when you go looking */}
+        <details className="drawer">
+          <summary>
+            <span>Battle log &amp; stats</span>
+            <em className="drawer-hint">Round {state.round} · {mm}:{ss}</em>
+          </summary>
+          <div className="drawer-body">
+            <div className="log">
+              {state.log.slice(-6).map((l, i, arr) => (
+                <div key={i} className={i === arr.length - 1 ? 'log-latest' : ''}>{l}</div>
+              ))}
+            </div>
+            <BattleStats state={state} owner={owner} />
+            {props.chat && <ChatBox chat={props.chat} />}
+            <MusicCorner />
+          </div>
+        </details>
       </div>
     </section>
+  )
+}
+
+/** Their side of the table: champion, synergies, and their cards on demand. */
+function RivalStrip(props: PanelProps) {
+  const { state, owner, mode } = props
+  const foe = otherOwner(owner)
+  const foeLabel = mode === 'ai' ? 'Rival' : foe === 'A' ? 'Player 1' : 'Player 2'
+  const fp = state.players[foe]
+  const revealed = fp.bench.filter((k) => fp.revealed.includes(k)).length
+  return (
+    <div className="rival-strip">
+      <ChampionCard state={state} owner={foe} label={foeLabel} />
+      <SynergyTracker state={state} owner={foe} />
+      <details className="rival-intel">
+        <summary>
+          Their cards
+          <em>{revealed}/{fp.bench.length} seen</em>
+        </summary>
+        <div className="rival-intel-body">
+          <EnemySide {...props} />
+        </div>
+      </details>
+    </div>
   )
 }
 
@@ -1229,11 +1255,8 @@ function EnemySide(props: PanelProps) {
   const { state, owner, onInspect, sel } = props
   const foe = otherOwner(owner)
   const fp = state.players[foe]
-  const foeLabel = props.mode === 'ai' ? 'Rival' : foe === 'A' ? 'Player 1' : 'Player 2'
   return (
     <div className="enemy-side">
-      <ChampionCard state={state} owner={foe} label={foeLabel} />
-      <SynergyTracker state={state} owner={foe} />
       <div className="enemy-deck" title="The rival's deck — cards reveal forever once deployed">
         {benchSorted(fp.bench).map((key) => {
           const s = ROSTER[key]
@@ -1619,15 +1642,10 @@ function SpeciesInfo({ speciesKey }: { speciesKey: string }) {
 function ActionBar({
   state, owner, sel, selUnit, interactive, onSpecial, onCancelPlan, onUndoMove, onPickRevive,
 }: PanelProps) {
+  // the command strip only exists while something is selected — nothing is
+  // reserved for it, so the board keeps the room when you have made no choice
   if (sel?.type === 'bench' || sel?.type === 'card') return <SpeciesInfo speciesKey={sel.key} />
-  if (!selUnit || (!interactive && sel?.type !== 'enemy'))
-    return (
-      <div className="actionbar actionbar-empty">
-        {interactive
-          ? 'Select a Pokémon to command it. Attacks land when the turn ends.'
-          : ' '}
-      </div>
-    )
+  if (!selUnit || (!interactive && sel?.type !== 'enemy')) return null
 
   const u = selUnit
   const mine = u.owner === owner

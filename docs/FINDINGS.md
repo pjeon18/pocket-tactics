@@ -1,4 +1,32 @@
-# Balance telemetry — baseline findings
+# Balance telemetry — findings
+
+> **Update (post-AI-overhaul).** A second 10k run (`post-ai`) was taken after the
+> AI rewrite, the multiplicative RNG change, and raising second-player
+> compensation to 3. Both runs are in `docs/telemetry/`.
+>
+> | Metric | baseline (weak AI) | post-ai | verdict |
+> |---|---|---|---|
+> | First-player win rate | 50.7% | **49.4%** | fair — and now fair against *competent* play |
+> | Fatigue rate | 57.9% | **47.6%** | better, still the biggest problem |
+> | Median length | 21 | **19** | shorter |
+> | Champion HP at round 15 | 85% | **82%** | still far too flat |
+> | Snowball index | 58.1% | 58.5% | unchanged, healthy |
+> | Cost → win correlation | −0.124 | **−0.053** | closer to neutral, still not rewarding |
+> | Dead cards (<5% deploy) | 3 | 3 | unchanged — Primeape, Gigalith, Scyther |
+> | Champion spread | 23.8 pts | 19.8 pts | narrower; Jirachi still last |
+>
+> The AI now uses items and aimed summons (Kyogre casts 0.46×/draft), and the
+> board no longer saturates to the cap — average fielded peaks at 6.2 and then
+> *falls*, where before it climbed to 6.7 and stayed. But **champions still lose
+> only 18% of their health over the first fifteen rounds**, so fatigue continues
+> to decide nearly half of all games. That is now unambiguously a rules problem
+> rather than an AI one, and it is the next thing to fix.
+>
+> The section below is the original baseline analysis, kept for the diff.
+
+---
+
+# Baseline findings (weak AI)
 
 **Run:** 10,000 seeded AI-vs-AI games against the live rules engine · seed 1 · 62 Pokémon · 256s
 **Artifacts:** `docs/telemetry/baseline.json` (raw) · `docs/telemetry/baseline.html` (dashboard)
