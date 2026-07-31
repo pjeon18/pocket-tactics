@@ -1642,10 +1642,17 @@ function SpeciesInfo({ speciesKey }: { speciesKey: string }) {
 function ActionBar({
   state, owner, sel, selUnit, interactive, onSpecial, onCancelPlan, onUndoMove, onPickRevive,
 }: PanelProps) {
-  // the command strip only exists while something is selected — nothing is
-  // reserved for it, so the board keeps the room when you have made no choice
+  // The strip keeps a FIXED footprint and always renders, so selecting a unit
+  // never reflows the board or the hand. On narrow screens CSS lifts it out of
+  // the flow entirely as a bottom sheet, which costs no layout either.
   if (sel?.type === 'bench' || sel?.type === 'card') return <SpeciesInfo speciesKey={sel.key} />
-  if (!selUnit || (!interactive && sel?.type !== 'enemy')) return null
+  if (!selUnit || (!interactive && sel?.type !== 'enemy')) {
+    return (
+      <div className="actionbar actionbar-idle" aria-hidden="true">
+        <span className="ab-idle-hint">Tap a Pokémon to command it</span>
+      </div>
+    )
+  }
 
   const u = selUnit
   const mine = u.owner === owner

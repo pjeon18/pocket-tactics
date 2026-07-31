@@ -762,13 +762,20 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 
 /* ---------- action bar / bench / log ---------- */
 /* FIXED height so selecting things never shifts the layout around it */
+/* FIXED footprint, never min-height: the strip grew from 208px to 295px when a
+   unit was selected, which shoved the whole hand column down ~300px on every
+   single click. Its height is now constant and its interior absorbs the
+   difference, so nothing outside it ever moves. */
 .actionbar {
-  /* min-height keeps a stable footprint, but the box GROWS for the cancel/undo
-     buttons instead of forcing an inner scrollbar */
-  min-height: 208px; overflow: visible; background: var(--paper); border: 2px solid var(--line);
-  border-radius: 16px; padding: 12px 14px;
-  display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 700;
+  height: 224px; flex: 0 0 224px; overflow: hidden;
+  background: var(--paper); border: 2px solid var(--line);
+  border-radius: 16px; padding: 11px 13px;
+  display: flex; flex-direction: column; gap: 5px; font-size: 14px; font-weight: 700;
 }
+.actionbar .ab-body { flex: 1; min-height: 0; overflow: hidden; }
+.actionbar .ab-btns { flex-shrink: 0; margin-top: auto; }
+.actionbar-idle { align-items: center; justify-content: center; border-style: dashed; background: transparent; }
+.ab-idle-hint { color: var(--on-dark-sub); font-size: 13px; font-weight: 700; }
 .ab-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
 .actionbar-empty { justify-content: center; color: var(--mist); }
 .ab-main { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
@@ -1210,3 +1217,70 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
   .tutorial-coach-title { font-size: 15.5px; }
   .tutorial-coach-body { font-size: 12.5px; line-height: 1.4; }
 }
+
+/* ---------- keep the board whole, and stop the strip shoving the layout ---------- */
+/* Below the three-column breakpoint the strip leaves the flow completely and
+   becomes a bottom sheet. In flow it was stealing height from .board-col, which
+   collapsed the board from 291x416 to 140x200 the moment you selected a unit. */
+@media (max-width: 1099px) {
+  .actionbar {
+    position: fixed; left: 8px; right: 8px; bottom: 8px; z-index: 30;
+    height: auto; max-height: 44svh; flex: none;
+    box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.5);
+  }
+  .actionbar-idle { display: none; }
+  /* a wrapping bench eats the height the board needs — one scrolling row instead */
+  .hand-cards { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+  .hand-cards > * { flex: 0 0 auto; }
+}
+
+/* The board claims the leftover height at every width. Rows must be allowed to
+   shrink (minmax(0,...)), or an auto row sizes to content and the board spills
+   past the viewport instead of fitting inside it. */
+.panel-solo { grid-template-rows: minmax(0, 1fr); }
+.panel-solo .board-col { min-height: 0; }
+.panel-solo .board-area { flex: 1 1 auto; min-height: 0; }
+
+/* MOVES and CLOCK were sitting on different baselines with different heights,
+   which read as a collision next to End turn. Lock them to a shared grid. */
+.hand-meta { align-items: stretch; gap: 18px; }
+.meta-block { min-height: 38px; justify-content: space-between; align-items: flex-start; }
+.meta-block .moves-left { padding-top: 0; }
+.meta-block .hud-value { font-size: 18px; line-height: 1; }
+
+/* The strip has a fixed height, so a long special description must end
+   gracefully rather than being sliced through a word. */
+.ab-hint {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4;
+  overflow: hidden; min-height: 0;
+}
+.actionbar .ab-special { min-height: 0; overflow: hidden; }
+
+/* ---------- command strip interior: the action button is never clipped ---------- */
+/* A fixed outer height is only safe if the interior yields in the right order:
+   the buttons are pinned, the patterns hold their size, and the prose gives way. */
+.actionbar { height: 246px; flex: 0 0 246px; }
+.actionbar .ab-body { display: flex; gap: 10px; align-items: flex-start; }
+.actionbar .ab-patterns { flex: 0 0 auto; gap: 10px; }
+.actionbar .ab-patterns svg { width: 56px; height: 56px; }
+.actionbar .ab-special {
+  flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 4px;
+}
+.actionbar .ab-hint { flex: 1 1 auto; min-height: 0; -webkit-line-clamp: 3; }
+.actionbar .ab-btns { flex: 0 0 auto; margin-top: 4px; }
+.actionbar .ab-btns .btn { white-space: nowrap; }
+
+/* label and value on one line — stacking them clipped the value out of the rail */
+.meta-block { flex-direction: row; align-items: baseline; gap: 6px; min-height: 0; }
+.meta-block .hud-label { margin: 0; }
+.meta-block .moves-left { padding-top: 0; align-self: center; }
+
+/* The hand rail is a DARK surface, but these readouts inherit the ink colour
+   meant for the light panels — the turn clock was rendering #16191D on #171B21,
+   a contrast ratio of 1.02:1, i.e. invisible. */
+.hand-bar, .hand-rail { color: var(--on-dark); }
+.hand-bar .hud-label, .hand-rail .hud-label { color: var(--on-dark-sub); }
+.hand-bar .hud-value, .hand-rail .hud-value { color: var(--on-dark); }
+.hand-bar .turn-clock-low { color: var(--danger); }
+.hand-bar .move-pip { background: rgba(255, 255, 255, 0.16); }
+.hand-bar .move-pip-on { background: var(--move); box-shadow: 0 0 0 2px rgba(70, 180, 120, 0.25); }
