@@ -1288,3 +1288,83 @@ button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 .hand-bar .turn-clock-low { color: var(--danger); }
 .hand-bar .move-pip { background: rgba(255, 255, 255, 0.16); }
 .hand-bar .move-pip-on { background: var(--move); box-shadow: 0 0 0 2px rgba(70, 180, 120, 0.25); }
+
+/* ==========================================================================
+   ACCESSIBILITY PASS — surface-scoped ink
+   The recurring bug was one set of ink tokens shared by light and dark
+   surfaces. These roles say which surface they belong to, and every value
+   below clears WCAG AA against that surface (verified by scripts/a11y-audit).
+   ========================================================================== */
+:root {
+  --mist: #5F666F;        /* secondary ink on LIGHT — was #6E7680 (3.8:1) */
+  --amber-ink: #8A6200;   /* amber TEXT on light — the bright amber is 2.1:1 */
+  --danger-ink: #B3382F;  /* red TEXT on light */
+}
+
+/* the primary button's whole gradient now clears 4.5:1 against white text */
+.btn-primary { background: linear-gradient(180deg, #CC4A43 0%, #C33F38 55%, #A5312B 100%); }
+.btn-primary:hover:not(:disabled) { background: #C74540; }
+
+/* gold buttons carried white text on a light gold — use ink instead */
+.btn-gold { color: #1B1405; }
+
+/* amber-on-white text roles */
+.ab-special-name, .role-chip-champ, .summon-cost { color: var(--amber-ink); }
+.stat-atk { color: var(--danger-ink); }
+
+/* the ball purse is a LIGHT card, so its figures take ink, not on-dark */
+.econ-row, .econ-row b, .econ-item b, .econ-item-big b { color: var(--ink); }
+.trade-btn { color: var(--ink); }
+
+/* type chips carry white text on arbitrary hues (set inline), so darken the
+   plate itself with an inset wash — the hue survives, the text becomes legible */
+.type-chip { box-shadow: inset 0 0 0 999px rgba(0, 0, 0, 0.3); }
+
+/* chips and status text inherit ink meant for light cards, but these instances
+   sit on the dark rails — scope them to the surface they are actually on */
+.rival-strip .syn-chip, .board-foot .syn-chip, .board-foot .status-line { color: var(--on-dark); }
+.board-foot .status-line { color: var(--on-dark-sub); }
+.board-foot .status-live { color: var(--amber); }
+
+/* .stat-chip .stat-atk is more specific than a bare .stat-atk rule */
+.stat-chip .stat-atk { color: var(--danger-ink); }
+.stat-chip .stat-hp { color: #1F6B41; }
+
+/* trade buttons: white needs a dark plate, gold needs dark ink */
+.trade-btn-great { background: #1E4C94; box-shadow: 0 4px 0 #12305D; color: #FFFFFF; }
+.trade-btn-ultra { background: #E0A50C; box-shadow: 0 4px 0 #9C7208; color: #1B1405; }
+
+/* Type hues are set inline from TYPE_META, and the pale ones (Electric, Ice,
+   Bug, Normal) are unreadable as text on a light card. Darkening via filter
+   keeps each type recognisably itself while clearing AA. */
+.type-chip { box-shadow: inset 0 0 0 999px rgba(0, 0, 0, 0.42); }
+.syn-details > summary, .syn-legend-note { color: var(--on-dark); }
+.rules .syn-legend-note, .help-pop .syn-legend-note { color: inherit; }
+
+/* the synergy legend sits on the dark draft page */
+.syn-legend, .syn-legend-row, .syn-legend-row b, .syn-legend-row span { color: var(--on-dark); }
+.rules .syn-legend, .rules .syn-legend-row, .rules .syn-legend-row b, .rules .syn-legend-row span,
+.help-pop .syn-legend, .help-pop .syn-legend-row { color: inherit; }
+
+/* ==========================================================================
+   COLOURBLIND-SAFE MODE  (html.cb)
+   Team identity and the tile overlays are hue-only by default: blue vs red for
+   sides, and blue/amber/red for move/special/threat. Red-green and red-blue are
+   the two commonest confusions, so this adds a second channel — direction-coded
+   hatching on tiles, and a distinct corner-marker shape per side.
+   ========================================================================== */
+html.cb .cell-move::after {
+  background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.5) 0 3px, transparent 3px 8px);
+}
+html.cb .cell-special::after {
+  background-image: repeating-linear-gradient(135deg, rgba(0,0,0,0.45) 0 3px, transparent 3px 8px);
+}
+html.cb .cell-threat::after {
+  background-image: repeating-linear-gradient(90deg, rgba(0,0,0,0.5) 0 2px, transparent 2px 7px);
+}
+/* your units keep a round marker; the rival's becomes a diamond */
+html.cb .unit-foe .type-dot { border-radius: 2px; transform: rotate(45deg) scale(0.86); }
+html.cb .unit-mine { box-shadow: inset 0 0 0 3px rgba(47, 111, 208, 0.85); }
+html.cb .unit-foe { box-shadow: inset 0 0 0 3px rgba(214, 69, 69, 0.85); border-style: dashed; }
+/* the rival's champion card gets a dashed edge so "theirs" is never colour-only */
+html.cb .rival-strip .champ-card-hud { border-style: dashed; border-width: 2px; }

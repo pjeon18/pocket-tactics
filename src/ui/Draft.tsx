@@ -11,6 +11,7 @@ import {
   SYNERGIES,
   TIER_META,
   TYPE_META,
+  typeInk,
   costEquiv,
 } from '../game/data'
 import { synergyThresholds } from '../game/data'
@@ -185,7 +186,7 @@ export function Draft({
               {sel && <span className="picked-mark">✓</span>}
               <Sprite dex={c.dex} name={c.name} tokenColor={TYPE_META[c.ptype].color} className="card-sprite" />
               <div className="card-name">{c.name}</div>
-              <div className="card-type" style={{ color: TYPE_META[c.ptype].color }}>{TYPE_META[c.ptype].label}</div>
+              <div className="card-type" style={{ color: typeInk(c.ptype) }}>{TYPE_META[c.ptype].label}</div>
               <div className="card-hint"><b>{c.ability}</b></div>
             </HoldButton>
           )
@@ -291,7 +292,7 @@ export function Draft({
               {sel && <span className="picked-mark">✓</span>}
               <div className="card-top">
                 <CostDots cost={s.cost} size={15} />
-                <span className="card-type" style={{ color: TYPE_META[s.ptype].color }}>{TYPE_META[s.ptype].label}</span>
+                <span className="card-type" style={{ color: typeInk(s.ptype) }}>{TYPE_META[s.ptype].label}</span>
               </div>
               <Sprite dex={s.dex} name={s.name} tokenColor={TYPE_META[s.ptype].color} className="card-sprite" />
               <div className="card-name">{s.name}</div>

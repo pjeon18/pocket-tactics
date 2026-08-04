@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "sim": "tsx scripts/sim.ts",
     "dashboard": "tsx scripts/dashboard.ts",
-    "telemetry": "tsx scripts/sim.ts 10000 --tag=baseline && tsx scripts/dashboard.ts baseline"
+    "telemetry": "tsx scripts/sim.ts 10000 --tag=baseline && tsx scripts/dashboard.ts baseline",
+    "a11y": "node scripts/a11y-audit.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

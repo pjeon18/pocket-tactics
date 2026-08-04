@@ -18,9 +18,9 @@ import {
 export function HowToPlay() {
   return (
     <ul>
-      <li>Pick a Mythical champion and draft 8 Pokémon (or buy live from the shop in Blitz). Type matchups are real — super effective hits do +3, resisted hits −2.</li>
+      <li>Pick a Mythical champion and draft 8 Pokémon (or buy live from the shop in Blitz). Type matchups are real — super effective hits deal 1.5×, resisted hits half.</li>
       <li>Deploy zones scale with cost: Poké-tier lands up to 4 rows deep, Great-tier 3, Ultra-tier 2 (max {FIELD_CAP} fielded at once). Trade 3 Poké Balls for a Great Ball, 6 for an Ultra. No Pokémon attacks the turn it lands, but it may move.</li>
-      <li>Each turn, up to 3 of your Pokémon may move, and the turn clock gives you 60 seconds — when it runs out, the turn ends itself. Undo is free until you declare an attack.</li>
+      <li>Each turn, up to 3 of your Pokémon may move. If the turn clock is on, it ends your turn at zero. Undo is free until you declare an attack.</li>
       <li>Attacks are declared during your turn and all land together when you end it. Every KO pays you a Poké Ball.</li>
       <li>If your champion moves, nothing else may move that turn. Guard it well.</li>
       <li>Field Poké Balls drop every 3 rounds — walk onto one for items.</li>
@@ -151,6 +151,7 @@ export function ModeSelect({
 }) {
   const [blitz, setBlitz] = useState(false)
   const [timer, setTimer] = useState(true)
+  const [colorblind, setColorblind] = useState(() => document.documentElement.classList.contains('cb'))
   const [difficulty, setDifficulty] = useState<Difficulty>('normal')
   return (
     <div className="menu">
@@ -176,6 +177,18 @@ export function ModeSelect({
         </button>
         <button className={`chip ${timer ? 'chip-on' : ''}`} onClick={() => setTimer(!timer)}>
           {timer ? 'Turn clock: 60 seconds' : 'Turn clock: off'}
+        </button>
+        <button
+          className={`chip ${colorblind ? 'chip-on' : ''}`}
+          aria-pressed={colorblind}
+          onClick={() => {
+            const next = !colorblind
+            setColorblind(next)
+            document.documentElement.classList.toggle('cb', next)
+            localStorage.setItem('pt-colorblind', next ? '1' : '0')
+          }}
+        >
+          {colorblind ? 'Colourblind mode: on — shapes and hatching' : 'Colourblind mode: off'}
         </button>
       </div>
 

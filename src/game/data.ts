@@ -181,6 +181,24 @@ const U = (poke: number): Cost => ({ poke, great: 0, ultra: 1 })
 
 /* ---------- type chart (real matchups, single-type simplification) ---------- */
 
+/**
+ * A darkened form of a type's hue, for use as TEXT on a light card. The pale
+ * types (Electric, Ice, Bug, Normal) sit at 1.8-2.3:1 on white at full
+ * saturation; scaling toward black keeps each type recognisable while clearing
+ * WCAG AA. Backgrounds keep the original `color`.
+ */
+export function typeInk(t: PType): string {
+  const h = TYPE_META[t].color.replace('#', '')
+  const ch = [0, 2, 4].map((i) => parseInt(h.substr(i, 2), 16))
+  const lin = (v: number) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4) }
+  const lumOf = (c: number[]) => 0.2126 * lin(c[0]) + 0.7152 * lin(c[1]) + 0.0722 * lin(c[2])
+  // darken until it clears 4.5:1 against white
+  let k = 1
+  // aim past 4.5 for headroom: the cards are tinted, not pure white
+  while (k > 0.12 && (1.05 / (lumOf(ch.map((c) => c * k)) + 0.05)) < 5.6) k -= 0.02
+  return '#' + ch.map((c) => Math.round(c * k).toString(16).padStart(2, '0')).join('')
+}
+
 export const TYPE_META: Record<PType, { label: string; color: string }> = {
   normal: { label: 'Normal', color: '#A8A878' },
   fire: { label: 'Fire', color: '#F08030' },
