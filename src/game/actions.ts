@@ -758,8 +758,10 @@ export function useAbility(state0: GameState, unitId: number, payload: AbilityPa
       } else if (u.key === 'victini') {
         for (const s of state.units) {
           if (s.owner !== u.owner) continue
-          s.atkBuff += 2
-          s.moveBuff += 2
+          // +1 attack, not +2: at +2 a team-wide alpha strike was worth more
+          // than any other champion ability in a game that now ends by round 15
+          s.atkBuff += 1
+          s.moveBuff += 1
         }
         state.events.push({ col: u.col, row: u.row, text: 'V!', color: COLOR.special })
       } else return null
@@ -1261,27 +1263,27 @@ export function finishTurn(state0: GameState): GameState {
   if (state.lugiaLock === ending) state.lugiaLock = null // the grounded turn is over
   resolveHazards(state) // whirlpools / eruptions tick and may crash down now
   state.current = otherOwner(ending)
-  // the closing board bites the side that just finished, so you always get a
-  // full turn to walk out of a row before it costs you anything
-  if (!state.deterministic) {
-    {
+  // The closing board bites BOTH sides at the round boundary rather than at each
+  // player's own turn end. Per-owner timing meant the first player was always
+  // damaged first and the second player then moved knowing it — worth several
+  // points of win rate, and it made the second-player compensation impossible to
+  // tune in whole Poke Balls (2 gave the first player 53.8%, 3 gave 44.2%).
+  if (state.current === 'A') {
+    state.round++
+    if (!state.deterministic) maybeSpawnChest(state)
+    if (!state.deterministic) {
       let bit = false
       for (const u of state.units) {
-        if (u.owner !== ending || !isPoisoned(u.row, state.round)) continue
+        if (!isPoisoned(u.row, state.round)) continue
         u.hp -= TUNING.poisonDamage
         bit = true
         state.events.push({ col: u.col, row: u.row, text: `-${TUNING.poisonDamage}`, color: '#A45FD6' })
       }
       if (bit) {
-        state.log.push(`The board is closing — ${ending === 'A' ? 'your' : "the rival's"} Pokémon in the outer rows take ${TUNING.poisonDamage}.`)
+        state.log.push(`The board closes in — everything in the outer rows takes ${TUNING.poisonDamage}.`)
         cleanup(state)
       }
     }
-  }
-
-  if (state.current === 'A') {
-    state.round++
-    if (!state.deterministic) maybeSpawnChest(state)
   }
   grantIncome(state)
   return state

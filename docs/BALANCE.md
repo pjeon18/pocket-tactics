@@ -23,50 +23,50 @@ _Generated from `src/game/data.ts` by `scripts/balance-sheet.ts` — do not edit
 | Onix | tank | Rock | 2P | 2 | 7 | 12 | 2 | 1 | 1 | 4 | Bind | 2 dmg and the target is stunned — it can’t move next turn |
 | Pikachu | generalist | Electric | 2P | 2 | 6 | 7 | 2 | 2 | 2 | 3 | Thunder Wave | 1 dmg and the target is stunned — it can’t move next turn |
 | Starly | dealer | Normal | 2P | 2 | 6 | 6 | 2 | 1 | 3 | 3 | Fly-by | 3 dmg, then Starly darts 2 tiles back |
+| Gigalith | tank | Rock | 3P | 3 | 7 | 14 | 2 | 1 | 1 | 2 | Rock Slide | 3 dmg, plus 2 to every enemy beside the target |
 | Haunter | dealer | Ghost | 3P | 3 | 7 | 7 | 3 | 2 | 2 | 4 | Shadow Ball | 4 dmg that phases straight through blockers |
 | Hitmonlee | dealer | Fighting | 3P | 3 | 7 | 8 | 3 | 1 | 1 | 4 | High Jump Kick | 8 dmg — but 25% chance to crash, miss, and take 2 itself |
 | Jynx | specialist | Ice | 3P | 3 | 7 | 7 | 3 | 3 | 1 | 4 | Lovely Kiss | 2 dmg and the target is stunned — it can’t move next turn |
 | Magneton | specialist | Electric | 3P | 3 | 7 | 8 | 2 | 3 | 1 | 5 | Zap Cannon | 4 dmg and the target is stunned — it can’t move next turn |
 | Ponyta | dealer | Fire | 3P | 3 | 7 | 8 | 3 | 1 | 3 | 3 | Flame Charge | 3 dmg, and Ponyta permanently gains +1 movement |
 | Porygon2 | specialist | Normal | 3P | 3 | 7 | 9 | 3 | 2 | 1 | 5 | Tri Attack | 3 dmg, piercing on to enemies up to 2 tiles behind the target |
+| Primeape | dealer | Fighting | 3P | 3 | 7 | 9 | 4 | 1 | 2 | 4 | Karate Chop | A furious 6 dmg blow |
 | Quagsire | tank | Water | 3P | 3 | 7 | 13 | 2 | 1 | 1 | 2 | Muddy Water | 3 dmg and washes the target back a tile |
+| Scyther | dealer | Bug | 3P | 3 | 7 | 8 | 4 | 1 | 3 | 4 | X-Scissor | Slashes twice for 3 dmg each |
 | Accelgor | dealer | Bug | 1G+1P | 4 | 6 | 8 | 4 | 1 | 3 | 4 | U-turn | 4 dmg, then Accelgor slips 2 tiles back |
-| Beartic | tank | Ice | 1G+1P | 4 | 6 | 14 | 3 | 1 | 1 | 2 | Icicle Crash | 4 dmg, +2 if the target is stunned |
-| Bronzong | tank | Steel | 1G+1P | 4 | 6 | 14 | 2 | 1 | 1 | 2 | Hypnosis | 1 dmg at range 2 and the target is stunned — it can’t move next turn |
-| Carracosta | tank | Water | 1G+1P | 4 | 6 | 14 | 3 | 1 | 1 | 2 | Shell Smash | Right away: +2 ATK and +2 movement this turn |
+| Beartic | tank | Ice | 1G+1P | 4 | 6 | 14 | 3 | 1 | 2 | 2 | Icicle Crash | 4 dmg, +2 if the target is stunned |
+| Bronzong | tank | Steel | 1G+1P | 4 | 6 | 14 | 2 | 1 | 2 | 2 | Hypnosis | 1 dmg at range 2 and the target is stunned — it can’t move next turn |
+| Carracosta | tank | Water | 1G+1P | 4 | 6 | 14 | 3 | 1 | 2 | 2 | Shell Smash | Right away: +2 ATK and +2 movement this turn |
 | Chansey | generalist | Normal | 1G+1P | 4 | 6 | 17 | 1 | 1 | 1 | 3 | Soft-Boiled | Restore 5 HP to an ally within 2 tiles, right away |
 | Espeon | specialist | Psychic | 1G+1P | 4 | 6 | 9 | 3 | 3 | 1 | 4 | Psyshock | 4 dmg and hurls the target back 2 tiles |
-| Ferrothorn | tank | Steel | 1G+1P | 4 | 6 | 15 | 2 | 1 | 1 | 2 | Power Whip | 4 dmg and drags the target adjacent to Ferrothorn |
-| Gigalith | tank | Rock | 4P | 4 | 6 | 14 | 2 | 1 | 1 | 2 | Rock Slide | 3 dmg, plus 2 to every enemy beside the target |
-| Golem | tank | Rock | 1G+1P | 4 | 6 | 15 | 3 | 1 | 1 | 2 | Rock Blast | 2 dmg, hitting 2–4 times |
+| Ferrothorn | tank | Steel | 1G+1P | 4 | 6 | 15 | 2 | 1 | 2 | 2 | Power Whip | 4 dmg and drags the target adjacent to Ferrothorn |
+| Golem | tank | Rock | 1G+1P | 4 | 6 | 15 | 3 | 1 | 2 | 2 | Rock Blast | 2 dmg, hitting 2–4 times |
 | Houndoom | dealer | Dark | 1G+1P | 4 | 6 | 9 | 4 | 2 | 2 | 4 | Dark Pulse | 4 dmg, piercing on for 3 into the tile behind |
 | Lucario | generalist | Fighting | 1G+1P | 4 | 6 | 10 | 3 | 2 | 3 | 3 | Aura Sphere | 4 dmg to any enemy within 3 tiles — never blocked |
 | Luxray | dealer | Electric | 1G+1P | 4 | 6 | 9 | 4 | 1 | 2 | 4 | Wild Charge | 6 dmg, but Luxray takes 1 recoil |
 | Magmortar | specialist | Fire | 1G+1P | 4 | 6 | 10 | 3 | 3 | 1 | 4 | Lava Plume | 3 dmg, plus 2 to every enemy beside the target |
-| Primeape | dealer | Fighting | 4P | 4 | 4 | 9 | 4 | 1 | 2 | 4 | Karate Chop | A furious 6 dmg blow |
 | Rotom-Mow | specialist | Grass | 1G+1P | 4 | 6 | 9 | 3 | 2 | 1 | 5 | Razor Leaf | 3 dmg, plus 2 to every enemy beside the target |
 | Rotom-Wash | specialist | Water | 1G+1P | 4 | 6 | 9 | 3 | 2 | 1 | 5 | Hydro Pump | 3 dmg to EVERY enemy in the target’s column |
-| Scyther | dealer | Bug | 4P | 4 | 4 | 8 | 4 | 1 | 3 | 4 | X-Scissor | Slashes twice for 3 dmg each |
-| Umbreon | tank | Dark | 1G+1P | 4 | 6 | 14 | 2 | 1 | 1 | 2 | Snarl | 3 dmg, and Umbreon heals itself 2 |
+| Umbreon | tank | Dark | 1G+1P | 4 | 6 | 14 | 2 | 1 | 2 | 2 | Snarl | 3 dmg, and Umbreon heals itself 2 |
 | Weavile | dealer | Ice | 1G+1P | 4 | 6 | 8 | 4 | 1 | 3 | 4 | Ice Shard | 4 dmg, then Weavile retreats 2 tiles |
 | Arcanine | dealer | Fire | 1G+2P | 5 | 7 | 11 | 4 | 1 | 3 | 4 | Extreme Speed | 4 dmg that lands INSTANTLY when declared |
 | Chandelure | specialist | Fire | 1G+2P | 5 | 6 | 10 | 3 | 3 | 1 | 4 | Heat Wave | 3 dmg to every enemy within 2 tiles of Chandelure |
 | Drifblim | tank | Ghost | 1G+2P | 5 | 6 | 13 | 2 | 3 | 1 | 3 | Ominous Wind | 4 dmg at range that phases through blockers, and Drifblim heals itself 2 |
-| Escavalier | tank | Bug | 1G+2P | 5 | 6 | 14 | 3 | 1 | 1 | 4 | Megahorn | 5 dmg, lancing through the two tiles behind for 3 — its NORMAL attacks skewer the unit behind, too |
+| Escavalier | tank | Bug | 1G+2P | 5 | 6 | 14 | 3 | 1 | 2 | 4 | Megahorn | 5 dmg, lancing through the two tiles behind for 3 — its NORMAL attacks skewer the unit behind, too |
 | Gallade | dealer | Fighting | 1G+2P | 5 | 6 | 10 | 4 | 1 | 2 | 4 | Psycho Cut | 4 dmg, cutting through to whatever hides behind for 3 |
 | Lapras | tank | Water | 1G+2P | 5 | 7 | 15 | 2 | 2 | 1 | 2 | Surf | 3 dmg, plus 2 to every enemy beside the target |
 | Zoroark | dealer | Dark | 1G+2P | 5 | 6 | 10 | 4 | 1 | 3 | 4 | Night Daze | 5 dmg — a KO refunds the full charge |
 | Blaziken | generalist | Fire | 1G+3P | 6 | 6 | 12 | 3 | 1 | 3 | 3 | Blaze Kick | 4 dmg, a guaranteed CRIT against full-HP targets |
 | Krookodile | generalist | Dark | 1G+3P | 6 | 6 | 12 | 3 | 1 | 1 | 3 | Crunch | Crunch — 5 dmg, +5 more if the target is below half HP |
-| Steelix | tank | Steel | 1U | 6 | 8 | 17 | 3 | 1 | 1 | 2 | Iron Tail | 4 dmg and knocks the target back a tile |
+| Steelix | tank | Steel | 1U | 6 | 8 | 17 | 3 | 1 | 2 | 2 | Iron Tail | 4 dmg and knocks the target back a tile |
 | Alakazam | specialist | Psychic | 1U+2P | 8 | 8 | 9 | 4 | 3 | 1 | 3 | Psychic | 6 dmg and hurls the target back 2 tiles |
 | Dragonite | generalist | Dragon | 1U+2P | 8 | 8 | 15 | 4 | 2 | 2 | 3 | Hyper Beam | 6 dmg to the first enemy in a straight line, any distance |
 | Gengar | dealer | Ghost | 1U+2P | 8 | 8 | 10 | 5 | 2 | 3 | 3 | Shadow Ball | Shadow Ball — 6 dmg through blockers, +4 against a full-HP target |
 | Machamp | dealer | Fighting | 1U+2P | 8 | 8 | 14 | 5 | 1 | 2 | 3 | Cross Chop | 6 dmg and knocks the target back a tile |
-| Mamoswine | dealer | Ice | 1U+2P | 8 | 8 | 14 | 6 | 1 | 1 | 3 | Icicle Spear | Strikes 1–4 times for 4 each — 100% / 75% / 50% / 25% per hit |
-| Rhyperior | tank | Rock | 1U+2P | 8 | 8 | 17 | 4 | 1 | 1 | 2 | Rock Wrecker | 6 dmg and knocks the target back a tile |
+| Mamoswine | dealer | Ice | 1U+2P | 8 | 8 | 14 | 6 | 1 | 2 | 3 | Icicle Spear | Strikes 1–4 times for 4 each — 100% / 75% / 50% / 25% per hit |
+| Rhyperior | tank | Rock | 1U+2P | 8 | 8 | 17 | 4 | 1 | 2 | 2 | Rock Wrecker | 6 dmg and knocks the target back a tile |
 | Serperior | dealer | Grass | 1U+2P | 8 | 8 | 12 | 4 | 2 | 2 | 3 | Leaf Storm | A regal tempest: 6 dmg, plus 2 to every enemy beside the target |
-| Snorlax | tank | Normal | 1U+2P | 8 | 8 | 20 | 3 | 1 | 1 | 2 | Body Slam | 5 dmg and the target is stunned — it can’t move next turn |
+| Snorlax | tank | Normal | 1U+2P | 8 | 8 | 20 | 3 | 1 | 2 | 2 | Body Slam | 5 dmg and the target is stunned — it can’t move next turn |
 | Tangrowth | tank | Grass | 1U+2P | 8 | 8 | 18 | 3 | 2 | 1 | 2 | Giga Drain | 6 dmg, and Tangrowth drinks 2 HP back |
 | Garchomp | dealer | Dragon | 1U+3P | 9 | 8 | 13 | 6 | 1 | 2 | 3 | Earthquake | 6 dmg to every enemy in the 8 tiles around Garchomp |
 | Gyarados | dealer | Water | 1U+3P | 9 | 8 | 13 | 5 | 1 | 2 | 3 | Dragon Rage | 6 dmg and hurls the target back 2 tiles |
@@ -75,11 +75,11 @@ _Generated from `src/game/data.ts` by `scripts/balance-sheet.ts` — do not edit
 
 | Champion | Type | HP | ATK | RNG | MOV | Charge | Ability | Effect |
 |---|---|---|---|---|---|---|---|---|
-| Mew | Psychic | 12 | 2 | 1 | 1 | 6 | Genesis | Bring one of your fainted Pokémon back onto your deploy rows, free |
-| Celebi | Grass | 11 | 1 | 1 | 1 | 4 | Healing Wish | Restore 3 HP to every one of your Pokémon, right away |
-| Jirachi | Steel | 11 | 1 | 2 | 1 | 5 | Doom Desire | A meteor deals 5 dmg in a cross of 5 tiles, anywhere within 5 tiles |
-| Victini | Fire | 12 | 2 | 1 | 1 | 5 | V-Create | This turn, every one of your Pokémon gets +2 attack and +2 movement, right away |
-| Manaphy | Water | 12 | 1 | 2 | 1 | 6 | Surf | A tidal wave hits every Pokémon outside her own back two rows for 4 — friend and foe alike |
+| Mew | Psychic | 13 | 2 | 1 | 1 | 4 | Genesis | Bring one of your fainted Pokémon back onto your deploy rows, free |
+| Celebi | Grass | 11 | 1 | 1 | 1 | 5 | Healing Wish | Restore 3 HP to every one of your Pokémon, right away |
+| Jirachi | Steel | 12 | 2 | 2 | 1 | 3 | Doom Desire | A meteor deals 5 dmg in a cross of 5 tiles, anywhere within 5 tiles |
+| Victini | Fire | 12 | 2 | 1 | 1 | 6 | V-Create | This turn, every one of your Pokémon gets +2 attack and +2 movement, right away |
+| Manaphy | Water | 12 | 1 | 2 | 1 | 5 | Surf | A tidal wave hits every Pokémon outside her own back two rows for 4 — friend and foe alike |
 
 ## Legendary summons
 
@@ -91,7 +91,7 @@ Drafted 2 per player (classic and blitz). One-shot battlefield effects cast for 
 | Lugia | 6P | Aeroblast — next turn your opponent can neither move nor deploy |
 | Dialga | 6P | Roar of Time — every one of your Pokémon gets its special fully charged |
 | Palkia | 6P | Spacial Rend — all of your Pokémon have 5 movement this turn |
-| Kyogre | 4P | Origin Pulse — mark a 3×3 whirlpool; at the end of the round it hits everything still inside for 4 (water). Opponents can flee it on their turn. |
+| Kyogre | 4P | Origin Pulse — mark a 3×3 whirlpool; it hits everything inside for 4 (water) at the end of your turn and again at the end of the opponent’s turn. They can flee it between hits. |
 | Groudon | 4P | Precipice Blades — choose a row; at the end of your turn it erupts for 6 to everyone standing on it. |
 
 ## Distributions
@@ -130,8 +130,8 @@ Drafted 2 per player (classic and blitz). One-shot battlefield effects cast for 
 |---|---|---|
 | 1 | 8 | Ferroseed, Squirtle, Croagunk, Poochyena, Vulpix, Lillipup, Sunkern, Abra |
 | 2 | 7 | Onix, Grotle, Metapod, Starly, Pikachu, Kirlia, Audino |
-| 3 | 7 | Quagsire, Haunter, Hitmonlee, Ponyta, Magneton, Porygon2, Jynx |
-| 4 | 19 | Gigalith, Ferrothorn, Carracosta, Beartic, Bronzong, Golem, Umbreon, Accelgor, Scyther, Luxray, Weavile, Houndoom, Primeape, Rotom-Mow, Rotom-Wash, Espeon, Magmortar, Chansey, Lucario |
+| 3 | 10 | Gigalith, Quagsire, Haunter, Hitmonlee, Scyther, Ponyta, Primeape, Magneton, Porygon2, Jynx |
+| 4 | 16 | Ferrothorn, Carracosta, Beartic, Bronzong, Golem, Umbreon, Accelgor, Luxray, Weavile, Houndoom, Rotom-Mow, Rotom-Wash, Espeon, Magmortar, Chansey, Lucario |
 | 5 | 7 | Lapras, Escavalier, Drifblim, Gallade, Arcanine, Zoroark, Chandelure |
 | 6 | 3 | Steelix, Blaziken, Krookodile |
 | 8 | 9 | Rhyperior, Snorlax, Gengar, Machamp, Tangrowth, Serperior, Mamoswine, Alakazam, Dragonite |
@@ -141,8 +141,8 @@ Drafted 2 per player (classic and blitz). One-shot battlefield effects cast for 
 
 | MOV | Count |
 |---|---|
-| 1 | 39 |
-| 2 | 13 |
+| 1 | 28 |
+| 2 | 24 |
 | 3 | 10 |
 
 ### Range

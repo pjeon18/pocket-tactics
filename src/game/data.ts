@@ -20,9 +20,16 @@ export const FIELD_CAP = 7
 /** Income tops out here (anti-flood: even late game pays a steady trickle). */
 export const INCOME_CAP = 3
 
-/** Rounds at which per-turn income steps up by 1 (from a base of 1): 2/turn at
-    round 6, 3/turn at round 16 — then it holds at the cap. */
-export const INCOME_BREAKS = [6, 16]
+/**
+ * Rounds at which per-turn income steps up by 1 from a base of 1.
+ *
+ * These were [6, 16] — set when the median game ran 19+ rounds. The closing
+ * board cut the median to 15, which put the third income tier PAST the end of
+ * most games: it may as well not have existed, and the Ultra-tier cards it was
+ * meant to pay for deployed in only ~16% of the games they were drafted into.
+ * Pulled in so the curve still resolves inside a game that now ends.
+ */
+export const INCOME_BREAKS = [5, 11]
 
 /** KOing an enemy Pokémon pays out a Poké Ball — aggression is tempo. */
 export const KILL_BOUNTY = 1
@@ -101,7 +108,7 @@ export const TUNING = {
    * forced to break cover first is already at a disadvantage. At 3 the first
    * player fell to 45%; at 2 it sits at 51%.
    */
-  startPokeB: 2,
+  startPokeB: 3,
   startGreatB: 0,
   /**
    * The closing board. Swept with the harness: closing at round 20 fired after
@@ -706,31 +713,31 @@ export const ROSTER: Record<string, Species> = {
 export const CHAMPIONS: Record<string, ChampionSpecies> = {
   mew: {
     key: 'mew', name: 'Mew', dex: 151, ptype: 'psychic',
-    hp: 9, atk: 2, range: 1, move: 1, chargeMax: 6,
+    hp: 10, atk: 2, range: 1, move: 1, chargeMax: 4,
     ability: 'Genesis', hint: 'Bring one of your fainted Pokémon back onto your deploy rows, free',
     targeting: { kind: 'revive' }, pattern: 'team',
   },
   celebi: {
     key: 'celebi', name: 'Celebi', dex: 251, ptype: 'grass',
-    hp: 8, atk: 1, range: 1, move: 1, chargeMax: 4,
+    hp: 8, atk: 1, range: 1, move: 1, chargeMax: 5,
     ability: 'Healing Wish', hint: 'Restore 3 HP to every one of your Pokémon, right away',
     targeting: { kind: 'team' }, pattern: 'team',
   },
   jirachi: {
     key: 'jirachi', name: 'Jirachi', dex: 385, ptype: 'steel',
-    hp: 8, atk: 1, range: 2, move: 1, chargeMax: 5,
+    hp: 9, atk: 2, range: 2, move: 1, chargeMax: 3,
     ability: 'Doom Desire', hint: 'A meteor deals 5 dmg in a cross of 5 tiles, anywhere within 5 tiles',
     targeting: { kind: 'tile', rangeOverride: 5 }, pattern: 'cross',
   },
   victini: {
     key: 'victini', name: 'Victini', dex: 494, ptype: 'fire',
-    hp: 9, atk: 2, range: 1, move: 1, chargeMax: 5,
+    hp: 9, atk: 2, range: 1, move: 1, chargeMax: 6,
     ability: 'V-Create', hint: 'This turn, every one of your Pokémon gets +2 attack and +2 movement, right away',
     targeting: { kind: 'team' }, pattern: 'team',
   },
   manaphy: {
     key: 'manaphy', name: 'Manaphy', dex: 490, ptype: 'water',
-    hp: 9, atk: 1, range: 2, move: 1, chargeMax: 6,
+    hp: 9, atk: 1, range: 2, move: 1, chargeMax: 5,
     ability: 'Surf', hint: 'A tidal wave hits every Pokémon outside her own back two rows for 4 — friend and foe alike',
     targeting: { kind: 'aoe' }, pattern: 'anywhere',
   },
@@ -742,6 +749,18 @@ for (const c of Object.values(CHAMPIONS)) c.hp += HP_INFLATE
 
 /** A Pokémon that costs a Great or Ultra Ball is "premium". */
 export const isPremium = (cost: Cost): boolean => cost.great > 0 || cost.ultra > 0
+
+/**
+ * The closing board shortened the median game from 19 rounds to 15, and that
+ * quietly gutted one archetype: Great-tier bricks with MOV 1 and RNG 1 simply
+ * could not walk anywhere useful before the game was over. The whole cluster
+ * (Bronzong, Rotom-Mow, Beartic, Ferrothorn, Carracosta, Golem, Umbreon) sat at
+ * 41-46% while the cost-4 bucket averaged 48.8%. Giving the slowest premium
+ * bodies a second step lets them reach the fight they were priced for.
+ */
+for (const s of Object.values(ROSTER)) {
+  if (isPremium(s.cost) && s.move === 1 && s.range === 1 && s.role !== 'generalist') s.move = 2
+}
 
 /* Cheap Poké-only Pokémon (under 4 Poké Balls) redeploy slower — throttles
    body-spam. Premium Pokémon hit harder: +1 to their basic attack (their

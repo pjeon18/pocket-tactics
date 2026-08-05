@@ -192,7 +192,11 @@ const vChamp = v.units.find((u) => u.isChampion && u.owner === 'A')!
 vChamp.charge = vChamp.chargeMax
 spawn(v, 930, 'pikachu', 'A', 0, 8)
 const vUsed = useAbility(v, vChamp.id, {})!
-ok(vUsed !== null && vUsed.units.find((u) => u.id === 930)!.moveBuff === 2, 'V-Create is instant (buffs before you move)')
+const vBuffed = vUsed.units.find((u) => u.id === 930)!
+ok(vUsed !== null && vBuffed.moveBuff > 0, 'V-Create is instant (buffs before you move)')
+// trimmed from +2/+2 to +1/+1: a team-wide alpha strike outclassed every other
+// champion ability once the closing board shortened games
+ok(vBuffed.atkBuff === 1 && vBuffed.moveBuff === 1, 'V-Create grants +1 attack and +1 movement')
 
 /* --- Jirachi plans, resolves, and is REPEATABLE (no more once-per-game) --- */
 let j = newBattle({ ...draftA, champion: 'jirachi' }, draftB)
@@ -471,12 +475,16 @@ pz.rocks = []
 pz.round = TUNE.poisonStart
 const inToxic = spawn(pz, 990, 'pikachu', 'A', 0, 9, { hp: 9, maxHp: 9 })
 const inSafe = spawn(pz, 991, 'pikachu', 'A', 1, 5, { hp: 9, maxHp: 9 })
-const foeSafe = spawn(pz, 992, 'pikachu', 'B', 5, 5, { hp: 9, maxHp: 9 })
-void inToxic; void inSafe; void foeSafe
-const pzEnd = endTurnFully(pz) // A's turn ends — only A's units in toxic rows are bitten
+const foeToxic = spawn(pz, 992, 'pikachu', 'B', 5, 0, { hp: 9, maxHp: 9 })
+void inToxic; void inSafe; void foeToxic
+// the board closes on BOTH sides at the round boundary, not at each player's own
+// turn end — per-owner timing handed the second player a free look at the damage
+const pzHalf = endTurnFully(pz) // A -> B: the round has not turned over yet
+ok(pzHalf.units.find((u) => u.id === 990)!.hp === 9, 'nothing is bitten mid-round')
+const pzEnd = endTurnFully(pzHalf) // B -> A: the round turns and the board closes
 ok(pzEnd.units.find((u) => u.id === 990)!.hp === 9 - TUNE.poisonDamage, 'a unit in a closed row takes damage')
 ok(pzEnd.units.find((u) => u.id === 991)!.hp === 9, 'a unit in the open is untouched')
-ok(pzEnd.units.find((u) => u.id === 992)!.hp === 9, "the rival is not bitten on the player's turn")
+ok(pzEnd.units.find((u) => u.id === 992)!.hp === 9 - TUNE.poisonDamage, 'both sides are bitten at the same moment')
 
 /* the champion starts on the back row, so closing evicts it — that is the point */
 let ev = newBattle(draftA, draftB)

@@ -1,0 +1,714 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pocket Tactics — balance telemetry (final)</title>
+<style>
+  :root{color-scheme:light dark}
+  .viz-root{
+    --surface-1:#fcfcfb; --page:#f9f9f7;
+    --text-primary:#0b0b0b; --text-secondary:#52514e; --muted:#898781;
+    --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
+    --series-1:#2a78d6; --series-2:#eb6834; --series-3:#1baf7a;
+    --pos:#2a78d6; --neg:#d03b3b; --good:#0ca30c; --warn:#fab219; --crit:#d03b3b;
+  }
+  @media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])) .viz-root{
+    --surface-1:#1a1a19; --page:#0d0d0d;
+    --text-primary:#fff; --text-secondary:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+    --series-1:#3987e5; --series-2:#d95926; --series-3:#199e70;
+    --pos:#3987e5; --neg:#e66767;
+  }}
+  :root[data-theme="dark"] .viz-root{
+    --surface-1:#1a1a19; --page:#0d0d0d;
+    --text-primary:#fff; --text-secondary:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+    --series-1:#3987e5; --series-2:#d95926; --series-3:#199e70;
+    --pos:#3987e5; --neg:#e66767;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--page);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+  .viz-root{background:var(--page);color:var(--text-primary);padding:40px 24px 72px;min-height:100vh}
+  .wrap{max-width:880px;margin:0 auto}
+  header h1{font-size:30px;font-weight:680;letter-spacing:-.02em;margin:0 0 6px}
+  header p{color:var(--text-secondary);margin:0;font-size:15px;line-height:1.55}
+  .meta{color:var(--muted);font-size:13px;margin-top:10px}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:28px 0 8px}
+  .tile{background:var(--surface-1);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+  .tile .label{font-size:12px;font-weight:620;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .tile .value{font-size:34px;font-weight:660;letter-spacing:-.02em;margin:6px 0 2px;font-variant-numeric:tabular-nums}
+  .tile .note{font-size:12.5px;color:var(--text-secondary);line-height:1.45;margin-top:6px}
+  .chip{display:inline-block;font-size:11.5px;font-weight:650;padding:3px 9px;border-radius:99px;margin-top:9px}
+  .chip-good{background:color-mix(in srgb,var(--good) 16%,transparent);color:var(--good)}
+  .chip-warn{background:color-mix(in srgb,var(--warn) 20%,transparent);color:#8a6100}
+  .chip-bad{background:color-mix(in srgb,var(--crit) 15%,transparent);color:var(--crit)}
+  @media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])) .chip-warn{color:var(--warn)}}
+  :root[data-theme="dark"] .chip-warn{color:var(--warn)}
+  section{background:var(--surface-1);border:1px solid var(--border);border-radius:16px;padding:22px 24px;margin-top:16px}
+  section h2{font-size:17px;font-weight:660;margin:0 0 4px;letter-spacing:-.01em}
+  section .sub{font-size:13.5px;color:var(--text-secondary);margin:0 0 14px;line-height:1.5}
+  .chart{width:100%;height:auto;display:block;overflow:visible}
+  .grid{stroke:var(--grid);stroke-width:1}
+  .axis-line{stroke:var(--axis);stroke-width:1}
+  .tick{fill:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+  .tick.mid{text-anchor:middle}
+  .axis-title{fill:var(--muted);font-size:11.5px}
+  .row-label{fill:var(--text-secondary);font-size:13px;text-anchor:end;font-weight:520}
+  .bar-value{fill:var(--text-primary);font-size:12.5px;font-weight:620;font-variant-numeric:tabular-nums;dominant-baseline:middle}
+  .bar-value-in{fill:#fff}
+  .hover-band{fill:transparent}
+  .bar-g:hover .hover-band,.dot-g:hover .hover-band{fill:color-mix(in srgb,var(--text-primary) 5%,transparent)}
+  .dot-g:hover circle{r:7.5}
+  .trend{stroke:var(--muted);stroke-width:2;stroke-dasharray:5 4;opacity:.75}
+  .marker{stroke:var(--crit);stroke-width:2;stroke-dasharray:4 3}
+  .marker-label{fill:var(--crit);font-size:11px;font-weight:620}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0 0;font-size:12.5px;color:var(--text-secondary)}
+  .legend i{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:6px;vertical-align:-1px}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:620;cursor:pointer;user-select:none}
+  th:hover{color:var(--text-primary)}
+  td.num{text-align:right;font-variant-numeric:tabular-nums}
+  .scroll{overflow-x:auto;max-height:460px;overflow-y:auto}
+  .findings{margin:0;padding-left:20px;line-height:1.65;font-size:14.5px;color:var(--text-secondary)}
+  .findings li{margin-bottom:9px}
+  .findings b{color:var(--text-primary);font-weight:640}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style></head>
+<body><div class="viz-root"><div class="wrap">
+<header>
+  <h1>Pocket Tactics — balance telemetry</h1>
+  <p>6,000 AI-vs-AI games simulated headlessly against the live rules engine.
+  Every match is seeded and reproducible, so a rules change can be re-run against the same population.</p>
+  <div class="meta">run “final” · seed 1 · 62 Pokémon ·
+  258.0s · 2026-08-05</div>
+</header>
+
+<div class="tiles">
+<div class="tile"><div class="label">First-player win rate</div><div class="value">50.5%</div><span class="chip chip-good">balanced</span><div class="note">Player A moves first. 50% is fair.</div></div><div class="tile"><div class="label">Snowball index</div><div class="value">58.9%</div><span class="chip chip-good">comebacks possible</span><div class="note">How often the first kill predicts the winner. 50% = no snowball.</div></div><div class="tile"><div class="label">Fatigue rate</div><div class="value">3.7%</div><span class="chip chip-good">games end on their own</span><div class="note">Games dragging past round 20, where forced chip damage starts.</div></div><div class="tile"><div class="label">Median length</div><div class="value">14</div><span class="chip chip-good">tight</span><div class="note">rounds · p90 18 · max 34</div></div><div class="tile"><div class="label">Cost → win correlation</div><div class="value">-0.04</div><span class="chip chip-bad">premium not rewarded</span><div class="note">Does paying more for a Pokémon actually win games? 1.0 = perfectly rewarded.</div></div><div class="tile"><div class="label">KOs per game</div><div class="value">9.5</div><span class="chip chip-warn">high churn</span><div class="note">first blood ~round 5.5</div></div>
+</div>
+
+<section>
+  <h2>Champion balance</h2>
+  <p class="sub">Win rate per champion, measured against the 50% balance line. Bars right of centre are overperforming.</p>
+  <svg viewBox="0 0 720 184" role="img" class="chart" preserveAspectRatio="xMidYMid meet">
+    <line x1="104.0" y1="20" x2="104.0" y2="172" class="grid"/>
+      <text x="104.0" y="13" class="tick mid">38%</text><line x1="242.5" y1="20" x2="242.5" y2="172" class="grid"/>
+      <text x="242.5" y="13" class="tick mid">44%</text><line x1="381.0" y1="20" x2="381.0" y2="172" class="axis-line"/>
+      <text x="381.0" y="13" class="tick mid">50%</text><line x1="519.5" y1="20" x2="519.5" y2="172" class="grid"/>
+      <text x="519.5" y="13" class="tick mid">56%</text><line x1="658.0" y1="20" x2="658.0" y2="172" class="grid"/>
+      <text x="658.0" y="13" class="tick mid">62%</text>
+    <g class="bar-g">
+        <title>Celebi: 53.3% win rate over 2408 games</title>
+        <rect x="0" y="18" width="720" height="26" class="hover-band"/>
+        <text x="92" y="37" class="row-label">Celebi</text>
+        <rect x="381.0" y="25" width="76.7" height="16" rx="4"
+          fill="var(--pos)"/>
+        <text x="465.7" y="37"
+          class="bar-value" text-anchor="start">53.3%</text>
+      </g><g class="bar-g">
+        <title>Victini: 52.1% win rate over 2335 games</title>
+        <rect x="0" y="48" width="720" height="26" class="hover-band"/>
+        <text x="92" y="67" class="row-label">Victini</text>
+        <rect x="381.0" y="55" width="47.9" height="16" rx="4"
+          fill="var(--pos)"/>
+        <text x="436.9" y="67"
+          class="bar-value" text-anchor="start">52.1%</text>
+      </g><g class="bar-g">
+        <title>Manaphy: 48.8% win rate over 2385 games</title>
+        <rect x="0" y="78" width="720" height="26" class="hover-band"/>
+        <text x="92" y="97" class="row-label">Manaphy</text>
+        <rect x="352.4" y="85" width="28.6" height="16" rx="4"
+          fill="var(--neg)"/>
+        <text x="344.4" y="97"
+          class="bar-value" text-anchor="end">48.8%</text>
+      </g><g class="bar-g">
+        <title>Mew: 48.2% win rate over 2403 games</title>
+        <rect x="0" y="108" width="720" height="26" class="hover-band"/>
+        <text x="92" y="127" class="row-label">Mew</text>
+        <rect x="339.2" y="115" width="41.8" height="16" rx="4"
+          fill="var(--neg)"/>
+        <text x="331.2" y="127"
+          class="bar-value" text-anchor="end">48.2%</text>
+      </g><g class="bar-g">
+        <title>Jirachi: 47.8% win rate over 2469 games</title>
+        <rect x="0" y="138" width="720" height="26" class="hover-band"/>
+        <text x="92" y="157" class="row-label">Jirachi</text>
+        <rect x="329.1" y="145" width="51.9" height="16" rx="4"
+          fill="var(--neg)"/>
+        <text x="321.1" y="157"
+          class="bar-value" text-anchor="end">47.8%</text>
+      </g>
+  </svg>
+</section>
+
+<section>
+  <h2>Does paying more win games?</h2>
+  <p class="sub">Each dot is one Pokémon: draft cost against win rate when drafted. A healthy economy slopes upward —
+  flat means the premium tiers aren’t earning their price.</p>
+  <svg viewBox="0 0 720 300" role="img" class="chart" preserveAspectRatio="xMidYMid meet">
+    <line x1="50" y1="235.6" x2="704" y2="235.6" class="grid"/>
+      <text x="42" y="239.6" class="tick" text-anchor="end">30%</text><line x1="50" y1="186.8" x2="704" y2="186.8" class="grid"/>
+      <text x="42" y="190.8" class="tick" text-anchor="end">40%</text><line x1="50" y1="138.0" x2="704" y2="138.0" class="axis-line"/>
+      <text x="42" y="142.0" class="tick" text-anchor="end">50%</text><line x1="50" y1="89.2" x2="704" y2="89.2" class="grid"/>
+      <text x="42" y="93.2" class="tick" text-anchor="end">60%</text><line x1="50" y1="40.4" x2="704" y2="40.4" class="grid"/>
+      <text x="42" y="44.4" class="tick" text-anchor="end">70%</text>
+    <line x1="50.0" y1="137.2" x2="704.0" y2="140.2" class="trend"/>
+    <g class="dot-g"><title>Lucario — cost 4, 59.0% win rate (n=712)</title>
+      <circle cx="295.3" cy="94.1" r="5.5" fill="var(--series-2)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Vulpix — cost 1, 58.2% win rate (n=2735)</title>
+      <circle cx="50.0" cy="97.9" r="5.5" fill="var(--series-1)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Lillipup — cost 1, 57.9% win rate (n=1548)</title>
+      <circle cx="50.0" cy="99.5" r="5.5" fill="var(--series-1)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Magmortar — cost 4, 57.2% win rate (n=2712)</title>
+      <circle cx="295.3" cy="102.9" r="5.5" fill="var(--series-2)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Croagunk — cost 1, 56.8% win rate (n=2051)</title>
+      <circle cx="50.0" cy="104.8" r="5.5" fill="var(--series-1)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Poochyena — cost 1, 56.5% win rate (n=1642)</title>
+      <circle cx="50.0" cy="106.2" r="5.5" fill="var(--series-1)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Ponyta — cost 3, 56.4% win rate (n=3004)</title>
+      <circle cx="213.5" cy="106.8" r="5.5" fill="var(--series-1)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Starly — cost 2, 55.0% win rate (n=2179)</title>
+      <circle cx="131.8" cy="113.7" r="5.5" fill="var(--series-1)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Houndoom — cost 4, 54.7% win rate (n=1712)</title>
+      <circle cx="295.3" cy="115.2" r="5.5" fill="var(--series-2)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Accelgor — cost 4, 54.5% win rate (n=1617)</title>
+      <circle cx="295.3" cy="116.1" r="5.5" fill="var(--series-2)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Chandelure — cost 5, 54.0% win rate (n=606)</title>
+      <circle cx="377.0" cy="118.7" r="5.5" fill="var(--series-2)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Golem — cost 4, 53.3% win rate (n=1823)</title>
+      <circle cx="295.3" cy="122.1" r="5.5" fill="var(--series-2)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Scyther — cost 3, 53.1% win rate (n=1577)</title>
+      <circle cx="213.5" cy="122.7" r="5.5" fill="var(--series-1)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Primeape — cost 3, 52.8% win rate (n=2075)</title>
+      <circle cx="213.5" cy="124.2" r="5.5" fill="var(--series-1)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Mamoswine — cost 8, 52.7% win rate (n=695)</title>
+      <circle cx="622.3" cy="125.0" r="5.5" fill="var(--series-3)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Rotom-Wash — cost 4, 52.2% win rate (n=716)</title>
+      <circle cx="295.3" cy="127.1" r="5.5" fill="var(--series-2)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Gengar — cost 8, 52.2% win rate (n=1343)</title>
+      <circle cx="622.3" cy="127.3" r="5.5" fill="var(--series-3)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Hitmonlee — cost 3, 51.9% win rate (n=1853)</title>
+      <circle cx="213.5" cy="128.7" r="5.5" fill="var(--series-1)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Porygon2 — cost 3, 51.8% win rate (n=1109)</title>
+      <circle cx="213.5" cy="129.0" r="5.5" fill="var(--series-1)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Zoroark — cost 5, 51.5% win rate (n=1148)</title>
+      <circle cx="377.0" cy="130.8" r="5.5" fill="var(--series-2)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Dragonite — cost 8, 51.3% win rate (n=755)</title>
+      <circle cx="622.3" cy="131.9" r="5.5" fill="var(--series-3)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Alakazam — cost 8, 51.2% win rate (n=697)</title>
+      <circle cx="622.3" cy="132.0" r="5.5" fill="var(--series-3)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Umbreon — cost 4, 51.1% win rate (n=1789)</title>
+      <circle cx="295.3" cy="132.4" r="5.5" fill="var(--series-2)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Chansey — cost 4, 51.1% win rate (n=714)</title>
+      <circle cx="295.3" cy="132.5" r="5.5" fill="var(--series-2)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Rhyperior — cost 8, 51.1% win rate (n=791)</title>
+      <circle cx="622.3" cy="132.8" r="5.5" fill="var(--series-3)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Arcanine — cost 5, 50.8% win rate (n=951)</title>
+      <circle cx="377.0" cy="134.2" r="5.5" fill="var(--series-2)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Metapod — cost 2, 50.6% win rate (n=1923)</title>
+      <circle cx="131.8" cy="135.1" r="5.5" fill="var(--series-1)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Haunter — cost 3, 50.3% win rate (n=898)</title>
+      <circle cx="213.5" cy="136.4" r="5.5" fill="var(--series-1)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Serperior — cost 8, 50.2% win rate (n=654)</title>
+      <circle cx="622.3" cy="137.3" r="5.5" fill="var(--series-3)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Steelix — cost 6, 50.0% win rate (n=2093)</title>
+      <circle cx="458.8" cy="138.1" r="5.5" fill="var(--series-3)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Gigalith — cost 3, 49.8% win rate (n=2199)</title>
+      <circle cx="213.5" cy="138.8" r="5.5" fill="var(--series-1)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Audino — cost 2, 49.6% win rate (n=843)</title>
+      <circle cx="131.8" cy="140.0" r="5.5" fill="var(--series-1)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Gallade — cost 5, 49.4% win rate (n=949)</title>
+      <circle cx="377.0" cy="140.8" r="5.5" fill="var(--series-2)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Snorlax — cost 8, 49.4% win rate (n=1037)</title>
+      <circle cx="622.3" cy="141.1" r="5.5" fill="var(--series-3)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Blaziken — cost 6, 49.2% win rate (n=796)</title>
+      <circle cx="458.8" cy="141.7" r="5.5" fill="var(--series-2)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Gyarados — cost 9, 49.2% win rate (n=890)</title>
+      <circle cx="704.0" cy="141.8" r="5.5" fill="var(--series-3)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Ferrothorn — cost 4, 49.0% win rate (n=3244)</title>
+      <circle cx="295.3" cy="143.1" r="5.5" fill="var(--series-2)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Machamp — cost 8, 48.9% win rate (n=852)</title>
+      <circle cx="622.3" cy="143.2" r="5.5" fill="var(--series-3)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Onix — cost 2, 48.7% win rate (n=2870)</title>
+      <circle cx="131.8" cy="144.1" r="5.5" fill="var(--series-1)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Pikachu — cost 2, 48.6% win rate (n=1737)</title>
+      <circle cx="131.8" cy="144.9" r="5.5" fill="var(--series-1)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Luxray — cost 4, 48.4% win rate (n=1765)</title>
+      <circle cx="295.3" cy="145.6" r="5.5" fill="var(--series-2)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Escavalier — cost 5, 48.4% win rate (n=1352)</title>
+      <circle cx="377.0" cy="145.9" r="5.5" fill="var(--series-2)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Magneton — cost 3, 48.3% win rate (n=2147)</title>
+      <circle cx="213.5" cy="146.1" r="5.5" fill="var(--series-1)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Quagsire — cost 3, 48.3% win rate (n=1839)</title>
+      <circle cx="213.5" cy="146.1" r="5.5" fill="var(--series-1)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Tangrowth — cost 8, 48.3% win rate (n=1167)</title>
+      <circle cx="622.3" cy="146.2" r="5.5" fill="var(--series-3)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Carracosta — cost 4, 48.2% win rate (n=1879)</title>
+      <circle cx="295.3" cy="147.0" r="5.5" fill="var(--series-2)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Kirlia — cost 2, 48.2% win rate (n=2056)</title>
+      <circle cx="131.8" cy="147.0" r="5.5" fill="var(--series-1)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Squirtle — cost 1, 47.6% win rate (n=1865)</title>
+      <circle cx="50.0" cy="149.9" r="5.5" fill="var(--series-1)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Drifblim — cost 5, 47.1% win rate (n=840)</title>
+      <circle cx="377.0" cy="151.9" r="5.5" fill="var(--series-2)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Abra — cost 1, 46.8% win rate (n=2013)</title>
+      <circle cx="50.0" cy="153.6" r="5.5" fill="var(--series-1)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Garchomp — cost 9, 46.8% win rate (n=1026)</title>
+      <circle cx="704.0" cy="153.7" r="5.5" fill="var(--series-3)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Lapras — cost 5, 46.7% win rate (n=1526)</title>
+      <circle cx="377.0" cy="154.3" r="5.5" fill="var(--series-2)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Bronzong — cost 4, 46.0% win rate (n=2167)</title>
+      <circle cx="295.3" cy="157.5" r="5.5" fill="var(--series-2)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Espeon — cost 4, 46.0% win rate (n=1901)</title>
+      <circle cx="295.3" cy="157.6" r="5.5" fill="var(--series-2)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Ferroseed — cost 1, 45.6% win rate (n=2381)</title>
+      <circle cx="50.0" cy="159.6" r="5.5" fill="var(--series-1)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Beartic — cost 4, 45.3% win rate (n=1778)</title>
+      <circle cx="295.3" cy="161.1" r="5.5" fill="var(--series-2)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Krookodile — cost 6, 44.9% win rate (n=760)</title>
+      <circle cx="458.8" cy="163.0" r="5.5" fill="var(--series-2)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Weavile — cost 4, 43.7% win rate (n=1435)</title>
+      <circle cx="295.3" cy="168.8" r="5.5" fill="var(--series-2)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Jynx — cost 3, 43.5% win rate (n=1403)</title>
+      <circle cx="213.5" cy="169.5" r="5.5" fill="var(--series-1)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Grotle — cost 2, 40.7% win rate (n=2020)</title>
+      <circle cx="131.8" cy="183.2" r="5.5" fill="var(--series-1)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Sunkern — cost 1, 38.2% win rate (n=1516)</title>
+      <circle cx="50.0" cy="195.6" r="5.5" fill="var(--series-1)"
+        stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>Rotom-Mow — cost 4, 37.0% win rate (n=1625)</title>
+      <circle cx="295.3" cy="201.5" r="5.5" fill="var(--series-2)"
+        stroke="var(--surface-1)" stroke-width="2"/></g>
+    <text x="50.0" y="280" class="tick" text-anchor="middle">1</text><text x="377.0" y="280" class="tick" text-anchor="middle">5</text><text x="704.0" y="280" class="tick" text-anchor="middle">9</text>
+    <text x="377.0" y="294" class="axis-title" text-anchor="middle">draft cost (Poké Ball equivalent)</text>
+  </svg>
+  <div class="legend">
+    <span><i style="background:var(--series-1)"></i>Poké Ball tier</span>
+    <span><i style="background:var(--series-2)"></i>Great Ball tier</span>
+    <span><i style="background:var(--series-3)"></i>Ultra Ball tier</span>
+    <span>— — trend (r = -0.04)</span>
+  </div>
+</section>
+
+<section>
+  <h2>How long games run</h2>
+  <p class="sub">Distribution of game length in rounds. The marker is where champion fatigue begins — everything to its
+  right is the engine forcing an ending rather than the players earning one.</p>
+  <svg viewBox="0 0 720 240" role="img" class="chart" preserveAspectRatio="xMidYMid meet">
+    <line x1="46" y1="206.0" x2="704" y2="206.0" class="grid"/>
+        <text x="38" y="210.0" class="tick" text-anchor="end">0</text><line x1="46" y1="158.5" x2="704" y2="158.5" class="grid"/>
+        <text x="38" y="162.5" class="tick" text-anchor="end">677</text><line x1="46" y1="111.0" x2="704" y2="111.0" class="grid"/>
+        <text x="38" y="115.0" class="tick" text-anchor="end">1353</text><line x1="46" y1="63.5" x2="704" y2="63.5" class="grid"/>
+        <text x="38" y="67.5" class="tick" text-anchor="end">2030</text><line x1="46" y1="16.0" x2="704" y2="16.0" class="grid"/>
+        <text x="38" y="20.0" class="tick" text-anchor="end">2706</text>
+    <g class="bar-g"><title>5-9 rounds: 922 games</title>
+        <rect x="46.0" y="16.0" width="109.7" height="190" class="hover-band"/>
+        <rect x="49.0" y="141.3" width="103.7"
+          height="64.7" rx="4" fill="var(--series-1)"/>
+        <text x="100.8" y="224" class="tick" text-anchor="middle">5-9</text>
+      </g><g class="bar-g"><title>10-14 rounds: 2149 games</title>
+        <rect x="155.7" y="16.0" width="109.7" height="190" class="hover-band"/>
+        <rect x="158.7" y="55.1" width="103.7"
+          height="150.9" rx="4" fill="var(--series-1)"/>
+        <text x="210.5" y="224" class="tick" text-anchor="middle">10-14</text>
+      </g><g class="bar-g"><title>15-19 rounds: 2706 games</title>
+        <rect x="265.3" y="16.0" width="109.7" height="190" class="hover-band"/>
+        <rect x="268.3" y="16.0" width="103.7"
+          height="190.0" rx="4" fill="var(--series-1)"/>
+        <text x="320.2" y="224" class="tick" text-anchor="middle">15-19</text>
+      </g><g class="bar-g"><title>20-24 rounds: 217 games</title>
+        <rect x="375.0" y="16.0" width="109.7" height="190" class="hover-band"/>
+        <rect x="378.0" y="190.8" width="103.7"
+          height="15.2" rx="4" fill="var(--series-1)"/>
+        <text x="429.8" y="224" class="tick" text-anchor="middle">20-24</text>
+      </g><g class="bar-g"><title>25-29 rounds: 4 games</title>
+        <rect x="484.7" y="16.0" width="109.7" height="190" class="hover-band"/>
+        <rect x="487.7" y="205.7" width="103.7"
+          height="0.3" rx="4" fill="var(--series-1)"/>
+        <text x="539.5" y="224" class="tick" text-anchor="middle">25-29</text>
+      </g><g class="bar-g"><title>30-34 rounds: 2 games</title>
+        <rect x="594.3" y="16.0" width="109.7" height="190" class="hover-band"/>
+        <rect x="597.3" y="205.9" width="103.7"
+          height="0.1" rx="4" fill="var(--series-1)"/>
+        <text x="649.2" y="224" class="tick" text-anchor="middle">30-34</text>
+      </g>
+    <line x1="375.0" y1="16" x2="375.0" y2="206" class="marker"/>
+        <text x="381.0" y="28" class="marker-label">fatigue starts</text>
+    <line x1="46" y1="206" x2="704" y2="206" class="axis-line"/>
+  </svg>
+</section>
+
+<section>
+  <h2>Economy over time</h2>
+  <p class="sub">Average Poké Balls held per player at the start of each round.</p>
+  <svg viewBox="0 0 720 220" role="img" class="chart" preserveAspectRatio="xMidYMid meet">
+    <line x1="46" y1="186.0" x2="704" y2="186.0" class="grid"/>
+      <text x="38" y="190.0" class="tick" text-anchor="end">0.0</text><line x1="46" y1="101.0" x2="704" y2="101.0" class="grid"/>
+      <text x="38" y="105.0" class="tick" text-anchor="end">2.0</text><line x1="46" y1="16.0" x2="704" y2="16.0" class="grid"/>
+      <text x="38" y="20.0" class="tick" text-anchor="end">4.1</text>
+    <path d="M46.0,82.0 L78.9,156.6 L111.8,149.1 L144.7,131.6 L177.6,105.7 L210.5,106.3 L243.4,90.2 L276.3,99.4 L309.2,95.5 L342.1,88.2 L375.0,59.3 L407.9,57.5 L440.8,56.5 L473.7,52.5 L506.6,50.7 L539.5,43.7 L572.4,44.5 L605.3,42.0 L638.2,40.5 L671.1,37.8 L704.0,31.5" fill="none" stroke="var(--series-1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    <g class="dot-g"><title>round 1: 2.5</title>
+        <circle cx="46.0" cy="82.0" r="4.5" fill="var(--series-1)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 3: 0.9</title>
+        <circle cx="111.8" cy="149.1" r="4.5" fill="var(--series-1)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 5: 1.9</title>
+        <circle cx="177.6" cy="105.7" r="4.5" fill="var(--series-1)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 7: 2.3</title>
+        <circle cx="243.4" cy="90.2" r="4.5" fill="var(--series-1)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 9: 2.2</title>
+        <circle cx="309.2" cy="95.5" r="4.5" fill="var(--series-1)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 11: 3.0</title>
+        <circle cx="375.0" cy="59.3" r="4.5" fill="var(--series-1)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 13: 3.1</title>
+        <circle cx="440.8" cy="56.5" r="4.5" fill="var(--series-1)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 15: 3.3</title>
+        <circle cx="506.6" cy="50.7" r="4.5" fill="var(--series-1)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 17: 3.4</title>
+        <circle cx="572.4" cy="44.5" r="4.5" fill="var(--series-1)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 19: 3.5</title>
+        <circle cx="638.2" cy="40.5" r="4.5" fill="var(--series-1)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 21: 3.7</title>
+        <circle cx="704.0" cy="31.5" r="4.5" fill="var(--series-1)" stroke="var(--surface-1)" stroke-width="2"/></g>
+    <text x="46.0" y="206" class="tick" text-anchor="middle">1</text><text x="375.0" y="206" class="tick" text-anchor="middle">11</text><text x="704.0" y="206" class="tick" text-anchor="middle">21</text>
+    <text x="375.0" y="214" class="axis-title" text-anchor="middle">round</text>
+    <line x1="46" y1="186" x2="704" y2="186" class="axis-line"/>
+  </svg>
+</section>
+
+<section>
+  <h2>Board population</h2>
+  <p class="sub">Average non-champion Pokémon fielded per player. A rising line that never falls is the wall problem;
+  a flat line near the cap means the board saturates.</p>
+  <svg viewBox="0 0 720 220" role="img" class="chart" preserveAspectRatio="xMidYMid meet">
+    <line x1="46" y1="186.0" x2="704" y2="186.0" class="grid"/>
+      <text x="38" y="190.0" class="tick" text-anchor="end">0.0</text><line x1="46" y1="101.0" x2="704" y2="101.0" class="grid"/>
+      <text x="38" y="105.0" class="tick" text-anchor="end">3.4</text><line x1="46" y1="16.0" x2="704" y2="16.0" class="grid"/>
+      <text x="38" y="20.0" class="tick" text-anchor="end">6.8</text>
+    <path d="M46.0,186.0 L78.9,156.4 L111.8,139.6 L144.7,131.2 L177.6,122.4 L210.5,107.5 L243.4,98.6 L276.3,81.6 L309.2,64.2 L342.1,51.5 L375.0,45.5 L407.9,41.3 L440.8,38.9 L473.7,36.0 L506.6,33.0 L539.5,33.6 L572.4,34.3 L605.3,35.5 L638.2,35.1 L671.1,32.0 L704.0,31.5" fill="none" stroke="var(--series-2)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    <g class="dot-g"><title>round 1: 0.0</title>
+        <circle cx="46.0" cy="186.0" r="4.5" fill="var(--series-2)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 3: 1.8</title>
+        <circle cx="111.8" cy="139.6" r="4.5" fill="var(--series-2)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 5: 2.5</title>
+        <circle cx="177.6" cy="122.4" r="4.5" fill="var(--series-2)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 7: 3.5</title>
+        <circle cx="243.4" cy="98.6" r="4.5" fill="var(--series-2)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 9: 4.8</title>
+        <circle cx="309.2" cy="64.2" r="4.5" fill="var(--series-2)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 11: 5.6</title>
+        <circle cx="375.0" cy="45.5" r="4.5" fill="var(--series-2)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 13: 5.9</title>
+        <circle cx="440.8" cy="38.9" r="4.5" fill="var(--series-2)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 15: 6.1</title>
+        <circle cx="506.6" cy="33.0" r="4.5" fill="var(--series-2)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 17: 6.0</title>
+        <circle cx="572.4" cy="34.3" r="4.5" fill="var(--series-2)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 19: 6.0</title>
+        <circle cx="638.2" cy="35.1" r="4.5" fill="var(--series-2)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 21: 6.1</title>
+        <circle cx="704.0" cy="31.5" r="4.5" fill="var(--series-2)" stroke="var(--surface-1)" stroke-width="2"/></g>
+    <text x="46.0" y="206" class="tick" text-anchor="middle">1</text><text x="375.0" y="206" class="tick" text-anchor="middle">11</text><text x="704.0" y="206" class="tick" text-anchor="middle">21</text>
+    <text x="375.0" y="214" class="axis-title" text-anchor="middle">round</text>
+    <line x1="46" y1="186" x2="704" y2="186" class="axis-line"/>
+  </svg>
+</section>
+
+<section>
+  <h2>Champion health</h2>
+  <p class="sub">Average champion HP remaining. The slope is the real clock of the game — how fast the win condition
+  actually approaches.</p>
+  <svg viewBox="0 0 720 220" role="img" class="chart" preserveAspectRatio="xMidYMid meet">
+    <line x1="46" y1="186.0" x2="704" y2="186.0" class="grid"/>
+      <text x="38" y="190.0" class="tick" text-anchor="end">0%</text><line x1="46" y1="101.0" x2="704" y2="101.0" class="grid"/>
+      <text x="38" y="105.0" class="tick" text-anchor="end">55%</text><line x1="46" y1="16.0" x2="704" y2="16.0" class="grid"/>
+      <text x="38" y="20.0" class="tick" text-anchor="end">110%</text>
+    <path d="M46.0,31.5 L78.9,31.5 L111.8,31.5 L144.7,32.7 L177.6,35.5 L210.5,40.1 L243.4,45.2 L276.3,50.3 L309.2,54.7 L342.1,57.3 L375.0,60.4 L407.9,62.1 L440.8,63.3 L473.7,85.1 L506.6,104.4 L539.5,117.2 L572.4,129.0 L605.3,139.8 L638.2,138.1 L671.1,137.1 L704.0,133.2" fill="none" stroke="var(--series-3)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    <g class="dot-g"><title>round 1: 100%</title>
+        <circle cx="46.0" cy="31.5" r="4.5" fill="var(--series-3)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 3: 100%</title>
+        <circle cx="111.8" cy="31.5" r="4.5" fill="var(--series-3)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 5: 97%</title>
+        <circle cx="177.6" cy="35.5" r="4.5" fill="var(--series-3)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 7: 91%</title>
+        <circle cx="243.4" cy="45.2" r="4.5" fill="var(--series-3)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 9: 85%</title>
+        <circle cx="309.2" cy="54.7" r="4.5" fill="var(--series-3)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 11: 81%</title>
+        <circle cx="375.0" cy="60.4" r="4.5" fill="var(--series-3)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 13: 79%</title>
+        <circle cx="440.8" cy="63.3" r="4.5" fill="var(--series-3)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 15: 53%</title>
+        <circle cx="506.6" cy="104.4" r="4.5" fill="var(--series-3)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 17: 37%</title>
+        <circle cx="572.4" cy="129.0" r="4.5" fill="var(--series-3)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 19: 31%</title>
+        <circle cx="638.2" cy="138.1" r="4.5" fill="var(--series-3)" stroke="var(--surface-1)" stroke-width="2"/></g><g class="dot-g"><title>round 21: 34%</title>
+        <circle cx="704.0" cy="133.2" r="4.5" fill="var(--series-3)" stroke="var(--surface-1)" stroke-width="2"/></g>
+    <text x="46.0" y="206" class="tick" text-anchor="middle">1</text><text x="375.0" y="206" class="tick" text-anchor="middle">11</text><text x="704.0" y="206" class="tick" text-anchor="middle">21</text>
+    <text x="375.0" y="214" class="axis-title" text-anchor="middle">round</text>
+    <line x1="46" y1="186" x2="704" y2="186" class="axis-line"/>
+  </svg>
+</section>
+
+<section>
+  <h2>Every Pokémon</h2>
+  <p class="sub">Full table — click a column to sort. Win rate is measured across games where the unit was drafted;
+  deploy rate is how often a drafted card actually reached the field.</p>
+  <div class="scroll"><table id="units">
+    <thead><tr>
+      <th data-k="name">Pokémon</th><th data-k="tier">Tier</th><th data-k="ptype">Type</th><th data-k="role">Role</th>
+      <th data-k="cost" class="num">Cost</th><th data-k="winRate" class="num">Win rate</th>
+      <th data-k="deployRate" class="num">Deployed</th><th data-k="avgDamage" class="num">Avg dmg</th><th data-k="n" class="num">n</th>
+    </tr></thead>
+    <tbody>
+    <tr>
+      <td>Lucario</td><td>great</td><td>fighting</td><td>generalist</td>
+      <td class="num">4</td><td class="num">59.0%</td>
+      <td class="num">75%</td><td class="num">14.9</td><td class="num">712</td>
+    </tr><tr>
+      <td>Vulpix</td><td>poke</td><td>fire</td><td>generalist</td>
+      <td class="num">1</td><td class="num">58.2%</td>
+      <td class="num">100%</td><td class="num">13.0</td><td class="num">2735</td>
+    </tr><tr>
+      <td>Lillipup</td><td>poke</td><td>normal</td><td>generalist</td>
+      <td class="num">1</td><td class="num">57.9%</td>
+      <td class="num">100%</td><td class="num">5.0</td><td class="num">1548</td>
+    </tr><tr>
+      <td>Magmortar</td><td>great</td><td>fire</td><td>specialist</td>
+      <td class="num">4</td><td class="num">57.2%</td>
+      <td class="num">94%</td><td class="num">25.9</td><td class="num">2712</td>
+    </tr><tr>
+      <td>Croagunk</td><td>poke</td><td>fighting</td><td>dealer</td>
+      <td class="num">1</td><td class="num">56.8%</td>
+      <td class="num">100%</td><td class="num">18.2</td><td class="num">2051</td>
+    </tr><tr>
+      <td>Poochyena</td><td>poke</td><td>dark</td><td>dealer</td>
+      <td class="num">1</td><td class="num">56.5%</td>
+      <td class="num">100%</td><td class="num">9.4</td><td class="num">1642</td>
+    </tr><tr>
+      <td>Ponyta</td><td>poke</td><td>fire</td><td>dealer</td>
+      <td class="num">3</td><td class="num">56.4%</td>
+      <td class="num">76%</td><td class="num">11.5</td><td class="num">3004</td>
+    </tr><tr>
+      <td>Starly</td><td>poke</td><td>normal</td><td>dealer</td>
+      <td class="num">2</td><td class="num">55.0%</td>
+      <td class="num">99%</td><td class="num">6.7</td><td class="num">2179</td>
+    </tr><tr>
+      <td>Houndoom</td><td>great</td><td>dark</td><td>dealer</td>
+      <td class="num">4</td><td class="num">54.7%</td>
+      <td class="num">81%</td><td class="num">16.2</td><td class="num">1712</td>
+    </tr><tr>
+      <td>Accelgor</td><td>great</td><td>bug</td><td>dealer</td>
+      <td class="num">4</td><td class="num">54.5%</td>
+      <td class="num">84%</td><td class="num">15.4</td><td class="num">1617</td>
+    </tr><tr>
+      <td>Chandelure</td><td>great</td><td>fire</td><td>specialist</td>
+      <td class="num">5</td><td class="num">54.0%</td>
+      <td class="num">60%</td><td class="num">13.1</td><td class="num">606</td>
+    </tr><tr>
+      <td>Golem</td><td>great</td><td>rock</td><td>tank</td>
+      <td class="num">4</td><td class="num">53.3%</td>
+      <td class="num">82%</td><td class="num">22.9</td><td class="num">1823</td>
+    </tr><tr>
+      <td>Scyther</td><td>poke</td><td>bug</td><td>dealer</td>
+      <td class="num">3</td><td class="num">53.1%</td>
+      <td class="num">67%</td><td class="num">11.9</td><td class="num">1577</td>
+    </tr><tr>
+      <td>Primeape</td><td>poke</td><td>fighting</td><td>dealer</td>
+      <td class="num">3</td><td class="num">52.8%</td>
+      <td class="num">56%</td><td class="num">15.2</td><td class="num">2075</td>
+    </tr><tr>
+      <td>Mamoswine</td><td>ultra</td><td>ice</td><td>dealer</td>
+      <td class="num">8</td><td class="num">52.7%</td>
+      <td class="num">28%</td><td class="num">10.3</td><td class="num">695</td>
+    </tr><tr>
+      <td>Rotom-Wash</td><td>great</td><td>water</td><td>specialist</td>
+      <td class="num">4</td><td class="num">52.2%</td>
+      <td class="num">70%</td><td class="num">14.6</td><td class="num">716</td>
+    </tr><tr>
+      <td>Gengar</td><td>ultra</td><td>ghost</td><td>dealer</td>
+      <td class="num">8</td><td class="num">52.2%</td>
+      <td class="num">26%</td><td class="num">15.9</td><td class="num">1343</td>
+    </tr><tr>
+      <td>Hitmonlee</td><td>poke</td><td>fighting</td><td>dealer</td>
+      <td class="num">3</td><td class="num">51.9%</td>
+      <td class="num">72%</td><td class="num">13.7</td><td class="num">1853</td>
+    </tr><tr>
+      <td>Porygon2</td><td>poke</td><td>normal</td><td>specialist</td>
+      <td class="num">3</td><td class="num">51.8%</td>
+      <td class="num">50%</td><td class="num">10.1</td><td class="num">1109</td>
+    </tr><tr>
+      <td>Zoroark</td><td>great</td><td>dark</td><td>dealer</td>
+      <td class="num">5</td><td class="num">51.5%</td>
+      <td class="num">59%</td><td class="num">10.7</td><td class="num">1148</td>
+    </tr><tr>
+      <td>Dragonite</td><td>ultra</td><td>dragon</td><td>generalist</td>
+      <td class="num">8</td><td class="num">51.3%</td>
+      <td class="num">26%</td><td class="num">13.8</td><td class="num">755</td>
+    </tr><tr>
+      <td>Alakazam</td><td>ultra</td><td>psychic</td><td>specialist</td>
+      <td class="num">8</td><td class="num">51.2%</td>
+      <td class="num">28%</td><td class="num">11.6</td><td class="num">697</td>
+    </tr><tr>
+      <td>Umbreon</td><td>great</td><td>dark</td><td>tank</td>
+      <td class="num">4</td><td class="num">51.1%</td>
+      <td class="num">84%</td><td class="num">13.8</td><td class="num">1789</td>
+    </tr><tr>
+      <td>Chansey</td><td>great</td><td>normal</td><td>generalist</td>
+      <td class="num">4</td><td class="num">51.1%</td>
+      <td class="num">74%</td><td class="num">2.3</td><td class="num">714</td>
+    </tr><tr>
+      <td>Rhyperior</td><td>ultra</td><td>rock</td><td>tank</td>
+      <td class="num">8</td><td class="num">51.1%</td>
+      <td class="num">27%</td><td class="num">14.9</td><td class="num">791</td>
+    </tr><tr>
+      <td>Arcanine</td><td>great</td><td>fire</td><td>dealer</td>
+      <td class="num">5</td><td class="num">50.8%</td>
+      <td class="num">59%</td><td class="num">12.3</td><td class="num">951</td>
+    </tr><tr>
+      <td>Metapod</td><td>poke</td><td>bug</td><td>tank</td>
+      <td class="num">2</td><td class="num">50.6%</td>
+      <td class="num">99%</td><td class="num">4.8</td><td class="num">1923</td>
+    </tr><tr>
+      <td>Haunter</td><td>poke</td><td>ghost</td><td>dealer</td>
+      <td class="num">3</td><td class="num">50.3%</td>
+      <td class="num">50%</td><td class="num">10.6</td><td class="num">898</td>
+    </tr><tr>
+      <td>Serperior</td><td>ultra</td><td>grass</td><td>dealer</td>
+      <td class="num">8</td><td class="num">50.2%</td>
+      <td class="num">24%</td><td class="num">12.7</td><td class="num">654</td>
+    </tr><tr>
+      <td>Steelix</td><td>ultra</td><td>steel</td><td>tank</td>
+      <td class="num">6</td><td class="num">50.0%</td>
+      <td class="num">33%</td><td class="num">7.7</td><td class="num">2093</td>
+    </tr><tr>
+      <td>Gigalith</td><td>poke</td><td>rock</td><td>tank</td>
+      <td class="num">3</td><td class="num">49.8%</td>
+      <td class="num">60%</td><td class="num">10.8</td><td class="num">2199</td>
+    </tr><tr>
+      <td>Audino</td><td>poke</td><td>normal</td><td>generalist</td>
+      <td class="num">2</td><td class="num">49.6%</td>
+      <td class="num">97%</td><td class="num">2.6</td><td class="num">843</td>
+    </tr><tr>
+      <td>Gallade</td><td>great</td><td>fighting</td><td>dealer</td>
+      <td class="num">5</td><td class="num">49.4%</td>
+      <td class="num">61%</td><td class="num">13.4</td><td class="num">949</td>
+    </tr><tr>
+      <td>Snorlax</td><td>ultra</td><td>normal</td><td>tank</td>
+      <td class="num">8</td><td class="num">49.4%</td>
+      <td class="num">24%</td><td class="num">9.6</td><td class="num">1037</td>
+    </tr><tr>
+      <td>Blaziken</td><td>great</td><td>fire</td><td>generalist</td>
+      <td class="num">6</td><td class="num">49.2%</td>
+      <td class="num">41%</td><td class="num">9.9</td><td class="num">796</td>
+    </tr><tr>
+      <td>Gyarados</td><td>ultra</td><td>water</td><td>dealer</td>
+      <td class="num">9</td><td class="num">49.2%</td>
+      <td class="num">19%</td><td class="num">12.7</td><td class="num">890</td>
+    </tr><tr>
+      <td>Ferrothorn</td><td>great</td><td>steel</td><td>tank</td>
+      <td class="num">4</td><td class="num">49.0%</td>
+      <td class="num">85%</td><td class="num">16.4</td><td class="num">3244</td>
+    </tr><tr>
+      <td>Machamp</td><td>ultra</td><td>fighting</td><td>dealer</td>
+      <td class="num">8</td><td class="num">48.9%</td>
+      <td class="num">25%</td><td class="num">15.4</td><td class="num">852</td>
+    </tr><tr>
+      <td>Onix</td><td>poke</td><td>rock</td><td>tank</td>
+      <td class="num">2</td><td class="num">48.7%</td>
+      <td class="num">99%</td><td class="num">8.8</td><td class="num">2870</td>
+    </tr><tr>
+      <td>Pikachu</td><td>poke</td><td>electric</td><td>generalist</td>
+      <td class="num">2</td><td class="num">48.6%</td>
+      <td class="num">99%</td><td class="num">10.5</td><td class="num">1737</td>
+    </tr><tr>
+      <td>Luxray</td><td>great</td><td>electric</td><td>dealer</td>
+      <td class="num">4</td><td class="num">48.4%</td>
+      <td class="num">88%</td><td class="num">19.7</td><td class="num">1765</td>
+    </tr><tr>
+      <td>Escavalier</td><td>great</td><td>bug</td><td>tank</td>
+      <td class="num">5</td><td class="num">48.4%</td>
+      <td class="num">57%</td><td class="num">12.5</td><td class="num">1352</td>
+    </tr><tr>
+      <td>Magneton</td><td>poke</td><td>electric</td><td>specialist</td>
+      <td class="num">3</td><td class="num">48.3%</td>
+      <td class="num">67%</td><td class="num">8.0</td><td class="num">2147</td>
+    </tr><tr>
+      <td>Quagsire</td><td>poke</td><td>water</td><td>tank</td>
+      <td class="num">3</td><td class="num">48.3%</td>
+      <td class="num">63%</td><td class="num">9.1</td><td class="num">1839</td>
+    </tr><tr>
+      <td>Tangrowth</td><td>ultra</td><td>grass</td><td>tank</td>
+      <td class="num">8</td><td class="num">48.3%</td>
+      <td class="num">26%</td><td class="num">11.3</td><td class="num">1167</td>
+    </tr><tr>
+      <td>Carracosta</td><td>great</td><td>water</td><td>tank</td>
+      <td class="num">4</td><td class="num">48.2%</td>
+      <td class="num">79%</td><td class="num">10.6</td><td class="num">1879</td>
+    </tr><tr>
+      <td>Kirlia</td><td>poke</td><td>psychic</td><td>generalist</td>
+      <td class="num">2</td><td class="num">48.2%</td>
+      <td class="num">99%</td><td class="num">7.4</td><td class="num">2056</td>
+    </tr><tr>
+      <td>Squirtle</td><td>poke</td><td>water</td><td>tank</td>
+      <td class="num">1</td><td class="num">47.6%</td>
+      <td class="num">100%</td><td class="num">5.1</td><td class="num">1865</td>
+    </tr><tr>
+      <td>Drifblim</td><td>great</td><td>ghost</td><td>tank</td>
+      <td class="num">5</td><td class="num">47.1%</td>
+      <td class="num">55%</td><td class="num">9.7</td><td class="num">840</td>
+    </tr><tr>
+      <td>Abra</td><td>poke</td><td>psychic</td><td>generalist</td>
+      <td class="num">1</td><td class="num">46.8%</td>
+      <td class="num">100%</td><td class="num">5.1</td><td class="num">2013</td>
+    </tr><tr>
+      <td>Garchomp</td><td>ultra</td><td>dragon</td><td>dealer</td>
+      <td class="num">9</td><td class="num">46.8%</td>
+      <td class="num">20%</td><td class="num">14.3</td><td class="num">1026</td>
+    </tr><tr>
+      <td>Lapras</td><td>great</td><td>water</td><td>tank</td>
+      <td class="num">5</td><td class="num">46.7%</td>
+      <td class="num">59%</td><td class="num">9.8</td><td class="num">1526</td>
+    </tr><tr>
+      <td>Bronzong</td><td>great</td><td>steel</td><td>tank</td>
+      <td class="num">4</td><td class="num">46.0%</td>
+      <td class="num">85%</td><td class="num">6.4</td><td class="num">2167</td>
+    </tr><tr>
+      <td>Espeon</td><td>great</td><td>psychic</td><td>specialist</td>
+      <td class="num">4</td><td class="num">46.0%</td>
+      <td class="num">92%</td><td class="num">21.6</td><td class="num">1901</td>
+    </tr><tr>
+      <td>Ferroseed</td><td>poke</td><td>steel</td><td>tank</td>
+      <td class="num">1</td><td class="num">45.6%</td>
+      <td class="num">100%</td><td class="num">4.7</td><td class="num">2381</td>
+    </tr><tr>
+      <td>Beartic</td><td>great</td><td>ice</td><td>tank</td>
+      <td class="num">4</td><td class="num">45.3%</td>
+      <td class="num">84%</td><td class="num">14.4</td><td class="num">1778</td>
+    </tr><tr>
+      <td>Krookodile</td><td>great</td><td>dark</td><td>generalist</td>
+      <td class="num">6</td><td class="num">44.9%</td>
+      <td class="num">42%</td><td class="num">9.2</td><td class="num">760</td>
+    </tr><tr>
+      <td>Weavile</td><td>great</td><td>ice</td><td>dealer</td>
+      <td class="num">4</td><td class="num">43.7%</td>
+      <td class="num">82%</td><td class="num">8.9</td><td class="num">1435</td>
+    </tr><tr>
+      <td>Jynx</td><td>poke</td><td>ice</td><td>specialist</td>
+      <td class="num">3</td><td class="num">43.5%</td>
+      <td class="num">68%</td><td class="num">9.4</td><td class="num">1403</td>
+    </tr><tr>
+      <td>Grotle</td><td>poke</td><td>grass</td><td>tank</td>
+      <td class="num">2</td><td class="num">40.7%</td>
+      <td class="num">99%</td><td class="num">7.3</td><td class="num">2020</td>
+    </tr><tr>
+      <td>Sunkern</td><td>poke</td><td>grass</td><td>generalist</td>
+      <td class="num">1</td><td class="num">38.2%</td>
+      <td class="num">100%</td><td class="num">4.1</td><td class="num">1516</td>
+    </tr><tr>
+      <td>Rotom-Mow</td><td>great</td><td>grass</td><td>specialist</td>
+      <td class="num">4</td><td class="num">37.0%</td>
+      <td class="num">85%</td><td class="num">18.5</td><td class="num">1625</td>
+    </tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>Summons</h2>
+  <p class="sub">Win rate when drafted, and how often a drafted summon actually gets cast per game.</p>
+  <table><thead><tr><th>Summon</th><th class="num">Win rate</th><th class="num">Casts per draft</th><th class="num">n</th></tr></thead>
+  <tbody><tr><td>Ho-Oh</td><td class="num">51.1%</td><td class="num">0.11</td><td class="num">5398</td></tr><tr><td>Palkia</td><td class="num">50.4%</td><td class="num">0.10</td><td class="num">4486</td></tr><tr><td>Kyogre</td><td class="num">50.3%</td><td class="num">0.31</td><td class="num">3067</td></tr><tr><td>Lugia</td><td class="num">49.6%</td><td class="num">0.05</td><td class="num">4516</td></tr><tr><td>Groudon</td><td class="num">49.6%</td><td class="num">0.26</td><td class="num">3134</td></tr><tr><td>Dialga</td><td class="num">48.5%</td><td class="num">0.08</td><td class="num">3399</td></tr></tbody></table>
+</section>
+
+</div></div>
+<script>
+  // sortable table — the table view is also the accessibility relief for the charts
+  const tbl = document.getElementById('units')
+  if (tbl) {
+    const rows = [...tbl.tBodies[0].rows]
+    let dir = -1, last = ''
+    tbl.tHead.addEventListener('click', (e) => {
+      const th = e.target.closest('th'); if (!th) return
+      const i = [...th.parentNode.children].indexOf(th)
+      dir = last === th.dataset.k ? -dir : -1
+      last = th.dataset.k
+      const num = th.classList.contains('num')
+      rows.sort((a, b) => {
+        const av = a.cells[i].textContent.replace(/[%,]/g, ''), bv = b.cells[i].textContent.replace(/[%,]/g, '')
+        return num ? (parseFloat(bv) - parseFloat(av)) * dir : bv.localeCompare(av) * dir
+      })
+      rows.forEach((r) => tbl.tBodies[0].appendChild(r))
+    })
+  }
+</script>
+</body></html>

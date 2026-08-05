@@ -43,16 +43,20 @@ variants against an identical population of seeded games.
 
 **The closing board** replaced champion fatigue. From `TUNING.poisonStart` (14)
 the outermost row on each side turns toxic for `poisonDamage` (2) at the end of
-its owner's turn; another row closes every `poisonStep` (5) rounds, capped at
-four a side (`poisonDepth`/`isPoisoned` in data.ts, applied in `finishTurn`).
+the round boundary — BOTH sides at once, never at each player's own turn end
+(per-owner timing let the second player move on a damaged opponent and was worth
+several points of win rate); another row closes every `poisonStep` (5) rounds,
+capped at four a side (`poisonDepth`/`isPoisoned` in data.ts, in `finishTurn`).
 Champions start on the back row, so the first closure evicts them forward. This
 took games reaching round 20 from 48% to 7% and the median from 19 to 15. Use
 `isPoisoned` (allocation-free) in hot paths — `poisonedRows` allocates and
 measurably slowed the AI's `evaluate()`.
 
 **Economy**: `POKE_CAP` 10, income 1/turn stepping up at `INCOME_BREAKS`
-(round 6 → 2, round 16 → 3), capped by `INCOME_CAP` 3. Great/Ultra Balls only
+(round 5 → 2, round 11 → 3), capped by `INCOME_CAP` 3. Great/Ultra Balls only
 via trading (3→G, 6→U). Second-player compensation is `TUNING.startPokeB` = 3.
+The breaks must stay INSIDE the median game length — at [6, 16] the third tier
+fired after most games had ended and the Ultra tier was unaffordable.
 
 **Synergies** unlock at 3 unique same-type fielded (5 for tier 2), except
 Normal/Payday at 2 and 4. Champion counts; duplicates never do.
@@ -111,10 +115,15 @@ self-contained HTML dashboard. **Any balance change should be A/B'd through
 this** — same seeds, different rules, diff the output.
 `docs/FINDINGS.md` holds the standing analysis and its caveats.
 
-Known open problems (see FINDINGS.md): cost→win correlation is -0.06 (neutral,
-not rewarding), the champion spread is 18.8 points, and a thin tail of games
-still runs long. Game length and dead cards are FIXED — do not re-litigate them
-without re-running the harness.
+Standing numbers (run `final`, 6k games): first-player 50.5%, champion spread
+5.6 pts, median 14 rounds, 3.7% reach round 20, no dead cards, cost buckets all
+within 46-51%. **Game length, dead cards, champion spread and premium
+reachability are all FIXED** — do not re-litigate them without re-running the
+harness.
+
+Note on cost→win correlation: near-zero is CORRECT. Expensive cards winning more
+games would be pay-to-win. The metric that mattered was premium *deploy* rate
+(~16% → ~24% after moving INCOME_BREAKS inside the shorter game).
 
 ## Layout
 - `src/game/data.ts` — every tuning number, roster, champions, summons. Balance

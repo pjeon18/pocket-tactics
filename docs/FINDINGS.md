@@ -1,5 +1,44 @@
 # Balance telemetry — findings
 
+> **Update (champion + economy tuning).** Run `final` (6,000 games) closes the
+> last two open imbalances. `docs/telemetry/` holds every run.
+>
+> | Metric | closing-final | final | verdict |
+> |---|---|---|---|
+> | First-player win rate | 51.2% | **50.5%** | fair |
+> | Champion spread | 18.8 pts | **5.6 pts** | solved |
+> | Cost → win correlation | −0.060 | −0.039 | neutral, as it should be |
+> | Premium (cost 8+) deploy rate | ~16% | **~24%** | reachable |
+> | Median length | 15 | 14 | unchanged |
+> | Games reaching round 20 | 7.3% | 3.7% | unchanged |
+> | Dead cards | 0 | 0 | unchanged |
+>
+> **Champions** now sit between 47.8% and 53.3%. Celebi's mass heal and
+> Victini's team buff were both too cheap for how much they did; Mew's revive at
+> charge 6 almost never fired, and Jirachi could not threaten anything with ATK
+> 1. Charges were retuned (Celebi 4→5, Victini 5→6, Mew 6→4, Jirachi 5→3,
+> Manaphy 6→5), V-Create trimmed from +2/+2 to +1/+1, and Jirachi and Mew given
+> a point of ATK and HP respectively.
+>
+> **On "premium investment is not rewarded":** the earlier framing was wrong.
+> A strongly positive cost→win correlation would mean expensive cards win more
+> games, which is pay-to-win, not good design. Every cost bucket sitting near
+> 50% is the correct outcome. The real defect was that the premium end was
+> *unreachable*: `INCOME_BREAKS` put the third income tier at round 16 while the
+> median game ended at 15, so it never activated and cost-8+ cards deployed in
+> only ~16% of the games they were drafted into. Moving the breaks to [5, 11]
+> lifted that to ~24%. The metric to watch is deploy rate, not win rate.
+>
+> **A tuning trap worth recording:** the closing board originally bit each side
+> at its own turn end, which damaged the first player before the second player
+> moved. That was worth several points of win rate and made the second-player
+> compensation impossible to tune in whole Poké Balls — 2 gave the first player
+> 53.8%, 3 gave 44.2%, with nothing in between. Applying the damage to both
+> sides simultaneously at the round boundary removed the asymmetry and let
+> `startPokeB: 3` land at 49.9%.
+
+---
+
 > **Update (the closing board).** The stall problem is fixed. Champion chip
 > damage ("fatigue") has been replaced by a board that closes: from round 14 the
 > outermost row on each side turns toxic for 2 damage at the end of its owner's
