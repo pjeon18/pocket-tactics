@@ -1,5 +1,5 @@
 import {
-  CHAMPION_ORDER, DRAFT_SIZE, SUMMONS, SUMMON_ORDER, GREAT_CAP, ROSTER,
+  CHAMPION_ORDER, isPoisoned, DRAFT_SIZE, SUMMONS, SUMMON_ORDER, GREAT_CAP, ROSTER,
   TRADE_GREAT_COST, TRADE_ULTRA_COST, ULTRA_CAP, ROWS, COLS,
   costEquiv, metaOf, ptypeOf, typeMult, synergyThresholds, SYNERGIES,
 } from './data'
@@ -114,6 +114,13 @@ function evaluate(state: GameState, me: Owner): number {
     if (u.isChampion || u.owner !== me) continue
     const d = Math.max(Math.abs(u.col - foeChamp.col), Math.abs(u.row - foeChamp.row))
     score += Math.max(0, 6 - d) * 0.35
+  }
+
+  // the closing board: standing in a toxic row is a slow death, and the champion
+  // sitting in one is how a turtling side loses without ever being attacked
+  for (const u of state.units) {
+    if (u.owner !== me || !isPoisoned(u.row, state.round)) continue
+    score -= u.isChampion ? 45 : 12
   }
 
   const p = state.players[me]

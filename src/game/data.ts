@@ -59,9 +59,18 @@ export const SUMMONS: Record<string, SummonDef> = {
 }
 export const SUMMON_ORDER = ['hooh', 'lugia', 'dialga', 'palkia', 'kyogre', 'groudon']
 
-/** From this round on, both champions take 1 fatigue damage per round — games must end. */
-export const FATIGUE_ROUND = 20
-
+/**
+ * The closing board. From FATIGUE_ROUND the outermost row on each side turns
+ * toxic, and another row closes every POISON_STEP rounds after that. Anything
+ * standing in it takes POISON_DAMAGE at the end of its owner's turn.
+ *
+ * This replaced flat champion chip damage. Chip damage ended games without
+ * changing them — it ignored position entirely, so a turtling side just lost on
+ * a clock. Closing the board attacks the actual cause: champions start on the
+ * back row, so the first closure evicts them forward into each other's range,
+ * and the play area keeps shrinking until someone has to commit. It is also
+ * dodgeable, which chip damage never was.
+ */
 /** Normal attacks only: a small hit-roll. Specials never miss or crit. */
 /**
  * Combat variance and type scaling — all MULTIPLICATIVE, so a modifier is worth
@@ -86,8 +95,46 @@ export const TUNING = {
    * play pushed the first-player win rate to 60.7%; at 3 it sits near 50% for
    * easy/normal and ~54% in hard mirrors.
    */
-  startPokeB: 3,
+  /**
+   * Second-player compensation. Retuned 3 -> 2 for the closing board: shorter
+   * games make B's opening balls a larger share of total income, and the side
+   * forced to break cover first is already at a disadvantage. At 3 the first
+   * player fell to 45%; at 2 it sits at 51%.
+   */
+  startPokeB: 2,
   startGreatB: 0,
+  /**
+   * The closing board. Swept with the harness: closing at round 20 fired after
+   * most games had already ended (median was 19) and barely moved anything.
+   * Round 14 cuts the median to 15 and the share of games reaching round 20
+   * from 48% to 8%, while still reading as a late-game event.
+   */
+  poisonStart: 14,
+  poisonStep: 5,
+  poisonDamage: 2,
+}
+
+export const FATIGUE_ROUND = 20 // the "long game" marker the telemetry reports against
+/** How many rows are closed on EACH side at a given round. */
+export function poisonDepth(round: number): number {
+  if (round < TUNING.poisonStart) return 0
+  return Math.min(4, Math.floor((round - TUNING.poisonStart) / TUNING.poisonStep) + 1)
+}
+/** Allocation-free row test — `evaluate()` calls this thousands of times a turn,
+ *  and building an array each time measurably slowed the simulator. */
+export function isPoisoned(row: number, round: number): boolean {
+  const d = poisonDepth(round)
+  return d > 0 && (row < d || row >= ROWS - d)
+}
+/** The row indices that are toxic at a given round. */
+export function poisonedRows(round: number): number[] {
+  const d = poisonDepth(round)
+  const rows: number[] = []
+  for (let i = 0; i < d; i++) {
+    rows.push(i)          // the rival's home edge
+    rows.push(ROWS - 1 - i) // ours
+  }
+  return rows
 }
 
 /** Every Pokémon gains this much HP over its "true" statline (attack/HP ratio fix). */
@@ -290,7 +337,7 @@ export const ROSTER: Record<string, Species> = {
     targeting: { kind: 'self' }, pattern: 'self',
   },
   gigalith: {
-    key: 'gigalith', name: 'Gigalith', dex: 526, role: 'tank', ptype: 'rock', tier: 'poke', cost: P(4), cooldown: 4,
+    key: 'gigalith', name: 'Gigalith', dex: 526, role: 'tank', ptype: 'rock', tier: 'poke', cost: P(3), cooldown: 4,
     hp: 11, atk: 2, range: 1, move: 1, chargeMax: 2,
     special: 'Rock Slide', hint: '3 dmg, plus 2 to every enemy beside the target',
     targeting: { kind: 'enemy' }, pattern: 'splash',
@@ -420,7 +467,7 @@ export const ROSTER: Record<string, Species> = {
     targeting: { kind: 'enemy' }, pattern: 'target',
   },
   scyther: {
-    key: 'scyther', name: 'Scyther', dex: 123, role: 'dealer', ptype: 'bug', tier: 'poke', cost: P(4), cooldown: 4,
+    key: 'scyther', name: 'Scyther', dex: 123, role: 'dealer', ptype: 'bug', tier: 'poke', cost: P(3), cooldown: 4,
     hp: 5, atk: 4, range: 1, move: 3, chargeMax: 4,
     special: 'X-Scissor', hint: 'Slashes twice for 3 dmg each',
     targeting: { kind: 'enemy' }, pattern: 'target',
@@ -499,7 +546,7 @@ export const ROSTER: Record<string, Species> = {
   },
 
   primeape: {
-    key: 'primeape', name: 'Primeape', dex: 57, role: 'dealer', ptype: 'fighting', tier: 'poke', cost: P(4), cooldown: 4,
+    key: 'primeape', name: 'Primeape', dex: 57, role: 'dealer', ptype: 'fighting', tier: 'poke', cost: P(3), cooldown: 4,
     hp: 6, atk: 4, range: 1, move: 2, chargeMax: 4,
     special: 'Karate Chop', hint: 'A furious 6 dmg blow',
     targeting: { kind: 'enemy' }, pattern: 'target',

@@ -1,4 +1,4 @@
-import { COLS, ROWS, TYPE_META, dexOf, nameOf, ptypeOf } from '../game/data'
+import { COLS, ROWS, TYPE_META, dexOf, nameOf, poisonedRows, ptypeOf } from '../game/data'
 import { effAtk } from '../game/rules'
 import type { GameState, Owner, Unit } from '../game/types'
 import { Sprite } from './Sprite'
@@ -92,6 +92,9 @@ export function BoardView({
   const undoKey = visuals.undoTile ? `${visuals.undoTile[0]},${visuals.undoTile[1]}` : null
 
   const cells = []
+  // rows the closing board has poisoned this round
+  const toxicRows = new Set(poisonedRows(state.round))
+
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
       const k = `${c},${r}`
@@ -106,6 +109,7 @@ export function BoardView({
         : `${state.season}-g${variant}`
       const cls = [
         'cell',
+        toxicRows.has(r) ? 'cell-toxic' : '',
         moveSet.has(k) ? 'cell-move' : '',
         sTileSet.has(k) ? 'cell-special' : '',
         visuals.threat.has(k) ? 'cell-threat' : '',

@@ -4,7 +4,7 @@ import {
   CHEST_MAX,
   COLS,
   DROPS,
-  FATIGUE_ROUND,
+  isPoisoned,
   GREAT_CAP,
   FIELD_CAP,
   INCOME_CAP,
@@ -1261,20 +1261,27 @@ export function finishTurn(state0: GameState): GameState {
   if (state.lugiaLock === ending) state.lugiaLock = null // the grounded turn is over
   resolveHazards(state) // whirlpools / eruptions tick and may crash down now
   state.current = otherOwner(ending)
+  // the closing board bites the side that just finished, so you always get a
+  // full turn to walk out of a row before it costs you anything
+  if (!state.deterministic) {
+    {
+      let bit = false
+      for (const u of state.units) {
+        if (u.owner !== ending || !isPoisoned(u.row, state.round)) continue
+        u.hp -= TUNING.poisonDamage
+        bit = true
+        state.events.push({ col: u.col, row: u.row, text: `-${TUNING.poisonDamage}`, color: '#A45FD6' })
+      }
+      if (bit) {
+        state.log.push(`The board is closing — ${ending === 'A' ? 'your' : "the rival's"} Pokémon in the outer rows take ${TUNING.poisonDamage}.`)
+        cleanup(state)
+      }
+    }
+  }
+
   if (state.current === 'A') {
     state.round++
     if (!state.deterministic) maybeSpawnChest(state)
-    if (!state.deterministic && state.round >= FATIGUE_ROUND) {
-      // escalates so healers can never stall the game out forever
-      const fatigue = 1 + Math.floor((state.round - FATIGUE_ROUND) / 5)
-      for (const u of state.units) {
-        if (!u.isChampion) continue
-        u.hp -= fatigue
-        state.events.push({ col: u.col, row: u.row, text: `-${fatigue}`, color: '#A6ABB3' })
-      }
-      state.log.push(`Fatigue — both champions take ${fatigue} damage.`)
-      cleanup(state)
-    }
   }
   grantIncome(state)
   return state

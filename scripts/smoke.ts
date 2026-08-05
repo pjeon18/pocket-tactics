@@ -457,6 +457,33 @@ ok(!canMoveNow(st, stU), 'a stunned Pokémon cannot move')
 ok(!canActNow(st, stU), 'a stunned Pokémon cannot attack either')
 ok(planAttack(st, 994, 995, false) === null, 'a stunned Pokémon cannot declare an attack')
 
+/* --- the closing board --- */
+import { isPoisoned, poisonDepth, TUNING as TUNE } from '../src/game/data'
+ok(poisonDepth(TUNE.poisonStart - 1) === 0, 'board is open before the closing round')
+ok(poisonDepth(TUNE.poisonStart) === 1, 'one row closes on each side at the closing round')
+ok(poisonDepth(TUNE.poisonStart + TUNE.poisonStep) === 2, 'a second row closes a step later')
+ok(poisonDepth(TUNE.poisonStart + TUNE.poisonStep * 99) === 4, 'closure stops at four rows a side')
+ok(isPoisoned(0, TUNE.poisonStart) && isPoisoned(9, TUNE.poisonStart), 'both home edges close together')
+ok(!isPoisoned(4, TUNE.poisonStart), 'the middle stays open')
+
+let pz = newBattle(draftA, draftB)
+pz.rocks = []
+pz.round = TUNE.poisonStart
+const inToxic = spawn(pz, 990, 'pikachu', 'A', 0, 9, { hp: 9, maxHp: 9 })
+const inSafe = spawn(pz, 991, 'pikachu', 'A', 1, 5, { hp: 9, maxHp: 9 })
+const foeSafe = spawn(pz, 992, 'pikachu', 'B', 5, 5, { hp: 9, maxHp: 9 })
+void inToxic; void inSafe; void foeSafe
+const pzEnd = endTurnFully(pz) // A's turn ends — only A's units in toxic rows are bitten
+ok(pzEnd.units.find((u) => u.id === 990)!.hp === 9 - TUNE.poisonDamage, 'a unit in a closed row takes damage')
+ok(pzEnd.units.find((u) => u.id === 991)!.hp === 9, 'a unit in the open is untouched')
+ok(pzEnd.units.find((u) => u.id === 992)!.hp === 9, "the rival is not bitten on the player's turn")
+
+/* the champion starts on the back row, so closing evicts it — that is the point */
+let ev = newBattle(draftA, draftB)
+ev.round = TUNE.poisonStart
+const evChamp = ev.units.find((u) => u.owner === 'A' && u.isChampion)!
+ok(isPoisoned(evChamp.row, ev.round), 'the closing board reaches the champion where it starts')
+
 /* --- full AI vs AI games run to completion --- */
 for (let g2 = 0; g2 < 5; g2++) {
   let game = newBattle(aiDraft(), aiDraft())

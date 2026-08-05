@@ -41,6 +41,15 @@ miss = 0 damage at 3%, super effective ×1.5, resisted ×0.5. Order inside
 **`TUNING` is mutable on purpose** so `scripts/sim.ts --tune=` can A/B rule
 variants against an identical population of seeded games.
 
+**The closing board** replaced champion fatigue. From `TUNING.poisonStart` (14)
+the outermost row on each side turns toxic for `poisonDamage` (2) at the end of
+its owner's turn; another row closes every `poisonStep` (5) rounds, capped at
+four a side (`poisonDepth`/`isPoisoned` in data.ts, applied in `finishTurn`).
+Champions start on the back row, so the first closure evicts them forward. This
+took games reaching round 20 from 48% to 7% and the median from 19 to 15. Use
+`isPoisoned` (allocation-free) in hot paths — `poisonedRows` allocates and
+measurably slowed the AI's `evaluate()`.
+
 **Economy**: `POKE_CAP` 10, income 1/turn stepping up at `INCOME_BREAKS`
 (round 6 → 2, round 16 → 3), capped by `INCOME_CAP` 3. Great/Ultra Balls only
 via trading (3→G, 6→U). Second-player compensation is `TUNING.startPokeB` = 3.
@@ -70,8 +79,8 @@ winning line exists at par AND that none exists a turn sooner.
 
 **Campaign** (`src/game/campaign.ts`) — six trainers with fixed decks and
 climbing difficulty. You draft only from cards you own; beating a trainer hands
-you their whole deck. 45 of 62 cards are reachable on the current ladder and the
-card book says so. Save lives in `pt-campaign`.
+you their whole deck. **All 62 cards are reachable** across nine trainers, and
+`npm run campaign` asserts it. Save lives in `pt-campaign`.
 
 ## Verification — prefer running a script to eyeballing
 
@@ -102,8 +111,10 @@ self-contained HTML dashboard. **Any balance change should be A/B'd through
 this** — same seeds, different rules, diff the output.
 `docs/FINDINGS.md` holds the standing analysis and its caveats.
 
-Known open problems (see FINDINGS.md): games still lean long, three Great-tier
-cards barely get deployed, and the champion win-rate spread is wide.
+Known open problems (see FINDINGS.md): cost→win correlation is -0.06 (neutral,
+not rewarding), the champion spread is 18.8 points, and a thin tail of games
+still runs long. Game length and dead cards are FIXED — do not re-litigate them
+without re-running the harness.
 
 ## Layout
 - `src/game/data.ts` — every tuning number, roster, champions, summons. Balance

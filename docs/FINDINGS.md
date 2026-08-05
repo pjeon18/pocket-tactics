@@ -1,26 +1,50 @@
 # Balance telemetry — findings
 
-> **Update (post-AI-overhaul).** A second 10k run (`post-ai`) was taken after the
-> AI rewrite, the multiplicative RNG change, and raising second-player
-> compensation to 3. Both runs are in `docs/telemetry/`.
+> **Update (the closing board).** The stall problem is fixed. Champion chip
+> damage ("fatigue") has been replaced by a board that closes: from round 14 the
+> outermost row on each side turns toxic for 2 damage at the end of its owner's
+> turn, and another row closes every 5 rounds after that, to a maximum of four
+> rows a side.
 >
-> | Metric | baseline (weak AI) | post-ai | verdict |
-> |---|---|---|---|
-> | First-player win rate | 50.7% | **49.4%** | fair — and now fair against *competent* play |
-> | Fatigue rate | 57.9% | **47.6%** | better, still the biggest problem |
-> | Median length | 21 | **19** | shorter |
-> | Champion HP at round 15 | 85% | **82%** | still far too flat |
-> | Snowball index | 58.1% | 58.5% | unchanged, healthy |
-> | Cost → win correlation | −0.124 | **−0.053** | closer to neutral, still not rewarding |
-> | Dead cards (<5% deploy) | 3 | 3 | unchanged — Primeape, Gigalith, Scyther |
-> | Champion spread | 23.8 pts | 19.8 pts | narrower; Jirachi still last |
+> | Metric | baseline (weak AI) | post-ai | closing board | verdict |
+> |---|---|---|---|---|
+> | First-player win rate | 50.7% | 49.4% | **51.2%** | fair |
+> | Games reaching round 20 | 57.9% | 47.6% | **7.3%** | solved |
+> | Median length | 21 | 19 | **15** | tight |
+> | p90 length | 28 | — | **19** | tail cut |
+> | Champion HP at round 18 | — | ~78% | **35%** | the win condition is now approached |
+> | Snowball index | 58.1% | 58.5% | 59.2% | unchanged, healthy |
+> | KOs per game | 13.0 | — | **9.4** | less churn |
+> | Dead cards (<5% deploy) | 3 | 3 | **0** | fixed |
+> | Champion spread | 23.8 pts | 19.8 pts | 18.8 pts | narrower |
 >
-> The AI now uses items and aimed summons (Kyogre casts 0.46×/draft), and the
-> board no longer saturates to the cap — average fielded peaks at 6.2 and then
-> *falls*, where before it climbed to 6.7 and stayed. But **champions still lose
-> only 18% of their health over the first fifteen rounds**, so fatigue continues
-> to decide nearly half of all games. That is now unambiguously a rules problem
-> rather than an AI one, and it is the next thing to fix.
+> **Why closing beats chipping.** Chip damage ended games without changing them:
+> it ignored position, so a turtling side simply lost on a clock. Closing the
+> board attacks the cause. Champions *start* on the back row, so the first
+> closure evicts them forward into each other's range — and the champion-HP
+> curve shows it, sitting at 82% through round 14 and collapsing to 35% by
+> round 18. It is also dodgeable, which chip damage never was.
+>
+> **The timing mattered more than the mechanic.** Closing at round 20 — the
+> obvious "when the game gets long" choice — barely moved anything, because the
+> median game was already over by then (47.3% of games even reached it). The
+> harness swept start rounds 10-20: round 14 cuts the median to 15 and the
+> reach-round-20 share to 8% while still reading as a late-game event.
+>
+> **It needed a compensation retune.** The closing board favours the second
+> player, because the side that must break cover first is exposed first, and
+> shorter games make B's opening balls a larger share of total income. At the
+> old `startPokeB: 3` the first player fell to 45%; at 2 it sits at 51%.
+>
+> **The three dead cards are alive.** Primeape, Gigalith and Scyther were Poké-
+> tier cards priced at 4 Poké Balls — the only ones at that price, competing
+> against Great-tier cards with identical statlines and the same cost in
+> equivalent terms. Repricing them to 3 took their deploy rates from ~1% to
+> 69-78%. No card in the roster now deploys under 5%.
+>
+> **Still open:** cost→win correlation is -0.06 (near-neutral rather than
+> rewarding); the champion spread is 18.8 points with Celebi still ahead; and a
+> thin tail of games still runs to round 41.
 >
 > The section below is the original baseline analysis, kept for the diff.
 

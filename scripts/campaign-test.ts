@@ -61,7 +61,16 @@ for (const o of LADDER) s = claimWin(o.id).save
 const reachable = new Set([...STARTER_CARDS, ...LADDER.flatMap((o) => rewardsOf(o))])
 ok(s.beaten.length === LADDER.length, 'whole ladder can be completed')
 ok(s.cards.length === reachable.size, `collection ends at ${reachable.size} cards`)
-console.log(`\ncollectable: ${reachable.size} of ${Object.keys(ROSTER).length} cards via the ladder`)
+ok(reachable.size === Object.keys(ROSTER).length,
+  `EVERY card is reachable on the ladder (${reachable.size}/${Object.keys(ROSTER).length})`)
+// the card book advertises the whole roster, so the ladder must be able to fill it
+const unreachable = Object.keys(ROSTER).filter((k) => !reachable.has(k))
+if (unreachable.length) console.log('   unreachable:', unreachable.join(', '))
+// difficulty must not go backwards down the ladder
+const rank = { easy: 0, normal: 1, hard: 2 }
+let prev = -1, monotonic = true
+for (const o of LADDER) { if (rank[o.difficulty] < prev) monotonic = false; prev = Math.max(prev, rank[o.difficulty]) }
+ok(monotonic, 'difficulty never decreases as you climb')
 
 console.log(fails === 0 ? '\nall good' : `\n${fails} failure(s)`)
 process.exit(fails ? 1 : 0)
