@@ -115,6 +115,7 @@ export function Battle({
   puzzle,
   onPuzzleSolved,
   onNextPuzzle,
+  onWin,
   initialState,
   rebuild,
 }: {
@@ -132,6 +133,8 @@ export function Battle({
   /** Puzzle mode: fixed board, inert rival, hard turn budget. */
   puzzle?: { id: string; name: string; teaches: string; turns: number }
   onPuzzleSolved?: (id: string) => void
+  /** Campaign: fires once when the match is decided. */
+  onWin?: (winner: Owner) => void
   onNextPuzzle?: () => void
   /** Start from a prepared state instead of a fresh random battle. */
   initialState?: GameState
@@ -316,6 +319,7 @@ export function Battle({
   }
 
   useEffect(() => {
+    if (state.winner) onWin?.(state.winner)
     if (puzzle && state.winner === 'A') onPuzzleSolved?.(puzzle.id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.winner, puzzle?.id])

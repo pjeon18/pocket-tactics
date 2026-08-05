@@ -92,6 +92,8 @@ export function Draft({
   onDone,
   onProgress,
   opponentNote,
+  allowedCards,
+  allowedSummons,
 }: {
   label: string
   championOnly?: boolean
@@ -101,6 +103,9 @@ export function Draft({
   onProgress?: (p: DraftProgress) => void
   /** A live note about the opponent's drafting progress (online only). */
   opponentNote?: string
+  /** Campaign: draft only from the cards you actually own. */
+  allowedCards?: string[]
+  allowedSummons?: string[]
 }) {
   const [champion, setChampion] = useState<string | null>(null)
   const [picks, setPicks] = useState<string[]>([])
@@ -122,6 +127,7 @@ export function Draft({
 
   const roster = useMemo(() => {
     let list = Object.values(ROSTER)
+    if (allowedCards) list = list.filter((sp) => allowedCards.includes(sp.key))
     if (search.trim()) list = list.filter((s) => s.name.toLowerCase().includes(search.trim().toLowerCase()))
     if (roleFilter !== 'all') list = list.filter((s) => s.role === roleFilter)
     if (tierFilter !== 'all') list = list.filter((s) => s.tier === tierFilter)
@@ -137,7 +143,7 @@ export function Draft({
               : b.hp - a.hp,
     )
     return list
-  }, [roleFilter, tierFilter, sort, search])
+  }, [roleFilter, tierFilter, sort, search, allowedCards])
 
   const ready = champion && summons.length === SUMMON_PICKS && (championOnly || picks.length === DRAFT_SIZE)
 
@@ -199,7 +205,7 @@ export function Draft({
       </div>
       <p className="draft-sub summon-sub">Battlefield effects cast for Poké Balls — re-castable as long as you can pay.</p>
       <div className="champ-grid summon-grid">
-        {SUMMON_ORDER.map((key) => {
+        {(allowedSummons ?? SUMMON_ORDER).map((key) => {
           const sm = SUMMONS[key]
           const sel = summons.includes(key)
           return (

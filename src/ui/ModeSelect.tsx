@@ -145,11 +145,13 @@ export function ModeSelect({
   onOnline,
   onTutorial,
   onPuzzles,
+  onCampaign,
 }: {
   onPick: (mode: 'ai' | 'local', blitz: boolean, timer: boolean, difficulty: Difficulty) => void
   onOnline: (blitz: boolean, timer: boolean) => void
   onTutorial: () => void
   onPuzzles: () => void
+  onCampaign: () => void
 }) {
   const [blitz, setBlitz] = useState(false)
   const [timer, setTimer] = useState(true)
@@ -217,6 +219,9 @@ export function ModeSelect({
         </button>
         <button className="btn btn-ghost" onClick={() => onOnline(blitz, timer)}>
           Play Online · Private Room
+        </button>
+        <button className="btn btn-ghost" onClick={onCampaign}>
+          Campaign · Collect the roster
         </button>
         <button className="btn btn-ghost" onClick={onPuzzles}>
           Puzzles · Fixed boards, no dice

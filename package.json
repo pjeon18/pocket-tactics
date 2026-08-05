@@ -11,7 +11,9 @@
     "dashboard": "tsx scripts/dashboard.ts",
     "telemetry": "tsx scripts/sim.ts 10000 --tag=baseline && tsx scripts/dashboard.ts baseline",
     "a11y": "node scripts/a11y-audit.mjs",
-    "puzzles": "tsx scripts/verify-puzzles.ts"
+    "puzzles": "tsx scripts/verify-puzzles.ts",
+    "campaign": "tsx scripts/campaign-test.ts",
+    "check": "npm run build && npx tsx scripts/smoke.ts && npx tsx scripts/verify-puzzles.ts && npx tsx scripts/campaign-test.ts"
   },
   "dependencies": {
     "react": "^18.3.1",

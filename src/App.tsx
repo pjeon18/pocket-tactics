@@ -3,6 +3,8 @@ import { aiDraft, type Difficulty } from './game/ai'
 import { makeTutorialDrafts, makeTutorialState } from './game/tutorial'
 import { PUZZLES, makePuzzleState, type Puzzle } from './game/puzzles'
 import { PuzzleSelect, markSolved } from './ui/PuzzleSelect'
+import { CampaignLadder, CardBook, RewardScreen } from './ui/Campaign'
+import { claimWin, loadCampaign, resetCampaign, type CampaignSave, type Opponent } from './game/campaign'
 import type { DraftResult } from './game/types'
 import { Battle } from './ui/Battle'
 import { BattleIntro } from './ui/BattleIntro'
@@ -17,6 +19,11 @@ type Phase =
   | { t: 'menu' }
   | { t: 'tutorial' }
   | { t: 'puzzles' }
+  | { t: 'campaign' }
+  | { t: 'cardbook' }
+  | { t: 'campaignDraft'; opp: Opponent }
+  | { t: 'campaignBattle'; opp: Opponent; draftA: DraftResult }
+  | { t: 'campaignReward'; opp: Opponent; gained: string[] }
   | { t: 'puzzle'; puzzle: Puzzle }
   | { t: 'online'; blitz: boolean; timer: boolean }
   | { t: 'draftA'; mode: Mode; blitz: boolean; timer: boolean; difficulty: Difficulty }
@@ -27,6 +34,7 @@ type Phase =
 
 export default function App() {
   const [phase, setPhase] = useState<Phase>({ t: 'menu' })
+  const [save, setSave] = useState<CampaignSave>(() => loadCampaign())
   const { waveActive, go } = useWave()
 
   return (
@@ -38,6 +46,7 @@ export default function App() {
           onOnline={(blitz, timer) => go(() => setPhase({ t: 'online', blitz, timer }))}
           onTutorial={() => go(() => setPhase({ t: 'tutorial' }))}
           onPuzzles={() => go(() => setPhase({ t: 'puzzles' }))}
+          onCampaign={() => go(() => setPhase({ t: 'campaign' }))}
         />
       )}
 
@@ -53,6 +62,56 @@ export default function App() {
           draftB={makeTutorialDrafts().draftB}
           onExit={() => setPhase({ t: 'menu' })}
           onRedraft={() => setPhase({ t: 'menu' })}
+        />
+      )}
+
+      {phase.t === 'campaign' && (
+        <CampaignLadder
+          save={save}
+          onFight={(opp) => go(() => setPhase({ t: 'campaignDraft', opp }))}
+          onBook={() => setPhase({ t: 'cardbook' })}
+          onBack={() => setPhase({ t: 'menu' })}
+          onReset={() => setSave(resetCampaign())}
+        />
+      )}
+
+      {phase.t === 'cardbook' && <CardBook save={save} onBack={() => setPhase({ t: 'campaign' })} />}
+
+      {phase.t === 'campaignDraft' && (
+        <Draft
+          label={`vs ${phase.opp.name}`}
+          allowedCards={save.cards}
+          allowedSummons={save.summons}
+          onBack={() => setPhase({ t: 'campaign' })}
+          onDone={(draftA) => go(() => setPhase({ t: 'campaignBattle', opp: phase.opp, draftA }))}
+        />
+      )}
+
+      {phase.t === 'campaignBattle' && (
+        <Battle
+          key={phase.opp.id}
+          mode="ai"
+          blitz={false}
+          timerOn={false}
+          difficulty={phase.opp.difficulty}
+          draftA={phase.draftA}
+          draftB={{ champion: phase.opp.champion, picks: phase.opp.deck, summons: phase.opp.summons }}
+          onWin={(winner) => {
+            if (winner !== 'A') return
+            const { save: next, gained } = claimWin(phase.opp.id)
+            setSave(next)
+            setPhase({ t: 'campaignReward', opp: phase.opp, gained })
+          }}
+          onExit={() => setPhase({ t: 'campaign' })}
+          onRedraft={() => setPhase({ t: 'campaignDraft', opp: phase.opp })}
+        />
+      )}
+
+      {phase.t === 'campaignReward' && (
+        <RewardScreen
+          opp={phase.opp}
+          gained={phase.gained}
+          onDone={() => go(() => setPhase({ t: 'campaign' }))}
         />
       )}
 

@@ -141,6 +141,19 @@ const scenes = [
   ['battle', async (p) => { await draftInto(p) }],
   ['battle-selected', async (p) => { await draftInto(p); await p.evaluate(() => [...document.querySelectorAll('.unit-mine')].pop()?.click()); await sleep(500) }],
   ['result-overlay', async (p) => { await draftInto(p); await p.evaluate((h) => document.body.insertAdjacentHTML('beforeend', h), OVERLAY_HTML); await sleep(400) }],
+  ['puzzle-select', async (p) => { await p.evaluate(() => [...document.querySelectorAll('button')].find((x) => x.textContent.includes('Puzzles ·'))?.click()); await p.waitForSelector('.puzzle-grid'); await sleep(400) }],
+  ['campaign', async (p) => {
+    await p.evaluate(() => localStorage.setItem('pt-campaign', JSON.stringify({ beaten: ['c1'], cards: ['squirtle','vulpix','sunkern','pikachu','onix','grotle','starly','lillipup','poochyena','abra','croagunk','kirlia','quagsire','metapod'], summons: ['hooh','lugia'] })))
+    await p.reload({ waitUntil: 'networkidle' }); await sleep(300)
+    await p.evaluate(() => [...document.querySelectorAll('button')].find((x) => x.textContent.includes('Campaign ·'))?.click())
+    await p.waitForSelector('.ladder'); await sleep(400)
+  }],
+  ['card-book', async (p) => {
+    await p.evaluate(() => [...document.querySelectorAll('button')].find((x) => x.textContent.includes('Campaign ·'))?.click())
+    await p.waitForSelector('.ladder'); await sleep(300)
+    await p.evaluate(() => [...document.querySelectorAll('button')].find((x) => x.textContent.includes('Card book'))?.click())
+    await p.waitForSelector('.book-grid'); await sleep(400)
+  }],
 ]
 
 const b = await chromium.launch()
