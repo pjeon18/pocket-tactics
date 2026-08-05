@@ -1,12 +1,15 @@
-# CLAUDE.md — Pocket Tactics (overhaul fork)
+# CLAUDE.md — Pocket Tactics
 
-This is **`pocket-tactics-next`**, the overhaul fork. The shipped game lives in
-`../pocket-tactics` and is deployed at pjeon18.github.io/pocket-tactics — this
-fork has **no git remote on purpose**, so nothing here can reach the live site
-until we deliberately give it one.
+**This is the live game.** `assets/pocket-tactics/` is the repo behind
+github.com/pjeon18/pocket-tactics, deployed to pjeon18.github.io/pocket-tactics
+on every push to `main`. Dev server: port 5202 (`preview_start` name
+`pocket-tactics`).
 
-Dev server: **port 5203** (`preview_start` name `pocket-tactics-next`). The
-shipped version still runs on 5202, so both can run side by side.
+The overhaul that produced everything below was built in a detached fork and
+promoted here as a fast-forward, so the whole history is intact. A working copy
+of that fork may still exist at `assets/pocket-tactics-next/` (dev port 5203) —
+it is now identical and redundant; delete it or ignore it, but do NOT commit
+there expecting it to reach the site.
 
 ## What this is
 A **tactics game**: 7×10 board, draft 1 Mythical champion + 8 Pokémon + 2
@@ -30,7 +33,7 @@ resolve at End Turn. KO the enemy champion to win.
 - Simulation stays **headless** — nothing in `src/game/` may touch the DOM.
 - Moving is optional; never auto-act the player's units.
 
-## Current systems (post-overhaul — differs from the shipped version)
+## Current systems
 
 **Combat maths is multiplicative** (`TUNING` in `data.ts`). Crit ×1.5 at 6%,
 miss = 0 damage at 3%, super effective ×1.5, resisted ×0.5. Order inside
@@ -82,7 +85,7 @@ in one task React batches the state update and Start reads the previous mode.
 The older `scripts/verify-*.mjs` one-offs predate the fork, still click the old
 menu labels, and are not wired into any npm script.
 
-## Modes (all new in this fork)
+## Modes
 
 **Tutorial** — one guided battle over a fixed board with two rival pieces: a
 throwaway Squirtle to learn the attack loop on, then Manaphy as the win
