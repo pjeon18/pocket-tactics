@@ -1138,6 +1138,8 @@ function PlayerPanel(props: PanelProps) {
       {/* the board is the whole point — everything else defers to it */}
       <div className="board-col">
         <div className="board-area">
+          {/* the stage hugs the board so the mat never sprawls past it */}
+          <div className="board-stage">
           <SkyMat />
           <BoardView
             state={state}
@@ -1156,6 +1158,7 @@ function PlayerPanel(props: PanelProps) {
           {banner && (
             <div key={banner.key} className="turn-banner">{banner.text}</div>
           )}
+          </div>
         </div>
         <div className="board-foot">
           <span className={`status-line ${myTurn && !resolving ? 'status-live' : ''}`}>{status}</span>

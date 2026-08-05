@@ -1519,3 +1519,36 @@ html.cb .cell-toxic::before {
 .menu-cb:hover { opacity: 1; }
 .difficulty-row { margin-bottom: 18px; }
 .menu .draft-style { margin-bottom: 14px; }
+
+/* ---------- the board must fit BOTH axes, not just height ---------- */
+/* It was sized `height: 100%; width: auto`, so aspect-ratio derived the width
+   from whatever height was going. In a tall window that width exceeded the
+   column and the mat's overflow:hidden simply cut the outer columns in half
+   (at 1100x1400: an 890px board in a 444px slot, 218px lost per side).
+   Container query units let the height be capped by the available WIDTH too, so
+   the board shrinks to fit instead of spilling — and no magic pixel constants. */
+.panel-solo .board-area {
+  width: 100%; max-width: 100%; container-type: size;
+  display: flex; align-items: center; justify-content: center;
+}
+.panel-solo .board {
+  height: min(100cqh, calc(100cqw * 10 / 7));
+  width: auto; max-width: 100%;
+}
+
+/* The centring transform was being replaced by the generic button hover, which
+   dropped translateX(-50%) and threw the button half its width to the right. */
+.review-return:hover:not(:disabled) { transform: translateX(-50%) translateY(-1.5px); }
+.review-return:active:not(:disabled) { transform: translateX(-50%) translateY(2px); }
+
+/* The mat moves onto an inner stage that hugs the board. With it on .board-area
+   — which must be full-width for the container query — a tall window left a
+   large empty sky above and below the grid. */
+.panel-solo .board-area { background: none; padding: 0; border-radius: 0; }
+.board-stage {
+  position: relative; display: flex; align-items: center; justify-content: center;
+  background: var(--page-2); border-radius: 14px; padding: 10px; overflow: hidden;
+}
+.panel-solo .board {
+  height: min(calc(100cqh - 20px), calc((100cqw - 20px) * 10 / 7));
+}
