@@ -115,6 +115,7 @@ export function Battle({
   puzzle,
   onPuzzleSolved,
   onNextPuzzle,
+  onPuzzles,
   onWin,
   initialState,
   rebuild,
@@ -136,6 +137,8 @@ export function Battle({
   /** Campaign: fires once when the match is decided. */
   onWin?: (winner: Owner) => void
   onNextPuzzle?: () => void
+  /** Where the tutorial sends you next. */
+  onPuzzles?: () => void
   /** Start from a prepared state instead of a fresh random battle. */
   initialState?: GameState
   /** How to rebuild the starting state on "Try again" (tutorial). */
@@ -764,11 +767,12 @@ export function Battle({
             <div className="overlay-title">{state.winner === 'A' ? 'Tutorial complete!' : 'Try again'}</div>
             <div className="overlay-sub">
               {state.winner === 'A'
-                ? "That's the whole loop — deploy, rest, move, declare, and resolve at End turn. You're ready for a real match."
+                ? 'That is the whole turn: pay, settle, move, declare, resolve — and a special when it is charged. The puzzles take it from here, one rule at a time.'
                 : 'The rival champion is still standing. Give it another go.'}
             </div>
             <div className="overlay-btns">
-              <button className="btn btn-primary" onClick={onExit}>Battle the Rival</button>
+              {onPuzzles && <button className="btn btn-primary" onClick={onPuzzles}>Try the puzzles</button>}
+              <button className="btn btn-ghost" onClick={onExit}>Battle the Rival</button>
               <button className="btn btn-ghost" onClick={restart}>Replay tutorial</button>
             </div>
           </div>
@@ -871,64 +875,88 @@ function PuzzleHud({
 /* ---------- guided tutorial coach ---------- */
 
 type TutorialStep =
-  | 'deploy' | 'restTurn' | 'wait' | 'move' | 'restMove' | 'charge' | 'special' | 'resolveTurn'
+  | 'deploy' | 'settle' | 'wait'
+  | 'approach' | 'restMove' | 'strike' | 'resolve'
+  | 'charge' | 'special' | 'restTurn'
 
+/**
+ * The step is DERIVED from the board, never from a script counter — so the coach
+ * stays correct no matter what order the player does things in, and picking up
+ * mid-way (or undoing) can't desync it.
+ */
 function tutorialStep(state: GameState, resolving: boolean): TutorialStep {
   if (resolving || state.current !== 'A') return 'wait'
   const unit = state.units.find((u) => u.owner === 'A' && !u.isChampion)
   if (!unit) return 'deploy'
-  if (unit.summoned) return 'restTurn'
-  if (unit.planned) return 'resolveTurn'
-  const champB = state.units.find((u) => u.owner === 'B' && u.isChampion)
-  const inRange =
-    !!champB && Math.max(Math.abs(unit.col - champB.col), Math.abs(unit.row - champB.row)) <= unit.range
-  if (!inRange) {
-    // out of range: move if it still can this turn, otherwise end the turn and continue
-    return unit.moved || state.movesLeft <= 0 ? 'restMove' : 'move'
+  if (unit.summoned) return 'settle'
+  if (unit.planned) return 'resolve'
+
+  // the throwaway body first, then the champion
+  const minion = state.units.find((u) => u.owner === 'B' && !u.isChampion)
+  const champ = state.units.find((u) => u.owner === 'B' && u.isChampion)
+  const target = minion ?? champ
+  if (!target) return 'wait'
+
+  const dist = Math.max(Math.abs(unit.col - target.col), Math.abs(unit.row - target.row))
+  if (dist > unit.range) {
+    return unit.moved || state.movesLeft <= 0 ? 'restMove' : 'approach'
   }
-  // in range: charge the special up, then unleash it as the finisher
-  return unit.charge >= unit.chargeMax ? 'special' : 'charge'
+  if (!canActNow(state, unit)) return 'restTurn'
+  // the special is saved for the champion — it is the finishing blow by design
+  if (!minion && unit.charge >= unit.chargeMax) return 'special'
+  if (!minion && unit.charge < unit.chargeMax) return 'strike'
+  return 'strike'
 }
 
 const TUTORIAL_COPY: Record<TutorialStep, { title: string; body: string; highlight: string[] }> = {
   deploy: {
-    title: 'Step 1 — Deploy',
-    body: 'Poké Balls (highlighted below) are your currency. Tap Pikachu on your bench — its card shows it costs 2 — then tap a glowing tile to send it out.',
+    title: 'Deploy a Pokémon',
+    body: 'You win by knocking out the rival champion — the gold one at the top. Poké Balls are what you spend to field help. Tap Pikachu on your bench (it costs 2), then tap a glowing tile.',
     highlight: ['.bench-card', '.econ-row'],
   },
-  restTurn: {
-    title: 'Step 2 — Settle in',
-    body: "A Pokémon can't attack the turn it deploys. Press End turn to let it settle — its special starts charging too.",
+  settle: {
+    title: 'Let it settle',
+    body: 'A Pokémon can move the turn it arrives, but it cannot attack. Press End turn — its special starts charging while it waits.',
     highlight: ['.endturn-hud'],
   },
   wait: {
     title: 'Rival’s turn',
-    body: 'The tutorial rival is passive, so it just passes its turn. Hang tight…',
+    body: 'The rival is passive here, so it simply passes. Hang tight…',
     highlight: [],
   },
-  move: {
-    title: 'Step 3 — Move in',
-    body: 'Tap your Pikachu, then a blue tile to move it toward the gold enemy champion until it’s within range.',
+  approach: {
+    title: 'Walk into range',
+    body: 'Tap Pikachu, then a blue tile. Blue is everywhere it can reach this turn — you get three moves a turn across your whole team.',
     highlight: [],
   },
   restMove: {
-    title: 'Step 3 — Keep closing in',
-    body: 'That’s this turn’s move. Press End turn, then move again next turn until Pikachu can reach the champion.',
+    title: 'Out of moves',
+    body: 'That is this turn’s movement. Press End turn and keep closing next turn.',
+    highlight: ['.endturn-hud'],
+  },
+  strike: {
+    title: 'Declare an attack',
+    body: 'With Pikachu selected, tap the enemy in range. Nothing happens yet — you are declaring the attack, and the red marker shows what it will hit.',
+    highlight: [],
+  },
+  resolve: {
+    title: 'End the turn to resolve',
+    body: 'Declared attacks all land together when the turn ends. Press End turn and watch it connect — electric into water is super effective, so it hits for half again.',
     highlight: ['.endturn-hud'],
   },
   charge: {
-    title: 'Step 4 — Charge the special',
-    body: 'Specials fire only once their charge meter is full. Tap Pikachu to watch its pips fill, then press End turn to charge one more notch.',
+    title: 'Charging',
+    body: 'The pips under Pikachu are its special charge, filling one notch per turn. Press End turn.',
     highlight: ['.endturn-hud'],
   },
   special: {
-    title: 'Step 5 — Unleash the special',
-    body: 'Charged! Tap Pikachu, press Use Thunder Wave, then tap the champion. Specials are your big, charged attacks — and they never miss.',
+    title: 'Finish with the special',
+    body: 'Charged. Tap Pikachu, press Use Thunder Wave, then tap the champion. Specials never miss and never crit — what you see is what lands.',
     highlight: ['.btn-gold'],
   },
-  resolveTurn: {
-    title: 'Step 6 — Resolve',
-    body: 'Attacks and specials are declared now and land when the turn ends. Press End turn to fire it and knock out the champion.',
+  restTurn: {
+    title: 'Nothing left this turn',
+    body: 'Pikachu has already acted. Press End turn to carry on.',
     highlight: ['.endturn-hud'],
   },
 }

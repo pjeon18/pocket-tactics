@@ -56,6 +56,7 @@ export default function App() {
           blitz={false}
           timerOn={false}
           tutorial
+          onPuzzles={() => go(() => setPhase({ t: 'puzzles' }))}
           initialState={makeTutorialState()}
           rebuild={makeTutorialState}
           draftA={makeTutorialDrafts().draftA}
