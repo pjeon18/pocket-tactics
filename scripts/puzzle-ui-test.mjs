@@ -1,4 +1,5 @@
 import pw from '/Users/pauljeon/Downloads/assets/iso-prototype/node_modules/playwright/index.js'
+import { startMode } from './menu-nav.mjs'
 const { chromium } = pw
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 const b = await chromium.launch()
@@ -6,7 +7,7 @@ const p = await b.newPage({ viewport: { width: 1440, height: 900 } })
 p.on('pageerror', e => console.log('PAGEERR', String(e).slice(0, 150)))
 await p.goto('http://localhost:5203/', { waitUntil: 'networkidle' }); await sleep(500)
 
-await p.evaluate(() => [...document.querySelectorAll('button')].find(x => x.textContent.includes('Puzzles ·'))?.click())
+await startMode(p, 'Puzzles')
 await p.waitForSelector('.puzzle-grid', { timeout: 8000 }); await sleep(400)
 const cards = await p.evaluate(() => [...document.querySelectorAll('.puzzle-card')].map(c => c.querySelector('.card-name')?.textContent))
 console.log('puzzles listed:', JSON.stringify(cards))

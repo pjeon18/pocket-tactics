@@ -1,5 +1,6 @@
 /** Plays the guided tutorial to completion and asserts what it taught. */
 import pw from '/Users/pauljeon/Downloads/assets/iso-prototype/node_modules/playwright/index.js'
+import { startMode } from './menu-nav.mjs'
 const { chromium } = pw
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 const VIEW = process.argv[2] === 'phone' ? { width: 390, height: 844 } : { width: 1280, height: 900 }
@@ -8,7 +9,7 @@ const b = await chromium.launch()
 const p = await b.newPage({ viewport: VIEW })
 p.on('pageerror', e => console.log('PAGEERR', String(e).slice(0, 150)))
 await p.goto('http://localhost:5203/', { waitUntil: 'networkidle' }); await sleep(500)
-await p.evaluate(() => [...document.querySelectorAll('button')].find(x => x.textContent.includes('Play the tutorial'))?.click())
+await startMode(p, 'Tutorial')
 await p.waitForSelector('.tutorial-coach', { timeout: 9000 }); await sleep(700)
 
 const title = () => p.evaluate(() => document.querySelector('.tutorial-coach-title')?.textContent || '')

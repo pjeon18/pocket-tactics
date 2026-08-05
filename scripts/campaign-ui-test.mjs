@@ -1,4 +1,5 @@
 import pw from '/Users/pauljeon/Downloads/assets/iso-prototype/node_modules/playwright/index.js'
+import { startMode } from './menu-nav.mjs'
 const { chromium } = pw
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 const b = await chromium.launch()
@@ -8,7 +9,7 @@ await p.goto('http://localhost:5203/', { waitUntil: 'networkidle' })
 await p.evaluate(() => localStorage.removeItem('pt-campaign'))
 await p.reload({ waitUntil: 'networkidle' }); await sleep(500)
 
-await p.evaluate(() => [...document.querySelectorAll('button')].find(x => x.textContent.includes('Campaign ·'))?.click())
+await startMode(p, 'Campaign')
 await p.waitForSelector('.ladder', { timeout: 8000 }); await sleep(400)
 const ladder = await p.evaluate(() => ({
   rows: document.querySelectorAll('.ladder-row').length,

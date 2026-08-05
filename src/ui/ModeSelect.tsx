@@ -140,6 +140,20 @@ export function Compendium() {
   )
 }
 
+type MenuMode = 'single' | 'tabletop' | 'online' | 'campaign' | 'puzzles' | 'tutorial'
+
+const MODES: { key: MenuMode; label: string; sub: string }[] = [
+  { key: 'single', label: 'Single Player', sub: 'Draft a team and fight the CPU' },
+  { key: 'tabletop', label: 'Tabletop Multiplayer', sub: 'Two players, one screen' },
+  { key: 'online', label: 'Play Online', sub: 'Private room — share a code' },
+  { key: 'campaign', label: 'Campaign', sub: 'Beat trainers, collect the roster' },
+  { key: 'puzzles', label: 'Puzzles', sub: 'Fixed boards, no dice' },
+  { key: 'tutorial', label: 'Tutorial', sub: 'New here? Start with this' },
+]
+
+/** Modes that actually take the draft-style and turn-clock settings. */
+const BATTLE_MODES: MenuMode[] = ['single', 'tabletop', 'online']
+
 export function ModeSelect({
   onPick,
   onOnline,
@@ -153,10 +167,24 @@ export function ModeSelect({
   onPuzzles: () => void
   onCampaign: () => void
 }) {
+  const [mode, setMode] = useState<MenuMode>('single')
   const [blitz, setBlitz] = useState(false)
   const [timer, setTimer] = useState(true)
   const [colorblind, setColorblind] = useState(() => document.documentElement.classList.contains('cb'))
   const [difficulty, setDifficulty] = useState<Difficulty>('normal')
+
+  // nothing commits until Start game — picking a mode only changes the selection
+  const start = () => {
+    if (mode === 'single') onPick('ai', blitz, timer, difficulty)
+    else if (mode === 'tabletop') onPick('local', blitz, timer, difficulty)
+    else if (mode === 'online') onOnline(blitz, timer)
+    else if (mode === 'campaign') onCampaign()
+    else if (mode === 'puzzles') onPuzzles()
+    else onTutorial()
+  }
+
+  const showBattleSettings = BATTLE_MODES.includes(mode)
+
   return (
     <div className="menu">
       <div className="ball-wallpaper" aria-hidden="true" />
@@ -172,64 +200,65 @@ export function ModeSelect({
         Draft your Pokémon, protect your Mythical, and take the other one down.
       </p>
 
-      <div className="draft-style">
-        <button className={`chip ${!blitz ? 'chip-on' : ''}`} onClick={() => setBlitz(false)}>
-          Classic draft — pick 8 before the battle
-        </button>
-        <button className={`chip ${blitz ? 'chip-on' : ''}`} onClick={() => setBlitz(true)}>
-          Blitz draft — buy from a shop that restocks every turn
-        </button>
-        <button className={`chip ${timer ? 'chip-on' : ''}`} onClick={() => setTimer(!timer)}>
-          {timer ? 'Turn clock: 60 seconds' : 'Turn clock: off'}
-        </button>
-        <button
-          className={`chip ${colorblind ? 'chip-on' : ''}`}
-          aria-pressed={colorblind}
-          onClick={() => {
-            const next = !colorblind
-            setColorblind(next)
-            document.documentElement.classList.toggle('cb', next)
-            localStorage.setItem('pt-colorblind', next ? '1' : '0')
-          }}
-        >
-          {colorblind ? 'Colourblind mode: on — shapes and hatching' : 'Colourblind mode: off'}
-        </button>
-      </div>
-
-      <div className="difficulty-row" role="group" aria-label="Rival difficulty">
-        <span className="difficulty-label">Rival</span>
-        {(['easy', 'normal', 'hard'] as const).map((d) => (
+      <div className="mode-grid" role="radiogroup" aria-label="Game mode">
+        {MODES.map((m) => (
           <button
-            key={d}
-            className={`chip ${difficulty === d ? 'chip-on' : ''}`}
-            onClick={() => setDifficulty(d)}
-            aria-pressed={difficulty === d}
+            key={m.key}
+            role="radio"
+            aria-checked={mode === m.key}
+            className={`mode-card ${mode === m.key ? 'is-on' : ''}`}
+            onClick={() => setMode(m.key)}
           >
-            {d === 'easy' ? 'Relaxed' : d === 'normal' ? 'Trainer' : 'Champion'}
+            <span className="mode-card-label">{m.label}</span>
+            <span className="mode-card-sub">{m.sub}</span>
           </button>
         ))}
       </div>
 
-      <div className="menu-btns">
-        <button className="btn btn-primary" onClick={() => onPick('ai', blitz, timer, difficulty)}>
-          Battle the Rival
-        </button>
-        <button className="btn btn-ghost" onClick={() => onPick('local', blitz, timer, difficulty)}>
-          Two Players · One Screen
-        </button>
-        <button className="btn btn-ghost" onClick={() => onOnline(blitz, timer)}>
-          Play Online · Private Room
-        </button>
-        <button className="btn btn-ghost" onClick={onCampaign}>
-          Campaign · Collect the roster
-        </button>
-        <button className="btn btn-ghost" onClick={onPuzzles}>
-          Puzzles · Fixed boards, no dice
-        </button>
-        <button className="btn btn-tutorial" onClick={onTutorial}>
-          New here? Play the tutorial
-        </button>
-      </div>
+      {showBattleSettings && (
+        <div className="draft-style">
+          <button className={`chip ${!blitz ? 'chip-on' : ''}`} onClick={() => setBlitz(false)}>
+            Classic draft — pick 8 before the battle
+          </button>
+          <button className={`chip ${blitz ? 'chip-on' : ''}`} onClick={() => setBlitz(true)}>
+            Blitz draft — buy from a shop that restocks every turn
+          </button>
+          <button className={`chip ${timer ? 'chip-on' : ''}`} onClick={() => setTimer(!timer)}>
+            {timer ? 'Turn clock: 60 seconds' : 'Turn clock: off'}
+          </button>
+        </div>
+      )}
+
+      {mode === 'single' && (
+        <div className="difficulty-row" role="group" aria-label="CPU difficulty">
+          <span className="difficulty-label">CPU difficulty</span>
+          {(['easy', 'normal', 'hard'] as const).map((d) => (
+            <button
+              key={d}
+              className={`chip ${difficulty === d ? 'chip-on' : ''}`}
+              onClick={() => setDifficulty(d)}
+              aria-pressed={difficulty === d}
+            >
+              {d === 'easy' ? 'Relaxed' : d === 'normal' ? 'Trainer' : 'Champion'}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <button className="btn btn-primary btn-start" onClick={start}>Start game</button>
+
+      <button
+        className={`chip menu-cb ${colorblind ? 'chip-on' : ''}`}
+        aria-pressed={colorblind}
+        onClick={() => {
+          const next = !colorblind
+          setColorblind(next)
+          document.documentElement.classList.toggle('cb', next)
+          localStorage.setItem('pt-colorblind', next ? '1' : '0')
+        }}
+      >
+        {colorblind ? 'Colourblind mode: on — shapes and hatching' : 'Colourblind mode: off'}
+      </button>
 
       <details className="rules rules-wide">
         <summary>How to play</summary>

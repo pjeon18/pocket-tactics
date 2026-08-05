@@ -68,6 +68,20 @@ avoids enemy threat tiles, uses items and aimed summons, and measures special
 damage by actually simulating the action (`simulateAction`) rather than
 consulting a table. `aiStep(state, difficulty)` and `aiDraft(difficulty)`.
 
+## The main menu
+
+The menu is a **selection screen, not a launcher**. The six mode cards
+(`.mode-card`, 2x3 grid) only mark a choice; the red `Start game` button is the
+only thing that leaves the screen, and `start()` routes on the selected mode.
+Settings appear only when they apply — draft style and turn clock for the three
+battle modes, CPU difficulty for Single Player alone.
+
+Browser suites must navigate with `startMode(page, label)` from
+`scripts/menu-nav.mjs`. Selecting and starting have to be **separate evaluates**:
+in one task React batches the state update and Start reads the previous mode.
+The older `scripts/verify-*.mjs` one-offs predate the fork, still click the old
+menu labels, and are not wired into any npm script.
+
 ## Modes (all new in this fork)
 
 **Tutorial** — one guided battle over a fixed board with two rival pieces: a
@@ -90,6 +104,7 @@ you their whole deck. **All 62 cards are reachable** across nine trainers, and
 
 ```bash
 npm run verify      # everything below, in order
+npm run menu        # menu selects vs commits, and routes each mode
 npm run check       # build + engine + puzzles + campaign
 npm run a11y        # contrast audit across 8 real screens
 npm run puzzles     # puzzle solvability + par tightness

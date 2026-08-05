@@ -15,7 +15,8 @@
     "campaign": "tsx scripts/campaign-test.ts",
     "check": "npm run build && npx tsx scripts/smoke.ts && npx tsx scripts/verify-puzzles.ts && npx tsx scripts/campaign-test.ts",
     "tutorial": "node scripts/tutorial-test.mjs",
-    "verify": "npm run check && node scripts/a11y-audit.mjs && node scripts/tutorial-test.mjs && node scripts/puzzle-ui-test.mjs && node scripts/campaign-ui-test.mjs"
+    "verify": "npm run check && node scripts/a11y-audit.mjs && node scripts/menu-test.mjs && node scripts/tutorial-test.mjs && node scripts/puzzle-ui-test.mjs && node scripts/campaign-ui-test.mjs",
+    "menu": "node scripts/menu-test.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",
