@@ -55,6 +55,39 @@ avoids enemy threat tiles, uses items and aimed summons, and measures special
 damage by actually simulating the action (`simulateAction`) rather than
 consulting a table. `aiStep(state, difficulty)` and `aiDraft(difficulty)`.
 
+## Modes (all new in this fork)
+
+**Tutorial** — one guided battle over a fixed board with two rival pieces: a
+throwaway Squirtle to learn the attack loop on, then Manaphy as the win
+condition. Teaches deploy → settle → move → *declare a normal attack* → resolve
+→ charge → special. Steps are DERIVED from board state (`tutorialStep`), never
+a script counter, so the coach cannot desync. The scenario is `deterministic`.
+
+**Puzzles** (`src/game/puzzles.ts`) — six hand-authored deterministic boards,
+"KO the champion in N turns", inert rival. Each teaches one rule by making it
+the solution. **Every puzzle is machine-verified**: `npm run puzzles` proves a
+winning line exists at par AND that none exists a turn sooner.
+
+**Campaign** (`src/game/campaign.ts`) — six trainers with fixed decks and
+climbing difficulty. You draft only from cards you own; beating a trainer hands
+you their whole deck. 45 of 62 cards are reachable on the current ladder and the
+card book says so. Save lives in `pt-campaign`.
+
+## Verification — prefer running a script to eyeballing
+
+```bash
+npm run verify      # everything below, in order
+npm run check       # build + engine + puzzles + campaign
+npm run a11y        # contrast audit across 8 real screens
+npm run puzzles     # puzzle solvability + par tightness
+npm run tutorial    # plays the tutorial to completion
+```
+
+These exist because eyeballing kept missing things. The a11y auditor caught 93
+real contrast failures; the puzzle verifier caught three broken boards and two
+bugs in itself. **When something looks wrong, check whether a tool can prove it
+before hand-tuning.**
+
 ## Balance telemetry — use it instead of guessing
 
 ```bash
