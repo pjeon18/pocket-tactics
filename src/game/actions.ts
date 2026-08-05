@@ -1137,13 +1137,14 @@ export function resolveStep(state0: GameState): GameState | null {
       state.acting = { id: u.id, dc: Math.sign(t.col - u.col), dr: Math.sign(t.row - u.row) }
       if (plan.kind === 'attack') {
         // normal attacks roll the dice: small miss chance, small crit chance
-        if (Math.random() < TUNING.missChance) {
+        if (!state.deterministic && Math.random() < TUNING.missChance) {
           state.events.push({ col: t.col, row: t.row, text: 'MISS', color: COLOR.resist })
           state.log.push(`${nameOf(u)} missed ${nameOf(t)}!`)
         } else {
           // Static: crit chance ×2 at tier 1, ×3 at tier 2
           const critChance =
-            ptypeOf(u) === 'electric' ? TUNING.critChance * (1 + tierOf(state.units, u)) : TUNING.critChance
+            state.deterministic ? 0
+              : ptypeOf(u) === 'electric' ? TUNING.critChance * (1 + tierOf(state.units, u)) : TUNING.critChance
           const critProof = ptypeOf(t) === 'rock' && hasSynergy(state.units, t) // Sturdy
           const crit = !critProof && Math.random() < critChance
           const before = t.hp
@@ -1262,8 +1263,8 @@ export function finishTurn(state0: GameState): GameState {
   state.current = otherOwner(ending)
   if (state.current === 'A') {
     state.round++
-    maybeSpawnChest(state)
-    if (state.round >= FATIGUE_ROUND) {
+    if (!state.deterministic) maybeSpawnChest(state)
+    if (!state.deterministic && state.round >= FATIGUE_ROUND) {
       // escalates so healers can never stall the game out forever
       const fatigue = 1 + Math.floor((state.round - FATIGUE_ROUND) / 5)
       for (const u of state.units) {

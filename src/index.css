@@ -1368,3 +1368,48 @@ html.cb .unit-mine { box-shadow: inset 0 0 0 3px rgba(47, 111, 208, 0.85); }
 html.cb .unit-foe { box-shadow: inset 0 0 0 3px rgba(214, 69, 69, 0.85); border-style: dashed; }
 /* the rival's champion card gets a dashed edge so "theirs" is never colour-only */
 html.cb .rival-strip .champ-card-hud { border-style: dashed; border-width: 2px; }
+
+/* ---------- puzzle mode ---------- */
+.puzzle-menu { max-width: 1040px; position: relative; }
+/* in the flow and left-aligned — absolute positioning anchored to the wrong
+   box and dropped it on top of the title */
+.puzzle-back { align-self: flex-start; margin-bottom: 10px; }
+.puzzle-grid {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; width: 100%; margin-top: 8px;
+}
+@media (max-width: 900px) { .puzzle-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .puzzle-grid { grid-template-columns: 1fr; } }
+.puzzle-card { --tc: #C9930A; min-width: 0; }
+.puzzle-card-top { display: flex; align-items: center; justify-content: space-between; }
+.puzzle-index { font-family: var(--font-num); font-size: 12px; font-weight: 700; color: var(--mist); }
+.puzzle-tick {
+  width: 22px; height: 22px; border-radius: 50%; background: var(--move); color: #fff;
+  display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900;
+}
+.puzzle-turns {
+  font-family: var(--font-num); font-size: 12px; font-weight: 600; color: var(--amber-ink);
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.puzzle-progress { color: var(--on-dark-sub); font-weight: 700; margin-top: 18px; }
+
+.puzzle-hud {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--gap-3);
+  width: 100%; max-width: var(--rail); margin: 0 auto 8px;
+  background: var(--page-2); border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px; padding: 8px 14px; color: var(--on-dark);
+}
+.puzzle-hud-main { display: flex; align-items: center; gap: var(--gap-4); min-width: 0; }
+.puzzle-hud-name { font-weight: 800; font-size: 15px; }
+.puzzle-hud-turns { display: inline-flex; align-items: center; gap: 6px; }
+.puzzle-hud-turns em {
+  font-style: normal; font-family: var(--font-num); font-size: 12px; color: var(--on-dark-sub); margin-left: 4px;
+}
+.turn-pip { width: 12px; height: 12px; border-radius: 50%; background: var(--amber); }
+.turn-pip-spent { background: rgba(255, 255, 255, 0.18); }
+.puzzle-hud-btns { display: flex; gap: 6px; flex-shrink: 0; }
+
+/* a puzzle has no economy and no hidden cards — drop the chrome that implies it */
+.battle-puzzle .econ-row,
+.battle-puzzle .rival-intel,
+.battle-puzzle .spend-row { display: none; }
+.battle-puzzle .hand-bar:empty { display: none; }

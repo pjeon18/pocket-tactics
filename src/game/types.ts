@@ -190,6 +190,8 @@ export interface GameState {
   chests: Chest[]
   /** Pending delayed area effects from targeted summons. */
   hazards: Hazard[]
+  /** Puzzle mode: no dice, no chest spawns, no fatigue. Perfect information. */
+  deterministic?: boolean
   /** Damage dealt per species, per side — feeds the battle-stats panel. */
   stats: Record<Owner, Record<string, number>>
   /** Blitz draft: no pre-drafted deck — deploy straight from a rotating shop. */

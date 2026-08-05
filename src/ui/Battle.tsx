@@ -112,6 +112,9 @@ export function Battle({
   onExit,
   onRedraft,
   tutorial = false,
+  puzzle,
+  onPuzzleSolved,
+  onNextPuzzle,
   initialState,
   rebuild,
 }: {
@@ -126,6 +129,10 @@ export function Battle({
   onRedraft: () => void
   /** Guided tutorial: passive rival, coach overlay, no draft. */
   tutorial?: boolean
+  /** Puzzle mode: fixed board, inert rival, hard turn budget. */
+  puzzle?: { id: string; name: string; teaches: string; turns: number }
+  onPuzzleSolved?: (id: string) => void
+  onNextPuzzle?: () => void
   /** Start from a prepared state instead of a fresh random battle. */
   initialState?: GameState
   /** How to rebuild the starting state on "Try again" (tutorial). */
@@ -308,6 +315,11 @@ export function Battle({
     setChatMsgs((m) => [...m, { me: true, text: t }])
   }
 
+  useEffect(() => {
+    if (puzzle && state.winner === 'A') onPuzzleSolved?.(puzzle.id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.winner, puzzle?.id])
+
   /* the win screen arrives behind a wave sweep */
   useEffect(() => {
     if (state.winner && !winnerShown) {
@@ -381,12 +393,12 @@ export function Battle({
   useEffect(() => {
     if (mode !== 'ai' || state.current !== 'B' || state.winner || resolving) return
     const t = window.setTimeout(() => {
-      const next = tutorial ? null : aiStep(state, difficulty)
+      const next = tutorial || puzzle ? null : aiStep(state, difficulty)
       if (next) apply(next)
       else setResolving(true)
     }, AI_STEP_MS)
     return () => clearTimeout(t)
-  }, [state, mode, resolving, tutorial, difficulty])
+  }, [state, mode, resolving, tutorial, puzzle, difficulty])
 
   const findUnit = (id: number) => state.units.find((u) => u.id === id)
   const selUnit = sel && 'id' in sel ? findUnit(sel.id) : undefined
@@ -656,7 +668,7 @@ export function Battle({
   }
 
   return (
-    <div className="battle">
+    <div className={`battle ${puzzle ? 'battle-puzzle' : ''}`}>
       <div className="ball-wallpaper" aria-hidden="true" />
       <div className="toolbar">
         <button className="btn btn-tiny" onClick={() => (state.winner ? onExit() : setQuitConfirm(true))}>‹ Menu</button>
@@ -742,7 +754,7 @@ export function Battle({
         </div>
       )}
 
-      {state.winner && winnerShown && !reviewing && tutorial && (
+      {state.winner && winnerShown && !reviewing && tutorial && !puzzle && (
         <div className="overlay">
           <div className="overlay-card overlay-confirm">
             <div className="overlay-title">{state.winner === 'A' ? 'Tutorial complete!' : 'Try again'}</div>
@@ -759,7 +771,7 @@ export function Battle({
         </div>
       )}
 
-      {state.winner && winnerShown && !reviewing && !tutorial && (
+      {state.winner && winnerShown && !reviewing && !tutorial && !puzzle && (
         <div className="overlay">
           <div className="overlay-card">
             <div className="overlay-title">
@@ -783,7 +795,71 @@ export function Battle({
         </div>
       )}
 
+      {puzzle && <PuzzleHud puzzle={puzzle} state={state} resolving={resolving} onRetry={restart} onExit={onExit} />}
+
+      {puzzle && state.winner === 'A' && winnerShown && (
+        <div className="overlay">
+          <div className="overlay-card overlay-confirm">
+            <div className="overlay-title">Solved</div>
+            <div className="overlay-sub">{puzzle.teaches}</div>
+            <div className="overlay-btns">
+              {onNextPuzzle && <button className="btn btn-primary" onClick={onNextPuzzle}>Next puzzle</button>}
+              <button className="btn btn-ghost" onClick={restart}>Play again</button>
+              <button className="btn btn-ghost" onClick={onExit}>All puzzles</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {puzzle && !state.winner && state.round > puzzle.turns && (
+        <div className="overlay">
+          <div className="overlay-card overlay-confirm">
+            <div className="overlay-title">Out of turns</div>
+            <div className="overlay-sub">
+              This board has a solution in {puzzle.turns} turn{puzzle.turns > 1 ? 's' : ''}. Nothing is hidden and
+              nothing is random — the line is there to be found.
+            </div>
+            <div className="overlay-btns">
+              <button className="btn btn-primary" onClick={restart}>Try again</button>
+              <button className="btn btn-ghost" onClick={onExit}>All puzzles</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {tutorial && !state.winner && <TutorialCoach state={state} resolving={resolving} sel={sel} onExit={onExit} />}
+    </div>
+  )
+}
+
+/* ---------- puzzle HUD: the turn budget, always visible ---------- */
+
+function PuzzleHud({
+  puzzle, state, resolving, onRetry, onExit,
+}: {
+  puzzle: { name: string; turns: number }
+  state: GameState
+  resolving: boolean
+  onRetry: () => void
+  onExit: () => void
+}) {
+  if (state.winner || state.round > puzzle.turns) return null
+  const used = state.round - 1
+  return (
+    <div className="puzzle-hud">
+      <div className="puzzle-hud-main">
+        <span className="puzzle-hud-name">{puzzle.name}</span>
+        <span className="puzzle-hud-turns">
+          {Array.from({ length: puzzle.turns }).map((_, i) => (
+            <span key={i} className={`turn-pip ${i < used ? 'turn-pip-spent' : ''}`} />
+          ))}
+          <em>{Math.max(0, puzzle.turns - used)} left</em>
+        </span>
+      </div>
+      <div className="puzzle-hud-btns">
+        <button className="btn btn-tiny" disabled={resolving} onClick={onRetry}>Restart</button>
+        <button className="btn btn-tiny" onClick={onExit}>Puzzles</button>
+      </div>
     </div>
   )
 }

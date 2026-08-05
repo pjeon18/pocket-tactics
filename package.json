@@ -10,7 +10,8 @@
     "sim": "tsx scripts/sim.ts",
     "dashboard": "tsx scripts/dashboard.ts",
     "telemetry": "tsx scripts/sim.ts 10000 --tag=baseline && tsx scripts/dashboard.ts baseline",
-    "a11y": "node scripts/a11y-audit.mjs"
+    "a11y": "node scripts/a11y-audit.mjs",
+    "puzzles": "tsx scripts/verify-puzzles.ts"
   },
   "dependencies": {
     "react": "^18.3.1",

@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { aiDraft, type Difficulty } from './game/ai'
 import { makeTutorialDrafts, makeTutorialState } from './game/tutorial'
+import { PUZZLES, makePuzzleState, type Puzzle } from './game/puzzles'
+import { PuzzleSelect, markSolved } from './ui/PuzzleSelect'
 import type { DraftResult } from './game/types'
 import { Battle } from './ui/Battle'
 import { BattleIntro } from './ui/BattleIntro'
@@ -14,6 +16,8 @@ type Mode = 'ai' | 'local'
 type Phase =
   | { t: 'menu' }
   | { t: 'tutorial' }
+  | { t: 'puzzles' }
+  | { t: 'puzzle'; puzzle: Puzzle }
   | { t: 'online'; blitz: boolean; timer: boolean }
   | { t: 'draftA'; mode: Mode; blitz: boolean; timer: boolean; difficulty: Difficulty }
   | { t: 'pass'; mode: 'local'; blitz: boolean; timer: boolean; difficulty: Difficulty; draftA: DraftResult }
@@ -33,6 +37,7 @@ export default function App() {
           onPick={(mode, blitz, timer, difficulty) => go(() => setPhase({ t: 'draftA', mode, blitz, timer, difficulty }))}
           onOnline={(blitz, timer) => go(() => setPhase({ t: 'online', blitz, timer }))}
           onTutorial={() => go(() => setPhase({ t: 'tutorial' }))}
+          onPuzzles={() => go(() => setPhase({ t: 'puzzles' }))}
         />
       )}
 
@@ -48,6 +53,35 @@ export default function App() {
           draftB={makeTutorialDrafts().draftB}
           onExit={() => setPhase({ t: 'menu' })}
           onRedraft={() => setPhase({ t: 'menu' })}
+        />
+      )}
+
+      {phase.t === 'puzzles' && (
+        <PuzzleSelect
+          onPick={(puzzle) => go(() => setPhase({ t: 'puzzle', puzzle }))}
+          onBack={() => setPhase({ t: 'menu' })}
+        />
+      )}
+
+      {phase.t === 'puzzle' && (
+        <Battle
+          key={phase.puzzle.id}
+          mode="ai"
+          blitz={false}
+          timerOn={false}
+          puzzle={phase.puzzle}
+          initialState={makePuzzleState(phase.puzzle)}
+          rebuild={() => makePuzzleState(phase.puzzle)}
+          onPuzzleSolved={markSolved}
+          onNextPuzzle={() => {
+            const i = PUZZLES.findIndex((x) => x.id === phase.puzzle.id)
+            const next = PUZZLES[i + 1]
+            go(() => setPhase(next ? { t: 'puzzle', puzzle: next } : { t: 'puzzles' }))
+          }}
+          draftA={{ champion: 'victini', picks: [], summons: [] }}
+          draftB={{ champion: 'mew', picks: [], summons: [] }}
+          onExit={() => setPhase({ t: 'puzzles' })}
+          onRedraft={() => setPhase({ t: 'puzzles' })}
         />
       )}
 
